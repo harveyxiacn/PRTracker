@@ -1,0 +1,16 @@
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.keystore
+*.jks
+keystore.properties
+android/app/release/
+# Capacitor generated web assets are rebuilt by `cap sync`
+android/app/src/main/assets/public/
+ios/App/App/public/
+*.tsbuildinfo

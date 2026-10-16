@@ -1,0 +1,46 @@
+{
+  "name": "pr-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Privacy-first Canadian PR & citizenship day tracker (Android, iOS, Web). All data stays on device.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "data:ircc": "node scripts/fetch-ircc.mjs public/data/ircc.json",
+    "data:community": "node scripts/build-community.mjs",
+    "cap:sync": "npm run build && cap sync",
+    "icons": "node scripts/gen-icons.mjs && capacitor-assets generate --iconBackgroundColor \"#c8102e\" --splashBackgroundColor \"#c8102e\" --splashBackgroundColorDark \"#121211\""
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/browser": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.0",
+    "@capacitor/preferences": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "idb-keyval": "^6.2.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "sharp": "^0.34.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.0"
+  }
+}

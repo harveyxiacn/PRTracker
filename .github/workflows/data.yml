@@ -1,0 +1,35 @@
+name: Refresh open data
+
+# Daily mirror of IRCC processing times and Express Entry draws into public/data,
+# plus a rebuild of the anonymised community dataset. Commits only when data changed.
+on:
+  schedule:
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/fetch-ircc.mjs public/data
+      - run: node scripts/build-community.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "pr-tracker-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # fetchedAt/updated timestamps alone are not a change worth committing
+          if git diff --quiet -I '"fetchedAt"' -I '"updated"' -- public/data; then echo "No data changes"; exit 0; fi
+          git add public/data
+          git commit -m "data: refresh IRCC processing times and draws"
+          git push
+      - name: Trigger web deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main || true

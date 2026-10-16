@@ -1,0 +1,20 @@
+name: Bug report
+description: Something is wrong in the app
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and version
+      placeholder: Android 15 / iOS 18 / Chrome 130, app v0.1.0
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Please do not paste your real travel history; use made-up dates that show the problem.
