@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16T06:32:43.939Z",
+ "updated": "2026-10-16T06:59:14.326Z",
  "series": {
   "child_adopted:CA": [{"date":"2026-10-16","days":700}],
   "child_adopted:ET": [{"date":"2026-10-16","days":883}],
@@ -112,7 +112,7 @@
   "study:ZA": [{"date":"2026-10-16","days":133}],
   "study:ZM": [{"date":"2026-10-16","days":84}],
   "study:ZW": [{"date":"2026-10-16","days":105}],
-  "study_ext": [{"date":"2026-10-16","days":59}],
+  "study_ext": [{"date":"2026-10-16","days":56}],
   "supervisa:AE": [{"date":"2026-10-16","days":64}],
   "supervisa:BD": [{"date":"2026-10-16","days":53}],
   "supervisa:BI": [{"date":"2026-10-16","days":71}],
@@ -322,7 +322,7 @@
   "visitor-outside-canada:ZA": [{"date":"2026-10-16","days":185}],
   "visitor-outside-canada:ZM": [{"date":"2026-10-16","days":332}],
   "visitor-outside-canada:ZW": [{"date":"2026-10-16","days":182}],
-  "visitor_ext": [{"date":"2026-10-16","days":370}],
+  "visitor_ext": [{"date":"2026-10-16","days":357}],
   "work:AE": [{"date":"2026-10-16","days":84}],
   "work:AU": [{"date":"2026-10-16","days":49}],
   "work:BD": [{"date":"2026-10-16","days":308}],
@@ -383,6 +383,6 @@
   "work:VN": [{"date":"2026-10-16","days":35}],
   "work:ZA": [{"date":"2026-10-16","days":119}],
   "work:ZW": [{"date":"2026-10-16","days":294}],
-  "work_ext": [{"date":"2026-10-16","days":112}]
+  "work_ext": [{"date":"2026-10-16","days":118}]
  }
 }
