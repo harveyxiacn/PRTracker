@@ -17,6 +17,10 @@ It runs on **Android, iOS and the web** in **14 languages**, and **your data nev
 | 📋 **Paste a timeline** | Paste any forum post (Reddit, CanadaVisa, Facebook, WeChat); the on-device parser extracts the program, milestones (AOR, BIL, PPR, P1/P2, eCOPR…), visa office and country, for you to review |
 | 🎯 **Eligibility** | CRS estimator (2025 rules, no job-offer points), CEC/FSW/FST checks, your score against the latest draw in each category you qualify for (French, healthcare, STEM, trades…), and an explorer of every program |
 | 🍁 **Maple assistant** | On-device, multilingual, rule-based. Asks about your own data (“longest trip?”, “days outside in the last 12 months?”), plans (“apply by June 2028 — how many days can I still travel?”, “best time for a 3-week trip?”), what-ifs with follow-ups (“and 3 months?”), “why is my date…”, FAQ answers with official sources, and a glossary of forum jargon (AOR, BIL, GU, P1/P2…) |
+| 🗂️ **Documents & expiries** | Passport, permits, language tests (valid 2 years), ECA (5 years), medical (12 months), police certificates, biometrics. Expiry reminders and a document checklist for each program; only metadata is stored, never document numbers |
+| 🧾 **Personal history** | Addresses and activities for IMM 5669 (past 10 years or since age 18) and citizenship (5 years), with gap and overlap detection and a form-ready CSV/table export |
+| 📈 **CRS improvement planner** | Ranks the changes that would raise your score (language, French, work, education, spouse, PNP), combines your chosen plan, and compares it with recent draws |
+| 🔒 **Security** | Passphrase-encrypted backups (AES-256-GCM), an optional PIN app lock, and calendar export (.ics) of reminders and trips |
 | 🔔 **Local reminders** | Scheduled on the phone, so no push server is needed |
 | 🌐 **14 languages** | English, Français, 简体中文, 繁體中文, Español, Português, हिन्दी, ਪੰਜਾਬੀ, Tagalog, Tiếng Việt, 한국어, العربية, فارسی, اردو. Right-to-left layout for Arabic, Persian and Urdu; languages load on demand |
 | 🌓 Light/dark theme, offline PWA | |

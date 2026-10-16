@@ -1,14 +1,25 @@
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
+import { App as CapApp } from '@capacitor/app';
+import { LockScreen } from './screens/Security';
+import { inExternalActivity } from './platform';
 import { Icon } from './components/Icon';
 import { useApp, type Route } from './store/AppContext';
-import { AssistantScreen } from './screens/Assistant';
 import { CalendarScreen } from './screens/Calendar';
-import { CommunityScreen } from './screens/Community';
-import { EligibilityScreen } from './screens/Eligibility';
 import { Home } from './screens/Home';
 import { Onboarding } from './screens/Onboarding';
-import { SettingsScreen } from './screens/Settings';
-import { TimelineScreen } from './screens/Timeline';
 import { TripsScreen } from './screens/Trips';
+
+// Home, Calendar and Trips are the everyday screens and ship in the main bundle;
+// everything else (including the Maple engine and knowledge base) loads on first visit.
+const named = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })));
+const TimelineScreen = named(() => import('./screens/Timeline'), 'TimelineScreen');
+const AssistantScreen = named(() => import('./screens/Assistant'), 'AssistantScreen');
+const EligibilityScreen = named(() => import('./screens/Eligibility'), 'EligibilityScreen');
+const CommunityScreen = named(() => import('./screens/Community'), 'CommunityScreen');
+const SettingsScreen = named(() => import('./screens/Settings'), 'SettingsScreen');
+const DocumentsScreen = named(() => import('./screens/Documents'), 'DocumentsScreen');
+const HistoryScreen = named(() => import('./screens/History'), 'HistoryScreen');
 
 const TABS: { route: Route; icon: string; key: string }[] = [
   { route: 'home', icon: 'home', key: 'nav.home' },
@@ -18,8 +29,39 @@ const TABS: { route: Route; icon: string; key: string }[] = [
   { route: 'assistant', icon: 'maple', key: 'nav.assistant' },
 ];
 
+/** Re-lock when the app was hidden for longer than this. */
+const RELOCK_AFTER_MS = 30_000;
+
 export function App() {
   const { data, route, go, t } = useApp();
+  const [locked, setLocked] = useState(() => !!data.lock);
+  // While backgrounded with a lock set, render nothing so the OS app-switcher snapshot is blank.
+  const [obscured, setObscured] = useState(false);
+  const hiddenAt = useRef<number | null>(null);
+  useEffect(() => {
+    if (!data.lock) return;
+    const hide = () => {
+      if (inExternalActivity()) return; // our own file picker / share sheet
+      hiddenAt.current = Date.now();
+      setObscured(true);
+    };
+    const show = () => {
+      if (hiddenAt.current !== null && Date.now() - hiddenAt.current > RELOCK_AFTER_MS) setLocked(true);
+      hiddenAt.current = null;
+      setObscured(false);
+    };
+    const onVis = () => (document.visibilityState === 'hidden' ? hide() : show());
+    document.addEventListener('visibilitychange', onVis);
+    const sub = CapApp.addListener('appStateChange', ({ isActive }) => (isActive ? show() : hide())).catch(() => null);
+    return () => {
+      document.removeEventListener('visibilitychange', onVis);
+      void sub.then((h) => h?.remove());
+    };
+  }, [!!data.lock]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The lock screen replaces the app (not an overlay) so nothing behind it is reachable.
+  if (locked && data.lock) return <LockScreen onUnlock={() => setLocked(false)} />;
+  if (obscured && data.lock) return <div className="app" aria-hidden="true" style={{ background: 'var(--bg)' }} />;
   if (!data.onboarded) return <Onboarding />;
 
   const screen = {
@@ -31,6 +73,8 @@ export function App() {
     eligibility: <EligibilityScreen />,
     community: <CommunityScreen />,
     settings: <SettingsScreen />,
+    documents: <DocumentsScreen />,
+    history: <HistoryScreen />,
   }[route];
 
   const title = route === 'home' ? t('app.name') : t(`nav.${route}`);
@@ -49,7 +93,9 @@ export function App() {
           </button>
         )}
       </header>
-      <main className="main">{screen}</main>
+      <main className="main">
+        <Suspense fallback={<div className="empty-state" aria-busy="true">…</div>}>{screen}</Suspense>
+      </main>
       <nav className="tabbar" aria-label={t('nav.main')}>
         <div className="tabbar-inner">
           {TABS.map((x) => (

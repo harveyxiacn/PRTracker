@@ -11,6 +11,7 @@ import {
   type TripIssue,
 } from './presence';
 import type { AppData, Trip } from './types';
+import { documentReminders, emptyDocuments } from './documents';
 
 /** IRCC: apply to renew when the card expires in less than 9 months. */
 export const PR_CARD_RENEWAL_MONTHS = 9;
@@ -45,7 +46,7 @@ export interface Reminder {
   title: string;
   body: string;
   vars: Record<string, string | number>;
-  category: 'citizenship' | 'prCard' | 'residency' | 'tripReturn';
+  category: 'citizenship' | 'prCard' | 'residency' | 'tripReturn' | 'documents';
   severity: 'info' | 'warn' | 'critical';
 }
 
@@ -137,6 +138,10 @@ export function computeInsights(data: AppData, today: ISODate = todayISO()): Ins
       });
     }
   }
+  // The PR card already has its own reminders from the profile; skip a duplicate PR-card document.
+  const docs = data.documents ?? emptyDocuments();
+  const skipIds = new Set(profile.prCardExpiry ? docs.items.filter((i) => i.kind === 'pr_card_copy').map((i) => i.id) : []);
+  reminders.push(...documentReminders(docs, today).filter((r) => ![...skipIds].some((id) => r.id.startsWith(`doc-${id}-`))));
   reminders.sort((a, b) => a.date.localeCompare(b.date));
   return out;
 }

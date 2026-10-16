@@ -2,8 +2,10 @@
 // UserDefaults); the web build uses IndexedDB. Nothing is ever sent to a server.
 import { Capacitor } from '@capacitor/core';
 import { Preferences } from '@capacitor/preferences';
-import { del, get, set } from 'idb-keyval';
-import { emptyData, type AppData } from '../domain/types';
+import { clear, del, get, set } from 'idb-keyval';
+import { emptyData, uid, type AppData } from '../domain/types';
+import { DOC_KINDS } from '../domain/documents';
+import { ACTIVITY_KINDS } from '../domain/history';
 import { isISODate } from '../domain/dates';
 
 const KEY = 'prtracker.data.v1';
@@ -44,15 +46,27 @@ export async function saveData(data: AppData): Promise<void> {
   await saveRaw(KEY, JSON.stringify(data));
 }
 
+/**
+ * Delete everything this app stored on the device: data, corrupt-data copies, reminder
+ * bookkeeping, lock attempt counters, and every scheduled OS notification.
+ */
 export async function wipeData(): Promise<void> {
-  if (Capacitor.isNativePlatform()) await Preferences.remove({ key: KEY });
-  else {
-    await del(KEY).catch(() => undefined);
+  if (Capacitor.isNativePlatform()) {
+    await Preferences.clear();
     try {
-      localStorage.removeItem(KEY);
+      const { LocalNotifications } = await import('@capacitor/local-notifications');
+      const pending = await LocalNotifications.getPending();
+      if (pending.notifications.length) await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
     } catch {
-      /* ignore */
+      /* notifications unavailable */
     }
+  } else {
+    await clear().catch(() => del(KEY).catch(() => undefined));
+  }
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith('prtracker.')) localStorage.removeItem(k);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -112,17 +126,38 @@ export function migrate(input: unknown): AppData {
         milestones: arr<AppData['applications'][number]['milestones'][number]>(a.milestones).filter((m) => m && typeof m.key === 'string' && isISODate(m.date)),
       })),
     chat: arr<NonNullable<AppData['chat']>[number]>(d.chat).slice(-200),
+    history: d.history
+      ? {
+          ...d.history,
+          addresses: arr<NonNullable<AppData['history']>['addresses'][number]>(d.history.addresses).filter((a) => a && isISODate(a.from)).map((a) => ({ ...a, id: typeof a.id === 'string' && a.id ? a.id : uid(), to: isoOrNull(a.to) })),
+          activities: arr<NonNullable<AppData['history']>['activities'][number]>(d.history.activities)
+            .filter((a) => a && isISODate(a.from) && (ACTIVITY_KINDS as string[]).includes(a.kind))
+            .map((a) => ({ ...a, id: typeof a.id === 'string' && a.id ? a.id : uid(), to: isoOrNull(a.to) })),
+          birthDate: isoOrUndef(d.history.birthDate),
+        }
+      : undefined,
+    documents: d.documents
+      ? {
+          items: arr<NonNullable<AppData['documents']>['items'][number]>(d.documents.items)
+            .filter((i) => i && (DOC_KINDS as string[]).includes(i.kind))
+            .map((i) => ({ ...i, id: typeof i.id === 'string' && i.id ? i.id : uid(), issued: isoOrNull(i.issued), expires: isoOrNull(i.expires) })),
+          checklist: d.documents.checklist && typeof d.documents.checklist === 'object' ? d.documents.checklist : {},
+        }
+      : undefined,
+    lock: d.lock && typeof d.lock.pinHash === 'string' && typeof d.lock.salt === 'string' ? d.lock : null,
     onboarded: !!d.onboarded,
   };
 }
 
 /** Export file contents (JSON backup). */
+/** Backup contents. The app-lock hash is device-specific and never exported (it could be brute-forced). */
 export function exportJson(data: AppData): string {
-  return JSON.stringify({ app: 'pr-tracker', exportedAt: new Date().toISOString(), data }, null, 2);
+  return JSON.stringify({ app: 'pr-tracker', exportedAt: new Date().toISOString(), data: { ...data, lock: null } }, null, 2);
 }
 
+/** Parse a backup. Any lock in the file is ignored; callers keep this device's lock. */
 export function importJson(text: string): AppData {
   const parsed = JSON.parse(text);
   const data = parsed && parsed.app === 'pr-tracker' ? parsed.data : parsed;
-  return migrate(data);
+  return { ...migrate(data), lock: null };
 }

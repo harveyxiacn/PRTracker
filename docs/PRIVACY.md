@@ -39,7 +39,15 @@ The “Paste a timeline” parser runs entirely on the device. When someone shar
 they found in a public post, only the same anonymised fields are kept: no usernames, post
 text or links.
 
+## Documents, history, encryption and lock (v0.3)
+
+- **Documents:** only the kind, holder (me/spouse/child), dates, country and a free note. The app asks you never to enter document numbers.
+- **Personal history:** addresses and activities you type yourself, stored only on the device. Exports are files you choose to save.
+- **Encrypted backups:** PBKDF2-SHA-256 (310,000 iterations, random 16-byte salt) and AES-256-GCM (random 12-byte IV) via WebCrypto. A forgotten passphrase cannot be recovered.
+- **App lock:** only a salted PBKDF2 hash of the PIN is stored. After 5 wrong tries there is an exponential back-off. The only reset is wiping all data.
+- **Calendar export (.ics):** reminder titles and trip destinations go into a file you choose to import into your calendar app. That calendar may sync to a cloud account.
+
 ## Threat model notes
 
-- Someone with your unlocked phone can open the app. Use your device lock; an app lock is on the roadmap.
-- Exported backups are plain JSON. Store them somewhere private.
+- Someone with your unlocked phone can open the app unless you set the PIN lock.
+- Plain JSON backups are readable by anyone with the file; prefer the encrypted backup.

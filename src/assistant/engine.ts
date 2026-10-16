@@ -10,6 +10,12 @@ import { countryName, COUNTRY_CODES } from '../domain/countries';
 import { glossaryLookup, kbSearch } from './kb';
 import { lexHas, lexKb, lexWords, type IntentId } from './lexicon';
 import { findDates, findDuration, findYear, normalizeDigits } from './parse';
+import { checklistFor, nextExpiries, emptyDocuments } from '../domain/documents';
+import { guessKind } from '../domain/pasteParser';
+import { emptyHistory, historySummary } from '../domain/history';
+import { describeImprovement, improvements } from '../domain/crsPlanner';
+import { formToCrsInput, readCrsForm } from '../domain/crsForm';
+import { calculateCrs } from '../domain/crs';
 import { daysOutsideLastMonths, explainCitizenship, filterTrips, planTrip, returnFor, travelBudget, tripStats } from './query';
 import { tripLength } from '../domain/presence';
 
@@ -154,6 +160,76 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
         text: ret ? ctx.t('as.confirmTrip', { dep, ret }) : ctx.t('as.confirmDeparture', { dep }),
         actions: [{ kind: 'addTrip', departure: dep, return: ret, label: ctx.t('as.act.logTrip') }],
       };
+    },
+  },
+  {
+    // "What documents do I need for citizenship / CEC / my application?"
+    id: 'doc_checklist',
+    match: (q) =>
+      has(q, /\b(what|which) (documents?|papers?) (do i|will i|i) need\b|\bdocuments? (needed|required|checklist)\b|\bchecklist\b/, '需要什么材料', '需要哪些材料', '要准备什么', '材料清单', '文件清单', '需要什麼文件', '需要哪些文件'),
+    run: (q, ctx) => {
+      // Program from the question ("for citizenship", "for CEC"), else the user's latest application.
+      const fromQ = /citizen|入籍|公民/.test(q) || lexHas(q, 'citizenship') ? 'citizenship' : guessKind(q).kind;
+      const app = [...ctx.data.applications].reverse().find((a) => !a.archived);
+      const kind = fromQ ?? app?.kind;
+      if (!kind) return { intent: 'doc_checklist', text: ctx.t('as.docChecklistPick'), actions: [{ kind: 'navigate', to: 'documents', label: ctx.t('as.act.documents') }] };
+      const keys = checklistFor(kind);
+      const lines = [ctx.t('as.docChecklistHead', { program: ctx.t(`app.kind.${kind}`) }), ...keys.slice(0, 10).map((k) => `• ${ctx.t(`doc.chk.${k}`)}`)];
+      if (keys.length > 10) lines.push(ctx.t('as.docChecklistMore', { n: keys.length - 10 }));
+      return { intent: 'doc_checklist', text: lines.join('\n'), actions: [{ kind: 'navigate', to: 'documents', label: ctx.t('as.act.documents') }] };
+    },
+  },
+  {
+    id: 'documents',
+    // Narrow on purpose: this runs before the FAQ, so generic words ("expired", "documents") must not
+    // capture questions like "can I apply for citizenship with an expired card?".
+    match: (q) =>
+      has(q, /\b(my|our) (passport|work permit|study permit|visa|documents?|ielts|celpip|tef|eca|medical)\b|\b(passport|permit|ielts|celpip|tef|eca|language test|medical|documents?)\b[^.?!]{0,30}\bexpir\w*|\bexpiring (documents?|soon)\b|\bdocument checklist\b/, '护照到期', '护照过期', '护照什么时候', '工签到期', '工签过期', '学签到期', '证件到期', '证件过期', '材料清单', '文件清单', '雅思过期', '雅思成绩', '護照到期', '護照過期', '證件到期') &&
+      !has(q, /\bpr card\b|citizen/, '枫叶卡', '楓葉卡', '入籍'),
+    run: (q, ctx) => {
+      // Also applies when a lexicon keyword matched: PR card and citizenship questions belong elsewhere.
+      if (has(q, /\bpr card\b|citizen/, '枫叶卡', '楓葉卡', '入籍')) return null;
+      // "My work permit is expiring — can I keep working?" is the bridging-permit FAQ.
+      if (kbSearch(q, lexKb())?.id === 'bowp' || /\b(keep working|bowp|bridging)\b/.test(q)) return null;
+      const docs = ctx.data.documents ?? emptyDocuments();
+      const next = nextExpiries(docs, ctx.today, 3);
+      if (!docs.items.length) return { intent: 'documents', text: ctx.t('as.docNone'), actions: [{ kind: 'navigate', to: 'documents', label: ctx.t('as.act.documents') }] };
+      const lines = next.length
+        ? [ctx.t('as.docHead'), ...next.map((n) => ctx.t('as.docLine', { kind: ctx.t(`doc.kind.${n.item.kind}`), label: n.item.label ? ` (${n.item.label})` : '', date: n.expires, days: n.days }))]
+        : [ctx.t('as.docAllOk')];
+      return { intent: 'documents', text: lines.join('\n'), actions: [{ kind: 'navigate', to: 'documents', label: ctx.t('as.act.documents') }] };
+    },
+  },
+  {
+    id: 'history',
+    match: (q) =>
+      !/\b(cec|fsw|fst|eligib|qualify|trip|trips)\b|申请cec|够不够/.test(q) &&
+      has(q, /\b(gaps? in my|address history|personal history|imm ?5669|schedule a)\b|\bwork history for\b/, '空白期', '空档', '空檔', '地址历史', '地址歷史', '个人历史', '個人歷史', '个人经历', '個人經歷'),
+    run: (q, ctx) => {
+      const h = ctx.data.history ?? emptyHistory();
+      const purpose = /citizen|入籍|公民/.test(q) ? 'citizenship' : 'pr';
+      const s = historySummary(h, purpose, ctx.today);
+      const gaps = s.addressGaps.length + s.activityGaps.length;
+      const text = !h.addresses.length && !h.activities.length
+        ? ctx.t('as.histNone')
+        : [
+            ctx.t('as.histHead', { from: s.window.from, to: s.window.to, purpose: ctx.t(`as.histPurpose.${purpose}`) }),
+            ctx.t('as.histCoverage', { a: Math.round(s.addressCoverage * 100), b: Math.round(s.activityCoverage * 100) }),
+            gaps ? ctx.t('as.histGaps', { n: gaps, first: (s.addressGaps[0] ?? s.activityGaps[0]).from }) : ctx.t('as.histNoGaps'),
+          ].join('\n');
+      return { intent: 'history', text, actions: [{ kind: 'navigate', to: 'history', label: ctx.t('as.act.history') }] };
+    },
+  },
+  {
+    id: 'crs_plan',
+    match: (q) => has(q, /\b(raise|improve|increase|boost|higher)\b.*\b(crs|score|points|chances)\b|\b(crs|score)\b.*\b(raise|improve|increase|boost)\b|\b(get|earn) (more )?(crs )?points\b|\bmore (crs )?points\b/, '提高分数', '提高分數', '怎么提分', '怎麼提分', '提分'),
+    run: (_q, ctx) => {
+      if (!ctx.data.eligibilityForm) return { intent: 'crs_plan', text: ctx.t('as.crsPlanNone'), actions: [{ kind: 'navigate', to: 'eligibility', label: ctx.t('as.act.eligibility') }] };
+      const input = formToCrsInput(readCrsForm(ctx.data.eligibilityForm));
+      const now = calculateCrs(input).totals.total;
+      const top = improvements(input).slice(0, 4);
+      const lines = [ctx.t('as.crsPlanHead', { score: now }), ...top.map((i) => `• ${describeImprovement(i, ctx.t)}`)];
+      return { intent: 'crs_plan', text: lines.join('\n'), actions: [{ kind: 'navigate', to: 'eligibility', label: ctx.t('as.act.eligibility') }] };
     },
   },
   {
@@ -474,24 +550,4 @@ export function answer(
   return { intent: 'fallback', text: t('as.fallback'), actions: suggestions(ctx) };
 }
 
-/** Proactive tips shown on the Home screen. */
-export function proactiveTips(data: AppData, insights: Insights): { key: string; vars?: Record<string, string | number>; severity: 'info' | 'warn' | 'critical' }[] {
-  const tips: ReturnType<typeof proactiveTips> = [];
-  if (!data.profile.prDate) tips.push({ key: 'tip.setPr', severity: 'info' });
-  if (insights.tripIssues.length) tips.push({ key: 'tip.tripIssues', vars: { n: insights.tripIssues.length }, severity: 'warn' });
-  if (insights.residency && !insights.residency.compliant) tips.push({ key: 'tip.resBad', vars: { short: insights.residency.shortfall }, severity: 'critical' });
-  else if (insights.ongoingTrip && insights.residency?.mustReturnBy && insights.residency.maxAbsence < 90)
-    tips.push({ key: 'tip.returnSoon', vars: { date: insights.residency.mustReturnBy }, severity: 'warn' });
-  if (insights.prCard?.state === 'renew_now') tips.push({ key: 'tip.renewCard', vars: { date: insights.prCard.expiry }, severity: 'warn' });
-  if (insights.prCard?.state === 'expired') tips.push({ key: 'tip.cardExpired', severity: 'warn' });
-  if (insights.citizenship?.eligible) tips.push({ key: 'tip.citEligible', severity: 'info' });
-  const c = insights.citizenship;
-  if (c && !c.eligible && c.daysUntilEligible !== null && c.daysUntilEligible <= 60)
-    tips.push({ key: 'tip.citSoon', vars: { days: c.daysUntilEligible }, severity: 'info' });
-  if (data.profile.prDate && !data.profile.prCardExpiry) tips.push({ key: 'tip.setCard', severity: 'info' });
-  const years = new Set(data.profile.taxYearsFiled);
-  const lastYear = Number(insights.today.slice(0, 4)) - 1;
-  if (data.profile.prDate && data.profile.prDate.slice(0, 4) <= String(lastYear) && !years.has(lastYear))
-    tips.push({ key: 'tip.tax', vars: { year: lastYear }, severity: 'info' });
-  return tips;
-}
+export { proactiveTips } from './tips';

@@ -6,7 +6,7 @@
 export type IntentId =
   | 'glossary' | 'log_return' | 'log_departure' | 'plan_target' | 'plan_best' | 'explain' | 'residency'
   | 'trips_query' | 'days_outside' | 'whatif' | 'faq' | 'pr_card' | 'citizenship' | 'application'
-  | 'crs' | 'rules' | 'privacy' | 'summary';
+  | 'crs' | 'rules' | 'privacy' | 'summary' | 'documents' | 'doc_checklist' | 'history' | 'crs_plan';
 
 export interface Lexicon {
   /** Keywords per intent. */

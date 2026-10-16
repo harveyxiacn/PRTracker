@@ -187,7 +187,11 @@ function AppDetail({ app }: { app: Application }) {
   };
   const remove = () => {
     if (!confirm(t('tl.confirmDelete'))) return;
-    update((d) => ({ ...d, applications: d.applications.filter((a) => a.id !== app.id) }));
+    update((d) => {
+      const checklist = { ...(d.documents?.checklist ?? {}) };
+      delete checklist[app.id];
+      return { ...d, applications: d.applications.filter((a) => a.id !== app.id), documents: d.documents ? { ...d.documents, checklist } : d.documents };
+    });
     go('timeline');
   };
   const q = `${app.province ? PNP_NAMES[app.province] + ' ' : ''}${SEARCH_TERMS[app.kind] ?? SEARCH_TERMS.other} ${app.submitted ? new Date(app.submitted + 'T00:00:00Z').toLocaleString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''}`.trim();

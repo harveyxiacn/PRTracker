@@ -134,6 +134,17 @@ Two complementary paths, both privacy-preserving:
 
 IRCC’s published processing times are mirrored daily (`scripts/fetch-ircc.mjs`) as the baseline.
 
+## v0.3 modules
+
+| Module | Key decisions |
+|---|---|
+| **Documents & expiries** (`domain/documents.ts`) | Metadata only (kind, holder, issue/expiry dates, country), never document numbers. Validity rules from IRCC: language test 2 years, ECA 5 years, medical 12 months, biometrics 10 years (temporary residence only). Warning leads: passport 6 months, permits 4 months, tests 3 months. Checklists per program are deliberately conservative: an item is left out when unsure. |
+| **Personal history** (`domain/history.ts`) | Built for IMM 5669 Schedule A (past 10 years or since 18th birthday, whichever is most recent, **no gaps**) and the citizenship 5-year history. Day-precise gap detection, address overlaps (1-day moving overlap allowed), and one-tap “fill this gap”. Export to CSV (with a BOM for Excel) and a copyable table. |
+| **CRS planner** (`domain/crsPlanner.ts`) | 13 single-change kinds evaluated with the real CRS calculator; equivalent changes are merged; you can combine a plan and compare it with the latest draws. |
+| **Security** (`security/`) | WebCrypto only: PBKDF2-SHA-256 (310k iterations) + AES-256-GCM for backups; PIN stored as a salted PBKDF2 hash with constant-time comparison and exponential back-off. The lock screen *replaces* the app (it isn't an overlay) and re-locks after 30 s in the background. RFC 5545 calendar export. |
+
+Maple gained `documents`, `history` and `crs_plan` intents on top of these modules.
+
 ## Future ideas
 
 - Encrypted export (passphrase) and optional biometric app lock.

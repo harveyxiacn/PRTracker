@@ -4,7 +4,7 @@ import { pickTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { csvToTrips } from '../store/csv';
 import { importJson } from '../store/storage';
-import { LanguageSelect, ProfileFields } from './Settings';
+import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
 
 export function Onboarding() {
   const { data, update, replaceAll, t, toast } = useApp();

@@ -6,6 +6,22 @@ import { Share } from '@capacitor/share';
 
 export const isNative = () => Capacitor.isNativePlatform();
 
+/**
+ * True while a system picker / share sheet we opened is in front of the app. The app lock
+ * uses it so that choosing a backup file doesn't re-lock and lose the screen's state.
+ */
+let externalDepth = 0;
+export const inExternalActivity = () => externalDepth > 0;
+async function external<T>(fn: () => Promise<T>): Promise<T> {
+  externalDepth++;
+  try {
+    return await fn();
+  } finally {
+    // Leave a short grace period: the "visible" event can arrive just after the promise.
+    setTimeout(() => (externalDepth = Math.max(0, externalDepth - 1)), 1500);
+  }
+}
+
 export async function openExternal(url: string) {
   if (isNative()) await Browser.open({ url });
   else window.open(url, '_blank', 'noopener,noreferrer');
@@ -15,7 +31,7 @@ export async function openExternal(url: string) {
 export async function saveTextFile(name: string, text: string, mime = 'application/json') {
   if (isNative()) {
     const res = await Filesystem.writeFile({ path: name, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 });
-    await Share.share({ title: name, url: res.uri, dialogTitle: name });
+    await external(() => Share.share({ title: name, url: res.uri, dialogTitle: name }));
     return;
   }
   const blob = new Blob([text], { type: mime });
@@ -30,6 +46,10 @@ export async function saveTextFile(name: string, text: string, mime = 'applicati
 }
 
 export function pickTextFile(accept: string): Promise<string | null> {
+  return external(() => pickTextFileInner(accept));
+}
+
+function pickTextFileInner(accept: string): Promise<string | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';

@@ -1,4 +1,4 @@
-import { proactiveTips } from '../assistant/engine';
+import { proactiveTips } from '../assistant/tips';
 import { Icon } from '../components/Icon';
 import { Ring, Status } from '../components/ui';
 import { diffDays } from '../domain/dates';
@@ -191,6 +191,8 @@ export function Home() {
         <button className="btn" onClick={() => go('assistant')}><Icon name="sparkle" /> {t('home.askMaple')}</button>
         <button className="btn" onClick={() => go('eligibility')}><Icon name="target" /> {t('nav.eligibility')}</button>
         <button className="btn" onClick={() => go('community')}><Icon name="users" /> {t('nav.community')}</button>
+        <button className="btn" onClick={() => go('documents')}><Icon name="card" /> {t('nav.documents')}</button>
+        <button className="btn" onClick={() => go('history')}><Icon name="home2" /> {t('nav.history')}</button>
       </div>
       <p className="tiny" style={{ textAlign: 'center', marginTop: 20 }}>{t('common.disclaimer')}</p>
       <TripEditor state={editor} />

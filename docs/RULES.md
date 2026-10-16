@@ -119,6 +119,27 @@ Each program has an offline estimate (IRCC service standards where they exist: E
 | Start-up Visa (`startup`) | Paused; only holders of a 2025 commitment certificate could apply, by 2026-06-30 | canada.ca Start-up Visa page |
 | Quebec Experience Program (`qc_peq`) | Rules changing (ended 2025-11-19, temporary reinstatement reported for 2026); check Quebec’s site | Quebec government / secondary sources |
 
+## Documents (`domain/documents.ts`)
+
+| Document | Valid until | Warning starts |
+|---|---|---|
+| Language test (IELTS/CELPIP/PTE/TEF/TCF) | test date + 2 years (must be < 2 years old for the Express Entry profile and the PR application) | 3 months before |
+| ECA | issue date + 5 years | 3 months before |
+| Immigration medical exam | exam date + 12 months | 3 months before |
+| Biometrics | + 10 years, **temporary residence only** (PR applicants give them every time) | 3 months before |
+| Passport | printed expiry | 6 months before |
+| Work/study permit, visitor record | printed expiry (apply to extend before it expires to keep maintained status) | 4 months before |
+| Visitor visa (TRV), COPR | printed expiry | 2 months before |
+| Police certificate | no fixed IRCC validity; IRCC may ask for a newer one | — |
+
+Reminders: at the warning date and 30 days before expiry (only dates on or after today).
+
+## Personal history (`domain/history.ts`)
+
+- PR (IMM 5669 Schedule A): from the most recent of *today − 10 years* and the *18th birthday*, to today.
+- Citizenship: the 5 years before today.
+- A gap is any uncovered day inside the window. Entries cover both end dates; an open entry runs to today. Address overlaps of 2+ days are flagged; 1 day is a normal moving day.
+
 ## Limitations
 
 - Time abroad that IRCC may count toward the residency obligation (accompanying a Canadian

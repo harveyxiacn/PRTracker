@@ -31,7 +31,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        // Language chunks are fetched on demand and cached at runtime, not pre-downloaded.
+        globIgnores: ['**/assets/{fr,zh,zh-Hant,es,pt,hi,pa,tl,vi,ko,ar,fa,ur}-*.js'],
         runtimeCaching: [
+          {
+            urlPattern: /\/assets\/.*\.js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'lazy-chunks', expiration: { maxEntries: 40 } },
+          },
           {
             urlPattern: /\/data\/.*\.json$/,
             handler: 'NetworkFirst',

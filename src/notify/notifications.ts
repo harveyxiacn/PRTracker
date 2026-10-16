@@ -17,7 +17,7 @@ export function notificationId(id: string): number {
 
 export function enabledReminders(reminders: Reminder[], s: Settings): Reminder[] {
   if (!s.notifications.enabled) return [];
-  return reminders.filter((r) => s.notifications[r.category]);
+  return reminders.filter((r) => s.notifications[r.category] !== false);
 }
 
 export async function requestPermission(): Promise<boolean> {

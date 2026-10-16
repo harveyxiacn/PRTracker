@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com), versions: SemVer.
 
+## [0.3.0] - 2026-10-16
+
+### Added
+- **Documents & expiries:**
+  - Track passports, permits, language tests, ECA, medicals, police certificates and biometrics, with IRCC validity rules (language 2 years, ECA 5 years, medical 12 months, biometrics 10 years for temporary residence).
+  - Expiry reminders, a document checklist for each program, and a "what documents do I need" answer in Maple.
+  - Only metadata is stored, never document numbers.
+- **Personal history:**
+  - Addresses and activities for IMM 5669 (past 10 years or since age 18) and citizenship (5 years).
+  - Gap and overlap detection, one-tap "fill this gap", CSV and copyable-table export.
+- **CRS improvement planner:** ranked score improvements (language, French, work, education, spouse, PNP…), plan combination, and comparison with recent draws.
+- **Security:**
+  - Passphrase-encrypted backups (PBKDF2-SHA-256 600k + AES-256-GCM).
+  - Optional PIN app lock with back-off; the screen is hidden in the app switcher and re-locks after 30 s in the background.
+  - Calendar export (.ics) of reminders and trips.
+- **Maple:** documents, checklist, history-gap and CRS-improvement intents in all 14 languages.
+
+### Changed
+- Screens and the Maple engine load on demand. Languages are no longer precached (precache went from 1.25 MB to about 0.55 MB).
+- Canada added to the country list.
+
+### Fixed (QA review)
+- Backups no longer contain the PIN hash, and restoring a backup keeps this device's lock.
+- "Delete all data" now also cancels scheduled notifications and removes leftover keys.
+- Calendar export escapes semicolons correctly.
+- No duplicate PR-card reminders; documents added close to expiry still get a reminder; checklists are removed with their application.
+- Checklist facts: CEC has no tax documents; PGWP needs a language test (since 2024-11-01); citizenship tax filing is declared and police certificates are needed only in some cases; super visa insurance wording updated.
+- Maple routing: generic "expired"/"documents"/"points" questions keep going to the right answers.
+
 ## [0.2.0] - 2026-10-16
 
 For applicants worldwide: every major pathway, 14 languages and a smarter Maple.

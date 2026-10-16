@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented, Status } from '../components/ui';
-import { calculateCrs, checkPrograms, minClb, toClb, type Education, type LanguageScores, type TestKind } from '../domain/crs';
+import { calculateCrs, checkPrograms, minClb, toClb, type Education, type LanguageScores } from '../domain/crs';
+import { CrsPlannerCard } from './CrsPlanner';
+import { CRS_FORM_DEFAULT as DEFAULT, formToCrsInput, type CrsForm as Form } from '../domain/crsForm';
 import { OCCUPATION_CATEGORIES, standings, type DrawCategory } from '../domain/draws';
 import { CATEGORY_ORDER, PROGRAMS } from '../domain/programs';
 import { uid } from '../domain/types';
@@ -9,48 +11,6 @@ import { fmtDate } from '../i18n';
 import { openExternal } from '../platform';
 import { fmtNum } from '../i18n';
 import { useApp } from '../store/AppContext';
-
-interface Form {
-  tab: 'crs' | 'programs' | 'all';
-  /** Occupation-based draw categories the user believes they qualify for. */
-  drawCats: DrawCategory[];
-  age: number;
-  hasSpouse: boolean;
-  education: Education;
-  testKind: TestKind;
-  lang1: LanguageScores;
-  hasLang2: boolean;
-  lang2: LanguageScores; // CLB/NCLC
-  firstIsFrench: boolean;
-  canadianWorkYears: number;
-  foreignWorkYears: number;
-  coq: boolean;
-  spouseEducation: Education;
-  spouseLang: LanguageScores;
-  spouseCanadianWork: number;
-  pnp: boolean;
-  sibling: boolean;
-  canadianEducation: 0 | 1 | 3;
-  // programs
-  teer: number;
-  cdnSkilledMonths: number;
-  skilledMonths10y: number;
-  tradesMonths: number;
-  eca: boolean;
-  jobOffer: boolean;
-  fundsExempt: boolean;
-  adapt: Record<'spouseLanguageClb4' | 'pastStudyInCanada' | 'spousePastStudyInCanada' | 'pastWorkInCanada' | 'spousePastWorkInCanada' | 'relativeInCanada', boolean>;
-}
-
-const L = (n: number): LanguageScores => ({ listening: n, reading: n, writing: n, speaking: n });
-
-const DEFAULT: Form = {
-  tab: 'crs', drawCats: [], age: 29, hasSpouse: false, education: 'bachelor', testKind: 'ielts', lang1: { listening: 7, reading: 6.5, writing: 6.5, speaking: 6.5 },
-  hasLang2: false, lang2: L(0), firstIsFrench: false, canadianWorkYears: 1, foreignWorkYears: 0, coq: false,
-  spouseEducation: 'bachelor', spouseLang: L(0), spouseCanadianWork: 0, pnp: false, sibling: false, canadianEducation: 0,
-  teer: 1, cdnSkilledMonths: 12, skilledMonths10y: 12, tradesMonths: 0, eca: true, jobOffer: false, fundsExempt: false,
-  adapt: { spouseLanguageClb4: false, pastStudyInCanada: false, spousePastStudyInCanada: false, pastWorkInCanada: false, spousePastWorkInCanada: false, relativeInCanada: false },
-};
 
 /** Number input that keeps the raw text while typing ("6.", "") and commits a number. */
 function NumInput({ value, onChange, min, max, step }: { value: number; onChange: (n: number) => void; min?: number; max?: number; step?: number }) {
@@ -87,17 +47,8 @@ export function EligibilityScreen() {
     update((d) => ({ ...d, eligibilityForm: { ...DEFAULT, ...(d.eligibilityForm as Partial<Form> | undefined), ...patch } }));
 
   const clb1 = toClb(f.testKind, f.lang1);
-  const crs = useMemo(
-    () =>
-      calculateCrs({
-        age: f.age, hasSpouse: f.hasSpouse, education: f.education, firstLanguage: clb1,
-        secondLanguage: f.hasLang2 ? f.lang2 : undefined, firstLanguageIsFrench: f.firstIsFrench,
-        canadianWorkYears: f.canadianWorkYears, foreignWorkYears: f.foreignWorkYears, certificateOfQualification: f.coq,
-        spouse: f.hasSpouse ? { education: f.spouseEducation, language: f.spouseLang, canadianWorkYears: f.spouseCanadianWork } : undefined,
-        provincialNomination: f.pnp, siblingInCanada: f.sibling, canadianEducation: f.canadianEducation,
-      }),
-    [JSON.stringify(f)], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  const crsInput = useMemo(() => formToCrsInput(f), [JSON.stringify(f)]); // eslint-disable-line react-hooks/exhaustive-deps
+  const crs = useMemo(() => calculateCrs(crsInput), [crsInput]);
   const programs = checkPrograms({
     firstLanguage: clb1, teer: f.teer, canadianSkilledMonthsLast3y: f.cdnSkilledMonths, skilledMonthsLast10y: f.skilledMonths10y,
     tradesMonthsLast5y: f.tradesMonths, education: f.education, hasEcaOrCanadianCredential: f.eca, age: f.age, hasJobOffer: f.jobOffer,
@@ -228,6 +179,8 @@ export function EligibilityScreen() {
         </div>
         <p className="tiny">{t('elig.disclaimer')}</p>
       </section>
+
+      {f.tab === 'crs' && <CrsPlannerCard input={crsInput} draws={open.draws} />}
 
       <section className="card">
         <h2>{t('elig.aboutYou')}</h2>

@@ -32,6 +32,10 @@
 | `src/domain/pasteParser.ts` | Forum-post timeline parser | |
 | `src/domain/draws.ts` | Express Entry draw categories, your standing per category | |
 | `src/domain/countries.ts` | ISO country codes; names via `Intl.DisplayNames` | |
+| `src/domain/documents.ts` | Document validity rules, statuses, reminders, per-program checklists | metadata only |
+| `src/domain/history.ts` | Address/activity history windows, gaps, overlaps, CSV/text export | IMM 5669, citizenship |
+| `src/domain/crsPlanner.ts`, `crsForm.ts` | CRS improvement suggestions; mapping of the saved calculator form to `CrsInput` | |
+| `src/security/` | `crypto.ts` (encrypted backups), `pin.ts` (app-lock hash), `ics.ts` (calendar export) | WebCrypto only |
 | `src/assistant/` | Maple: `parse` (dates/durations, any digits), `engine` (ordered intents + memory), `query` (data queries & planners), `kb` (FAQ & glossary), `lexicon` (per-language keywords) | returns text + actions + memory, never mutates data |
 | `src/store/` | `AppContext` (state, routing, toasts, theme, notification sync), storage adapters, CSV | debounced saves (250 ms) |
 | `src/notify/` | Schedules/cancels local notifications | stable numeric IDs from reminder IDs |
@@ -58,6 +62,13 @@ AppData {
 
 Stored as one JSON document under `prtracker.data.v1`. `migrate()` fills defaults for fields
 added later and drops malformed rows, so old backups keep importing.
+
+## Code splitting
+
+Home, Calendar and Trips (and Onboarding) are in the main bundle. Every other screen, the Maple
+engine and knowledge base, and each language are lazy chunks. The PWA precaches the app shell and
+screens but not language chunks, which are cached at runtime the first time they load
+(`vite.config.ts` → `globIgnores` + `runtimeCaching`).
 
 ## Performance
 

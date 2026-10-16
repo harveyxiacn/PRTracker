@@ -1,3 +1,8 @@
+import { documentsEn } from './parts/documents';
+import { historyEn } from './parts/history';
+import { crsPlannerEn } from './parts/crsPlanner';
+import { securityEn } from './parts/security';
+
 export const en: Record<string, string> = {
   'app.name': 'PR Tracker',
 
@@ -11,6 +16,8 @@ export const en: Record<string, string> = {
   'nav.eligibility': 'Eligibility',
   'nav.community': 'Community',
   'nav.settings': 'Settings',
+  'nav.documents': 'Documents',
+  'nav.history': 'Personal history',
 
   // common
   'common.days': 'days',
@@ -449,6 +456,7 @@ export const en: Record<string, string> = {
   'set.notifCard': 'PR card renewal & expiry',
   'set.notifRes': 'Residency obligation (when abroad)',
   'set.notifTrip': 'Confirm return from planned trips',
+  'set.notifDocs': 'Documents expiring (passport, permits, tests)',
   'set.notifAllow': 'Allow notifications',
   'set.notifScheduled': '{n} reminders scheduled.',
   'set.notifDenied': 'Notifications are blocked. Enable them in your system settings.',
@@ -599,6 +607,24 @@ export const en: Record<string, string> = {
 
   // ---- v0.2: Maple ----
   'as.source': 'Source',
+  'as.act.documents': 'Open documents',
+  'as.act.history': 'Open personal history',
+  'as.docChecklistHead': 'Documents usually needed for {program}:',
+  'as.docChecklistMore': '…and {n} more. Open Documents to tick them off.',
+  'as.docChecklistPick': 'Which application? Add it in Timeline (or ask e.g. “documents for citizenship”) and I’ll list what you usually need.',
+  'as.docNone': 'You haven’t added any documents yet. Add your passport, permits and test results to get expiry reminders.',
+  'as.docHead': 'Next to expire:',
+  'as.docLine': '• {kind}{label}: {date} ({days} days)',
+  'as.docAllOk': 'None of your documents expire soon.',
+  'as.histNone': 'Your personal history is empty. Add your addresses and activities so I can check for gaps before you fill IRCC forms.',
+  'as.histHead': 'History for {purpose}: {from} → {to}.',
+  'as.histPurpose.pr': 'PR (IMM 5669)',
+  'as.histPurpose.citizenship': 'citizenship (5 years)',
+  'as.histCoverage': 'Addresses {a}% covered · activities {b}% covered.',
+  'as.histGaps': '⚠️ {n} gap(s), the first starting {first}. IRCC does not allow gaps.',
+  'as.histNoGaps': '✅ No gaps.',
+  'as.crsPlanNone': 'Fill in the CRS calculator first, then I can tell you which changes raise your score most.',
+  'as.crsPlanHead': 'Your estimated CRS is {score}. Biggest gains:',
   'as.planTooSoon': 'On {target} you would have {credited} credited days, short of 1,095. The earliest date you can apply is {earliest}.',
   'as.planBudget': 'To apply on {target} you can still spend up to {days} days outside Canada before then (you’d have {credited} credited days without more travel).',
   'as.planBudgetSafe': 'Keeping your {buffer}-day safety margin: up to {days} days.',
@@ -675,4 +701,8 @@ export const en: Record<string, string> = {
   'gl.gcms': 'Global Case Management System — IRCC’s internal file notes (request them through ATIP).',
   'gl.prtd': 'Permanent Resident Travel Document.',
   'gl.fd': 'Final Decision — the decision on your application (often together with PPR).',
+  ...historyEn,
+  ...documentsEn,
+  ...crsPlannerEn,
+  ...securityEn,
 };

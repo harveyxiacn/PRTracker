@@ -1,4 +1,6 @@
 import type { ISODate } from './dates';
+import type { DocumentsData } from './documents';
+import type { HistoryData } from './history';
 
 /** A trip outside Canada. Departure and return are the days the border was crossed. */
 export interface Trip {
@@ -80,6 +82,7 @@ export interface Settings {
     prCard: boolean;
     residency: boolean;
     tripReturn: boolean;
+    documents?: boolean;
   };
   /** Base URL of the open-data mirror (IRCC times, community timelines). */
   dataUrl: string;
@@ -98,6 +101,12 @@ export interface AppData {
   onboarded: boolean;
   /** Saved answers of the eligibility / CRS form. */
   eligibilityForm?: Record<string, unknown>;
+  /** v0.3: personal history (addresses, activities) for forms. */
+  history?: HistoryData;
+  /** v0.3: documents & expiries. */
+  documents?: DocumentsData;
+  /** v0.3: app lock (PIN hash, never the PIN itself). */
+  lock?: { pinHash: string; salt: string } | null;
 }
 
 export const DEFAULT_DATA_URL = 'https://harveyxiacn.github.io/PRTracker/data/';

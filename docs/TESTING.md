@@ -52,6 +52,16 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] Switch to العربية / فارسی / اردو → the layout mirrors; calendars and charts still run left-to-right; back arrows point the right way.
 - [ ] Switch to हिन्दी, ਪੰਜਾਬੀ, 한국어, 繁體中文 → text renders (no boxes); dates and country names appear in that language.
 
+**v0.3: documents, history, CRS planner, security**
+- [ ] Documents: add a passport expiring in 5 months → “expiring soon” + reminder; an IELTS with only the test date → “valid until” is +2 years.
+- [ ] Documents checklist: pick your application, tick items, leave and come back → still ticked.
+- [ ] History: add two addresses with a 2-month hole → 1 gap; “Fill this gap” pre-fills the dates; export CSV opens in Excel with accents intact.
+- [ ] CRS planner (Eligibility → CRS): tick two improvements → combined score and draw comparison update.
+- [ ] Settings → Security: set a PIN → background the app >30 s → PIN pad appears; 5 wrong PINs → back-off timer.
+- [ ] Encrypted backup: export with a passphrase → wipe → restore with the passphrase; a wrong passphrase is refused.
+- [ ] Export reminders (.ics) → import into Google/Apple Calendar → events at the right dates with a 9:00 alert.
+- [ ] Maple: “When does my passport expire?”, “Any gaps in my address history?”, “How can I raise my CRS?”.
+
 **Settings & privacy**
 - [ ] Switch language and theme (light/dark/system).
 - [ ] Export backup → Delete all data → onboarding → *Restore from a backup file* → everything is back.
