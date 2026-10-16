@@ -1,6 +1,13 @@
 {
- "fetchedAt": "2026-10-16T06:59:14.256Z",
+ "fetchedAt": "2026-10-16T15:23:20.531Z",
  "draws": [
+  {
+   "number": 450,
+   "date": "2026-10-16",
+   "name": "French-Language proficiency 2026-Version 2",
+   "size": 5000,
+   "crs": 435
+  },
   {
    "number": 449,
    "date": "2026-10-15",
@@ -413,13 +420,6 @@
    "name": "Provincial Nominee Program",
    "size": 681,
    "crs": 746
-  },
-  {
-   "number": 390,
-   "date": "2026-01-07",
-   "name": "Canadian Experience Class",
-   "size": 8000,
-   "crs": 511
   }
  ]
 }
