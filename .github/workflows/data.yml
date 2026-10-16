@@ -14,8 +14,8 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - run: node scripts/fetch-ircc.mjs public/data
@@ -24,9 +24,9 @@ jobs:
         run: |
           git config user.name "pr-tracker-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # fetchedAt/updated timestamps alone are not a change worth committing
-          if git diff --quiet -I '"fetchedAt"' -I '"updated"' -- public/data; then echo "No data changes"; exit 0; fi
           git add public/data
+          # fetchedAt/updated timestamps alone are not a change worth committing
+          if git diff --cached --quiet -I '"fetchedAt"' -I '"updated"' -- public/data; then echo "No data changes"; exit 0; fi
           git commit -m "data: refresh IRCC processing times and draws"
           git push
       - name: Trigger web deploy

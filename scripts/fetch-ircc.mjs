@@ -5,7 +5,9 @@ import path from 'node:path';
 
 const outDir = process.argv[2]?.endsWith('.json') ? path.dirname(process.argv[2]) : process.argv[2] ?? 'public/data';
 const BASE = 'https://www.canada.ca/content/dam/ircc/documents/json/';
-const SOURCES = ['data-ptime-non-country-en.json', 'data-ptime-en.json'];
+// The first two files are what IRCC's processing-time tool uses today; the others are
+// probed in case IRCC republishes permanent-residence/citizenship times separately.
+const SOURCES = ['data-ptime-non-country-en.json', 'data-ptime-en.json', 'data-ptime-pr-en.json', 'data-ptime-citizenship-en.json'];
 const DRAWS = BASE + 'ee_rounds_123_en.json';
 
 async function get(url) {
@@ -57,7 +59,8 @@ async function main() {
   }
   for (const [k, v] of Object.entries(entries)) if (k.endsWith('lastupdated') && !updated) updated = v;
   const times = {};
-  const keys = Object.keys(entries).filter((k) => !/\.([A-Z]{2})$/.test(k)); // skip per-country rows
+  // Skip per-country rows (any path segment that is a 2-letter country code).
+  const keys = Object.keys(entries).filter((k) => !k.split('.').some((seg) => /^[A-Z]{2}$/.test(seg)));
   for (const [kind, pats] of Object.entries(MAP)) {
     for (const p of pats) {
       const k = keys.find((key) => p.test(key) && parseDuration(entries[key]) !== null);

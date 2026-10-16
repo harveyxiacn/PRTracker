@@ -94,7 +94,9 @@ Priority of sources for the expected total processing time:
 
 1. Your own override (days).
 2. **Community** median when there are ≥ 5 similar records (same type; submitted within ±3 months if there are ≥ 5 such records, otherwise any month). Also shows the p25–p75 range and per-milestone medians (≥ 3 records).
-3. **IRCC** published processing time from the daily mirror.
+3. **IRCC** published processing time from the daily mirror. *As of October 2026 IRCC’s public
+   JSON only includes the PR card (and some citizenship sub-types); Express Entry, PNP, spousal and
+   citizenship-grant times are not in it, so those fall through to step 4 until community data exists.*
 4. **Fallback** service standards: Express Entry 6 months, spousal 12 months, citizenship 12 months, PR card ~2 months.
 
 Progress % = elapsed / expected (capped at 99% until the final milestone is logged).
