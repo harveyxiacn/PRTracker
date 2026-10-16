@@ -3,7 +3,8 @@ import { computeInsights, type Insights } from '../domain/insights';
 import { todayISO } from '../domain/dates';
 import type { AppData } from '../domain/types';
 import { loadOpenData, type OpenData } from '../data/remote';
-import { detectLang, makeT, type Lang } from '../i18n';
+import { detectLang, languageInfo, loadLanguage, makeT, type Lang } from '../i18n';
+import { en } from '../i18n/en';
 import { syncNotifications } from '../notify/notifications';
 import { loadData, saveData } from './storage';
 
@@ -78,7 +79,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const lang: Lang = data?.settings.language ?? 'en';
-  const t = useMemo(() => makeT(lang), [lang]);
+  const [dict, setDict] = useState<Record<string, string>>(en);
+  // The language whose strings are actually loaded (falls back to English on failure).
+  const [loadedLang, setLoadedLang] = useState<Lang>('en');
+  useEffect(() => {
+    let live = true;
+    loadLanguage(lang).then(
+      (d) => {
+        if (!live) return;
+        setDict(d);
+        setLoadedLang(d === en && lang !== 'en' ? 'en' : lang);
+      },
+      () => {
+        if (!live) return;
+        setDict(en);
+        setLoadedLang('en');
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [lang]);
+  const t = useMemo(() => makeT(dict), [dict]);
 
   const refreshOpen = useCallback(async () => {
     if (!data) return;
@@ -128,11 +150,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const th = data?.settings.theme ?? 'system';
     if (th === 'system') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', th);
-    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  }, [data?.settings.theme, lang]);
+    // Direction and lang follow the strings actually shown, so a missing locale never mirrors English.
+    document.documentElement.lang = loadedLang;
+    document.documentElement.dir = languageInfo(loadedLang).dir;
+  }, [data?.settings.theme, loadedLang]);
 
   // Reschedule local notifications when anything that affects them changes.
-  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.settings.notifications) + lang : '';
+  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.settings.notifications) + loadedLang : '';
   useEffect(() => {
     if (!data || !insights || !data.onboarded) return;
     syncNotifications(insights.reminders, data.settings, t).catch((e) => console.warn('notifications', e));

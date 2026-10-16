@@ -152,7 +152,7 @@ export function TripsScreen() {
             <div className="label">{t('trips.total')}</div>
             <div className="hero-num" style={{ fontSize: 28 }}>{fmtNum(total, lang)} <span className="small muted">{t('common.days')}</span></div>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: 'end' }}>
             <div className="label">{t('trips.count')}</div>
             <div className="hero-num" style={{ fontSize: 28 }}>{trips.length}</div>
           </div>

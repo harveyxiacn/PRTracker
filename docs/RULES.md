@@ -101,6 +101,24 @@ Priority of sources for the expected total processing time:
 
 Progress % = elapsed / expected (capped at 99% until the final milestone is logged).
 
+## Maple planners (`src/assistant/query.ts`)
+
+- **Travel budget for a target date T**: `credited(T) − 1,095`, capped at the days left between tomorrow (or T − 5 years, if later) and T − 1. Every remaining day before T is a PR day worth exactly one credited day, so a trip of `budget` full days still leaves 1,095 on T, and one more day falls short. A test checks both sides. The “safe” figure subtracts your safety margin.
+- **Best time for an N-day trip**: compares the eligibility date with and without a trip that starts tomorrow. A trip that starts on or after the eligibility date, once you have applied, doesn’t delay citizenship, because presence is counted up to the application date. It also checks the 730-day rule from the departure until a year after the return, and whether the PR card expires during the trip.
+- **Explain**: the window `[date − 5y, date − 1]`, PR days present, pre-PR days and their ½ credit, and trips and days away in the window.
+
+## Program-specific predictions
+
+Each program has an offline estimate (IRCC service standards where they exist: Express Entry, the Atlantic Immigration Program and the EE-linked PNP 6 months, spousal 12 months, citizenship 12 months). Other estimates are labelled approximate and can be overridden per application. Study, work, visitor, super visa and child-sponsorship times come from IRCC’s per-country series for the country you apply from. Community predictions narrow to your province (PNP) or country when there are at least 5 matching records.
+
+## Program status (verified 2026-10-16)
+
+| Program | Status | Source |
+|---|---|---|
+| Home Care Worker Immigration Pilots (`caregiver`) | Intake paused until further notice (IRCC notice of 2025-12-19) | canada.ca notice “Pausing Home Care Worker Immigration Pilots application intake” |
+| Start-up Visa (`startup`) | Paused; only holders of a 2025 commitment certificate could apply, by 2026-06-30 | canada.ca Start-up Visa page |
+| Quebec Experience Program (`qc_peq`) | Rules changing (ended 2025-11-19, temporary reinstatement reported for 2026); check Quebec’s site | Quebec government / secondary sources |
+
 ## Limitations
 
 - Time abroad that IRCC may count toward the residency obligation (accompanying a Canadian

@@ -43,6 +43,15 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] “What if I travel for 2 months?” shows the eligibility shift and a *Save as planned trip* button.
 - [ ] “I left on <date> and came back <date>” offers *Log this trip*.
 
+**v0.2: programs, paste, languages**
+- [ ] Track a *PNP (paper-based)* application, pick Ontario → the steps start with expression of interest / provincial invitation; the CanadaVisa and Reddit search buttons include “OINP”.
+- [ ] Track a *Study permit*, choose your country → the prediction says “Based on IRCC published processing time · <country>”.
+- [ ] Timeline → *From text* → paste a real “finally PR” post → check the review table (uncertain dates flagged) → *Use for my application*.
+- [ ] Eligibility → *All programs* → *Track* any program. CRS tab: tick an occupation category; the “your score vs. draws” table updates.
+- [ ] Maple: “What is GU?”, “my longest trip”, “I want to apply by <date>, how many days can I travel?”, “What if I travel for 2 months?” then “and 3 months?”, “why?”.
+- [ ] Switch to العربية / فارسی / اردو → the layout mirrors; calendars and charts still run left-to-right; back arrows point the right way.
+- [ ] Switch to हिन्दी, ਪੰਜਾਬੀ, 한국어, 繁體中文 → text renders (no boxes); dates and country names appear in that language.
+
 **Settings & privacy**
 - [ ] Switch language and theme (light/dark/system).
 - [ ] Export backup → Delete all data → onboarding → *Restore from a backup file* → everything is back.

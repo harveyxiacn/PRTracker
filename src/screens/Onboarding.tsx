@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
-import { Segmented } from '../components/ui';
 import { pickTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { csvToTrips } from '../store/csv';
 import { importJson } from '../store/storage';
-import { ProfileFields } from './Settings';
+import { LanguageSelect, ProfileFields } from './Settings';
 
 export function Onboarding() {
   const { data, update, replaceAll, t, toast } = useApp();
@@ -17,7 +16,9 @@ export function Onboarding() {
     <div className="onb">
       <div className="row spread">
         <img className="logo" src={`${import.meta.env.BASE_URL}icon.svg`} alt="" />
-        <Segmented label={t('set.language')} value={data.settings.language} onChange={(language) => update((d) => ({ ...d, settings: { ...d.settings, language } }))} options={[{ value: 'en', label: 'EN' }, { value: 'zh', label: '中文' }]} />
+        <div style={{ maxWidth: 220 }}>
+          <LanguageSelect value={data.settings.language} onChange={(language) => update((d) => ({ ...d, settings: { ...d.settings, language } }))} />
+        </div>
       </div>
       <div className="steps" aria-hidden="true">{Array.from({ length: steps }, (_, i) => <i key={i} className={i <= step ? 'on' : ''} />)}</div>
 

@@ -254,9 +254,9 @@ textarea.input { min-height: 80px; resize: vertical; }
 
 /* chat */
 .chat { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
-.msg { max-width: 86%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; word-wrap: break-word; }
-.msg.user { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 6px; }
-.msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+.msg { unicode-bidi: plaintext; max-width: 86%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; word-wrap: break-word; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-end-end-radius: 6px; }
+.msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-end-start-radius: 6px; }
 .composer {
   position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); z-index: 15;
   background: var(--bg); border-top: 1px solid var(--border); padding: 8px 16px;
@@ -280,7 +280,7 @@ textarea.input { min-height: 80px; resize: vertical; }
 .ms .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); justify-self: center; z-index: 1; }
 .ms.done .dot { background: var(--d-pr); border-color: var(--d-pr); }
 .ms.pred .dot { border-style: dashed; border-color: var(--d-tr); }
-.ms-line { position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.ms-line { position: absolute; inset-inline-start: 11px; top: 0; bottom: 0; width: 2px; background: var(--border); }
 .ms input[type='date'] { min-height: 36px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
 
 .onb { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 32px) 20px 32px; }
@@ -291,5 +291,16 @@ textarea.input { min-height: 80px; resize: vertical; }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.data th, table.data td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--border); }
-table.data td.n, table.data th.n { text-align: right; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { text-align: start; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+table.data td.n, table.data th.n { text-align: end; font-variant-numeric: tabular-nums; }
+
+/* Right-to-left languages (Arabic, Persian, Urdu): mirror directional icons; keep charts
+   and numeric inputs left-to-right so time still flows the same way as dates are written. */
+[dir='rtl'] .flip-rtl, [dir='rtl'] .tab svg.flip-rtl { transform: scaleX(-1); }
+[dir='rtl'] .months, [dir='rtl'] .mgrid, [dir='rtl'] .bars, [dir='rtl'] .hist, [dir='rtl'] .ltr { direction: ltr; }
+[dir='rtl'] input[type='date'], [dir='rtl'] input[inputmode='decimal'], [dir='rtl'] input[inputmode='numeric'] { direction: ltr; text-align: end; }
+:root[lang='ar'], :root[lang='fa'], :root[lang='ur'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Naskh Arabic', 'Noto Nastaliq Urdu', Tahoma, sans-serif; }
+:root[lang='hi'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Devanagari', 'Nirmala UI', sans-serif; }
+:root[lang='pa'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Gurmukhi', 'Raavi', 'Nirmala UI', sans-serif; }
+:root[lang='ko'] { --font: system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; }
+:root[lang='zh-Hant'], :root[lang='zh-TW'] { --font: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }

@@ -10,10 +10,28 @@ const BASE = 'https://www.canada.ca/content/dam/ircc/documents/json/';
 const SOURCES = ['data-ptime-non-country-en.json', 'data-ptime-en.json', 'data-ptime-pr-en.json', 'data-ptime-citizenship-en.json'];
 const DRAWS = BASE + 'ee_rounds_123_en.json';
 
-async function get(url) {
-  const res = await fetch(url, { headers: { 'User-Agent': 'pr-tracker-open-data-mirror (+https://github.com/harveyxiacn/PRTracker)' } });
-  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-  return res.json();
+async function get(url, tries = 3) {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'pr-tracker-open-data-mirror (+https://github.com/harveyxiacn/PRTracker)' },
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      if (i >= tries) throw e;
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
+async function previous(file) {
+  try {
+    return JSON.parse(await readFile(path.join(outDir, file), 'utf8'));
+  } catch {
+    return undefined;
+  }
 }
 
 function flatten(obj, prefix = '', out = {}) {
@@ -33,26 +51,37 @@ export function parseDuration(s) {
   return Math.round(n * (unit === 'day' ? 1 : unit === 'week' ? 7 : unit === 'month' ? 30.44 : 365.25));
 }
 
-// Application kind -> patterns tried against flattened IRCC keys (first match wins).
+// Program id / time key -> patterns tried against flattened non-country IRCC keys.
+// Only PR card and in-Canada extensions are published today; the PR-program patterns
+// are kept in case IRCC adds those series back.
 const MAP = {
-  citizenship: [/cit[^.]*grant/i, /grant[^.]*cit/i, /citizenship\.(cit_)?grant/i],
   pr_card: [/pr_card\.existing_pr/i, /pr_card\.renew/i],
-  ee_cec: [/\bcec\b/i, /canadian[_ ]?experience/i, /_cec/i],
-  ee_fsw: [/\bfsw\b/i, /fed[^.]*skilled[^.]*worker/i, /_fsw/i],
-  ee_fst: [/skilled_trades_ee/i, /\bfst\b/i],
-  pnp_ee: [/pnp[^.]*ee/i, /provincial[^.]*express/i],
-  pnp_base: [/pnp(?![^.]*ee)/i, /provincial[^.]*(paper|base)/i],
-  spousal: [/spouse[^.]*(outside|out)[^.]*quebec/i, /spous/i, /partner/i],
+  pr_card_new: [/pr_card\.new_pr/i],
+  study_ext: [/study_extension/i],
+  work_ext: [/work_extension/i],
+  visitor_ext: [/visitor_extension/i],
+  citizenship: [/cit[^.]*grant/i, /grant[^.]*cit/i],
+  ee_cec: [/\bcec\b/i, /canadian[_ ]?experience/i],
+  ee_fsw: [/\bfsw\b/i, /fed[^.]*skilled[^.]*worker/i],
+  ee_fst: [/skilled_trades_ee/i],
+  pnp_ee: [/pnp[^.]*ee/i],
+  pnp_base: [/pnp(?![^.]*ee)/i],
+  spousal: [/spous/i],
 };
+
+// Per-country series kept for the app (applicant's country of residence -> days).
+const COUNTRY_SERIES = ['visitor-outside-canada', 'supervisa', 'study', 'work', 'child_dependent', 'child_adopted'];
 
 async function main() {
   await mkdir(outDir, { recursive: true });
   const entries = {};
   let updated = '';
+  let primaryOk = false;
   for (const f of SOURCES) {
     try {
-      const j = await get(BASE + f);
+      const j = await get(BASE + f, f === SOURCES[0] ? 3 : 1);
       Object.assign(entries, flatten(j, f.replace(/\.json$/, '')));
+      if (f === SOURCES[0]) primaryOk = true;
     } catch (e) {
       console.warn('skip', f, e.message);
     }
@@ -72,9 +101,32 @@ async function main() {
     }
   }
   console.log('non-country keys:', keys.join(', '));
-  const nonCountry = Object.fromEntries(keys.map((k) => [k, entries[k]]));
-  if (Object.keys(entries).length) {
-    await writeFile(path.join(outDir, 'ircc.json'), JSON.stringify({ updated, fetchedAt: new Date().toISOString(), times, entries: nonCountry }, null, 1));
+  const nonCountry = Object.fromEntries(keys.filter((k) => !k.endsWith('lastupdated')).map((k) => [k, entries[k]]));
+  const byCountry = {};
+  for (const series of COUNTRY_SERIES) {
+    const prefix = `data-ptime-en.${series}.`;
+    const map = {};
+    for (const [k, v] of Object.entries(entries)) {
+      const m = k.startsWith(prefix) && /^([A-Z]{2})$/.exec(k.slice(prefix.length));
+      const d = m && parseDuration(v);
+      if (d) map[m[1]] = d;
+    }
+    if (Object.keys(map).length) byCountry[series] = map;
+    console.log(`${series}: ${Object.keys(map).length} countries`);
+  }
+  // Never replace good data with partial data: keep previous values for anything missing.
+  const prev = await previous('ircc.json');
+  if (!primaryOk && prev) {
+    console.warn('primary IRCC file unavailable; keeping previous ircc.json');
+  } else if (Object.keys(entries).length) {
+    const merged = {
+      updated: updated || prev?.updated || '',
+      fetchedAt: new Date().toISOString(),
+      times: { ...(prev?.times ?? {}), ...times },
+      byCountry: { ...(prev?.byCountry ?? {}), ...byCountry },
+      entries: Object.keys(nonCountry).length ? nonCountry : prev?.entries ?? {},
+    };
+    await writeFile(path.join(outDir, 'ircc.json'), JSON.stringify(merged, null, 1));
   }
 
   try {

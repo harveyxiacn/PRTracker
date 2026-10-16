@@ -15,7 +15,7 @@
   apply on 2029-01-10”*, *“Be back by 2027-03-02”*.
 - **Show the rule.** Each number can be explained (RULES.md and the assistant’s *rules* answer). Disclaimers are short and kept in one place.
 - **Works offline.** Every calculation is local; open data is bundled with a fallback.
-- **Bilingual.** English and Simplified Chinese from day one, auto-detected from the system language.
+- **Global.** Applicants come from everywhere: 14 languages (auto-detected from the OS, lazy-loaded), RTL layout, country names and month names from the platform’s `Intl` data, and every major pathway to PR in the program catalogue.
 
 ## Information architecture
 
@@ -52,11 +52,49 @@ Routing is hash-based (`#/timeline/<id>`) so the browser and Android back button
 - **Status colours** (good/warn/critical) always come with an icon and a label.
 - **Motion:** short sheet slide-up; disabled under `prefers-reduced-motion`.
 
+## Program catalogue (`src/domain/programs.ts`)
+
+One table drives everything program-specific: category, milestone template, final milestone,
+offline processing estimate, whether it needs a province (PNP) or a country (IRCC publishes
+study/work/visitor times by country), and the official IRCC link. Templates:
+
+| Template | Steps |
+|---|---|
+| Express Entry | profile → ITA → submitted → AOR → BIL → biometrics → medical → eligibility → background → PPR → passport sent/returned → P1 → P2 → COPR → landed |
+| PNP (EE / base) | (profile or expression of interest) → provincial invitation → provincial application → nomination → (ITA) → federal steps |
+| Quebec | expression of interest → Arrima invitation → CSQ application → CSQ issued → federal steps |
+| Endorsed pilots (AIP, RCIP, FCIP) | job offer → endorsement / community recommendation → federal steps |
+| Family | submitted → AOR → sponsor approved → (open work permit, inland) → … → COPR |
+| Parents & grandparents | interest form → invitation → submitted → … |
+| Temporary residence | submitted → BIL → biometrics → medical → decision → passport request → permit issued |
+| Citizenship / PR card / PRTD | as before |
+
+## Paste-a-timeline parser (`src/domain/pasteParser.ts`)
+
+Built and tested against real Reddit posts (CEC inland, CEC outland, generic Express Entry):
+- Splits text into fragments (lines, `|`, `;`, `→`, bullets).
+- A milestone needs a **label right next to a date** (“AOR: Feb 8, 2026”, “eCOPR 06/20/2026”). Story sentences (“I submitted my study permit on Oct 1, 2021…”) are ignored.
+- **Program:** an explicit “Stream:/Program:/Application type:” line wins. Otherwise the first program mentioned wins. Temporary permits are excluded when PR-only milestones (ITA, PPR, P1/P2, eCOPR) are present. A generic “Express Entry” becomes CEC, flagged for review.
+- **Dates:** ISO, `DD/MM/YYYY` vs `MM/DD/YYYY` (ambiguous ones flagged), English month names, Chinese `3月5日`. Year-less dates follow the previous milestone in time and never land in the future.
+- Also extracts the visa office (“PVO: Ottawa”, “PVO/SVO: Vancouver, Sydney”), the country applied from (“Applied from Kenya” → KE) and the province (OINP → ON).
+- Everything is shown in an editable review table before it is applied or shared.
+
+Forums like CanadaVisa block automated access and Reddit requires its API, so the app links
+out to searches and lets **people** paste what they read. Nothing is scraped.
+
 ## Maple: the on-device smart assistant
 
 **Why rule-based and not a cloud LLM?** The questions are about the user’s own travel history,
 which shouldn’t leave the device, and the answers must be *exactly* right, which a model can’t
 guarantee. Maple is a small intent engine on top of the same rules engine the UI uses.
+
+**v0.2 additions:**
+- **Your data as a database** (`query.ts`): longest/shortest/last/next trip, trips to a place (matched by your destinations or any country name in your language), most-visited place, days outside in the last N months.
+- **Planner:** `travelBudget(target)` answers “how many more days can I travel and still apply on T?”. It is exact, because every future day before T is a PR day worth one credit; a test checks that budget days pass and one more fails. `planTrip(N)` compares leaving now with leaving after you apply, and checks the 730-day rule and PR card expiry.
+- **Explain:** breaks down the citizenship number: window, PR days, pre-PR days and credit, trips and days away.
+- **Knowledge base** (`kb.ts`): 18 curated FAQ answers, each linked to its official source, plus a 32-term glossary of forum jargon. Retrieval scores keywords; no text is generated.
+- **Memory:** follow-ups reuse the previous what-if or plan (“and 3 months?”, “what about May 1?”).
+- **Multilingual:** each language ships a lexicon (intent keywords, duration units, relative days, query words, FAQ keywords). Month names come from `Intl`, and Arabic-Indic, Persian, Devanagari and Gurmukhi digits are normalised.
 
 **Pipeline** (`src/assistant/`):
 

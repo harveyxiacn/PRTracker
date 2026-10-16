@@ -104,3 +104,46 @@ describe('assistant review regressions', () => {
     expect(answer("What's my status?", data(), t, undefined, TODAY).intent).toBe('summary');
   });
 });
+
+describe('Maple v2', () => {
+  const d2 = () => {
+    const d = data();
+    d.trips = [
+      { id: '1', departure: '2024-07-01', return: '2024-07-31', destination: 'Shanghai, China' },
+      { id: '2', departure: '2025-02-10', return: '2025-02-20', destination: 'Mexico' },
+    ];
+    return d;
+  };
+  it('explains jargon from forums', () => {
+    expect(answer('What is BIL?', data(), t, undefined, TODAY)).toMatchObject({ intent: 'glossary' });
+    expect(answer('AOR是什么意思', data(), t, undefined, TODAY)).toMatchObject({ intent: 'glossary' });
+    expect(answer('ppr?', data(), t, undefined, TODAY)).toMatchObject({ intent: 'glossary' });
+  });
+  it('answers questions about the trip history', () => {
+    expect(answer('What was my longest trip?', d2(), t, undefined, TODAY).text).toContain('29 days');
+    expect(answer('How many times did I go to China?', d2(), t, undefined, TODAY).text).toMatch(/1 trip/);
+    expect(answer('最长的一次出国是哪次', d2(), t, undefined, TODAY).intent).toBe('trips_query');
+    expect(answer('How many days was I away in the last 12 months?', d2(), t, undefined, TODAY).intent).toBe('trips_query');
+  });
+  it('plans towards a target date and finds the best time for a trip', () => {
+    expect(answer('I want to apply for citizenship by 2028-06-01, how many days can I still travel?', d2(), t, undefined, TODAY).intent).toBe('plan_target');
+    expect(answer('When is the best time for a 2 month trip?', d2(), t, undefined, TODAY).intent).toBe('plan_best');
+    expect(answer('为什么是这个日期', d2(), t, undefined, TODAY).intent).toBe('explain');
+  });
+  it('remembers the previous what-if for follow-ups', () => {
+    const first = answer('What if I travel for 2 months?', d2(), t, undefined, TODAY);
+    expect(first.memory).toMatchObject({ intent: 'whatif' });
+    const second = answer('and 3 months?', d2(), t, undefined, TODAY, first.memory);
+    expect(second.intent).toBe('whatif');
+    expect(second.text).toContain('91 days');
+  });
+  it('answers FAQs with a source link', () => {
+    const r = answer('Can I apply for citizenship with an expired PR card?', data(), t, undefined, TODAY);
+    expect(r.intent).toBe('faq');
+    expect(r.source).toMatch(/^https:\/\//);
+    expect(answer('Does time abroad with my citizen spouse count?', data(), t, undefined, TODAY).intent).toBe('faq');
+  });
+  it('understands non-ASCII digits', () => {
+    expect(answer('What if I travel for ٣ months?', d2(), t, undefined, TODAY).text).toContain('91 days');
+  });
+});

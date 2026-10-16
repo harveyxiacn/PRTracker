@@ -27,12 +27,16 @@
 | `src/domain/presence.ts` | `PresenceModel`: per-day arrays (absent, status, travel day) with prefix sums for O(1) window queries; citizenship, residency, year stats, what-if | the core of correctness; heavily tested |
 | `src/domain/insights.ts` | Derived dashboard facts + reminder list | shared by Home, notifications, assistant |
 | `src/domain/crs.ts` | CRS score, language conversion, program checks | |
-| `src/domain/timeline.ts` | Milestone templates, predictions, anonymised community record | |
-| `src/assistant/` | Maple: entity parsing + intent rules | returns text + actions, never mutates data |
+| `src/domain/programs.ts` | Program catalogue: category, milestone template, fallback time, province/country needs, IRCC link | add a program here + i18n `app.kind.*`/`prog.desc.*` |
+| `src/domain/timeline.ts` | Predictions (community → IRCC per-country/general → fallback), anonymised community record | |
+| `src/domain/pasteParser.ts` | Forum-post timeline parser | |
+| `src/domain/draws.ts` | Express Entry draw categories, your standing per category | |
+| `src/domain/countries.ts` | ISO country codes; names via `Intl.DisplayNames` | |
+| `src/assistant/` | Maple: `parse` (dates/durations, any digits), `engine` (ordered intents + memory), `query` (data queries & planners), `kb` (FAQ & glossary), `lexicon` (per-language keywords) | returns text + actions + memory, never mutates data |
 | `src/store/` | `AppContext` (state, routing, toasts, theme, notification sync), storage adapters, CSV | debounced saves (250 ms) |
 | `src/notify/` | Schedules/cancels local notifications | stable numeric IDs from reminder IDs |
 | `src/data/remote.ts` | Loads open data from the configured URL, falls back to the bundled copy | `credentials: omit`, `no-referrer` |
-| `src/i18n/` | `en`, `zh` dictionaries, `t()` with `{placeholders}`, date/number formatting | parity enforced by tests |
+| `src/i18n/` | `en.ts` (source, bundled), `locales/<code>.ts` (one lazy chunk per language: strings + Maple lexicon), `languages.ts` (registry: native name, `dir`, Intl locale) | parity, placeholders and referenced keys enforced by tests |
 | `src/screens/` | One file per screen | |
 | `android/`, `ios/` | Capacitor native shells | generated, with small committed patches (signing, backup off, notification icon) |
 | `scripts/` | Data mirror, community builder, icon generator | run in CI or by hand |

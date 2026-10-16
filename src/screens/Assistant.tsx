@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { answer, suggestions, type AssistantAction } from '../assistant/engine';
+import { answer, suggestions, type AssistantAction, type Memory } from '../assistant/engine';
 import { Icon } from '../components/Icon';
 import { uid } from '../domain/types';
 import { fmtDate } from '../i18n';
+import { openExternal } from '../platform';
 import { useApp, type Route } from '../store/AppContext';
 
 interface Msg {
@@ -10,11 +11,13 @@ interface Msg {
   text: string;
   at: string;
   actions?: AssistantAction[];
+  source?: string;
 }
 
 export function AssistantScreen() {
   const { data, update, t, lang, open, go, insights, toast } = useApp();
   const [input, setInput] = useState('');
+  const [memory, setMemory] = useState<Memory>({});
   const [msgs, setMsgs] = useState<Msg[]>(() => (data.chat ?? []).map((m) => ({ ...m })));
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -38,9 +41,10 @@ export function AssistantScreen() {
   const ask = (q: string) => {
     const text = q.trim();
     if (!text) return;
-    const r = answer(text, data, tt, open);
+    const r = answer(text, data, tt, open, undefined, memory, lang);
+    setMemory(r.memory ?? {});
     const now = new Date().toISOString();
-    const next = [...msgs, { role: 'user' as const, text, at: now }, { role: 'assistant' as const, text: r.text, at: now, actions: r.actions }];
+    const next = [...msgs, { role: 'user' as const, text, at: now }, { role: 'assistant' as const, text: r.text, at: now, actions: r.actions, source: r.source }];
     setMsgs(next);
     persist(next);
     setInput('');
@@ -78,7 +82,16 @@ export function AssistantScreen() {
       <div className="chat" aria-live="polite" style={{ paddingBottom: 120 }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ display: 'contents' }}>
-            <div className={`msg ${m.role}`}>{m.text}</div>
+            <div className={`msg ${m.role}`}>
+              {m.text}
+              {m.source && (
+                <div style={{ marginTop: 6 }}>
+                  <button className="btn ghost sm" style={{ padding: 0, minHeight: 0 }} onClick={() => openExternal(m.source!)}>
+                    <Icon name="external" size={14} /> {t('as.source')}
+                  </button>
+                </div>
+              )}
+            </div>
             {m.actions && m.actions.length > 0 && i === msgs.length - 1 && (
               <div className="chips">
                 {m.actions.map((a, j) => (

@@ -1,9 +1,10 @@
 # 🍁 PR Tracker
 
-**Privacy-first tracker for Canadian permanent residents.** Count your days in Canada, see
-exactly when you can apply for citizenship, keep your PR status safe while travelling, and
-follow your IRCC application against real timelines. It runs on **Android, iOS and the web**,
-and **your data never leaves your device**.
+**Privacy-first companion for anyone on the road to Canadian permanent residence, from anywhere
+in the world.** Track any IRCC application (Express Entry, provincial nominee programs, Quebec,
+pilots, family sponsorship, study/work permits, citizenship), count your days in Canada, see
+exactly when you can apply for citizenship, and keep your PR status safe while travelling.
+It runs on **Android, iOS and the web** in **14 languages**, and **your data never leaves your device**.
 
 | | |
 |---|---|
@@ -12,11 +13,13 @@ and **your data never leaves your device**.
 | 🪪 **PR card** | Renewal window (9 months before expiry) and expiry reminders |
 | 🗓️ **Hot-spot calendar** | Year and month heat maps of every day in and outside Canada, plus per-year totals |
 | ✈️ **Trips** | Log past, ongoing and planned trips (back-dating supported), CSV import/export, overlap checks |
-| ⏱️ **Application timelines** | Milestones for Express Entry, PNP, spousal, citizenship and PR card; predictions from IRCC processing times and anonymised community timelines |
-| 🎯 **Eligibility** | CRS estimator (2025 rules, no job-offer points) and CEC / FSW / FST minimum checks; recent draws |
-| 🍁 **Maple assistant** | On-device bilingual (EN/中文) assistant: “What if I travel 2 months from June 1?”, “I’m back today”, “How many days was I out in 2025?” |
+| ⏱️ **Application timelines** | 30+ programs, each with its own steps: Express Entry, PNP for each province (expression of interest → nomination → federal), Quebec (Arrima → CSQ), AIP, rural/francophone pilots, caregivers, Start-up Visa, spousal (inland/outland), child, parents & grandparents, protected persons, H&C, study/work/visitor permits, PGWP, PRTD, PR card, citizenship. Predictions use IRCC’s published times (per country for permits) plus anonymised community timelines |
+| 📋 **Paste a timeline** | Paste any forum post (Reddit, CanadaVisa, Facebook, WeChat); the on-device parser extracts the program, milestones (AOR, BIL, PPR, P1/P2, eCOPR…), visa office and country, for you to review |
+| 🎯 **Eligibility** | CRS estimator (2025 rules, no job-offer points), CEC/FSW/FST checks, your score against the latest draw in each category you qualify for (French, healthcare, STEM, trades…), and an explorer of every program |
+| 🍁 **Maple assistant** | On-device, multilingual, rule-based. Asks about your own data (“longest trip?”, “days outside in the last 12 months?”), plans (“apply by June 2028 — how many days can I still travel?”, “best time for a 3-week trip?”), what-ifs with follow-ups (“and 3 months?”), “why is my date…”, FAQ answers with official sources, and a glossary of forum jargon (AOR, BIL, GU, P1/P2…) |
 | 🔔 **Local reminders** | Scheduled on the phone, so no push server is needed |
-| 🌐 **English & 简体中文**, light/dark theme, offline PWA | |
+| 🌐 **14 languages** | English, Français, 简体中文, 繁體中文, Español, Português, हिन्दी, ਪੰਜਾਬੀ, Tagalog, Tiếng Việt, 한국어, العربية, فارسی, اردو. Right-to-left layout for Arabic, Persian and Urdu; languages load on demand |
+| 🌓 Light/dark theme, offline PWA | |
 
 > ⚠️ Estimates for planning only, not legal advice. Always confirm with IRCC’s official tools.
 

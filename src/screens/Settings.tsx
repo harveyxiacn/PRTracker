@@ -2,13 +2,25 @@ import { useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented } from '../components/ui';
 import { uid, DEFAULT_DATA_URL, emptyData, type PrePRStatusKind, type Profile, type Settings } from '../domain/types';
-import { fmtDate } from '../i18n';
+import { fmtDate, LANGUAGES } from '../i18n';
 import { requestPermission, syncNotifications } from '../notify/notifications';
 import { isNative, openExternal, pickTextFile, saveTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { exportJson, importJson, wipeData } from '../store/storage';
 
 const VERSION = __APP_VERSION__;
+
+export function LanguageSelect({ value, onChange }: { value: string; onChange: (code: string) => void }) {
+  return (
+    <select className="input" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Language">
+      {LANGUAGES.map((l) => (
+        <option key={l.code} value={l.code} lang={l.code} dir={l.dir}>
+          {l.name}{l.code !== 'en' ? ` — ${l.english}` : ''}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export function ProfileFields() {
   const { data, update, t, lang } = useApp();
@@ -93,7 +105,7 @@ export function SettingsScreen() {
       <section className="card">
         <h2><Icon name="settings" /> {t('set.prefs')}</h2>
         <Field label={t('set.language')}>
-          <Segmented label={t('set.language')} value={s.language} onChange={(language) => setS({ language })} options={[{ value: 'en', label: 'English' }, { value: 'zh', label: '中文' }]} />
+          <LanguageSelect value={s.language} onChange={(language) => setS({ language })} />
         </Field>
         <Field label={t('set.theme')}>
           <Segmented label={t('set.theme')} value={s.theme} onChange={(theme) => setS({ theme })} options={[{ value: 'system', label: t('set.themeSystem') }, { value: 'light', label: t('set.themeLight') }, { value: 'dark', label: t('set.themeDark') }]} />
@@ -112,7 +124,7 @@ export function SettingsScreen() {
         <h2><Icon name="bell" /> {t('set.notifications')}</h2>
         <label className="check"><input type="checkbox" checked={s.notifications.enabled} onChange={(e) => setN({ enabled: e.target.checked })} /> {t('set.notifEnabled')}</label>
         {s.notifications.enabled && (
-          <div style={{ paddingLeft: 12 }}>
+          <div style={{ paddingInlineStart: 12 }}>
             <label className="check"><input type="checkbox" checked={s.notifications.citizenship} onChange={(e) => setN({ citizenship: e.target.checked })} /> {t('set.notifCit')}</label>
             <label className="check"><input type="checkbox" checked={s.notifications.prCard} onChange={(e) => setN({ prCard: e.target.checked })} /> {t('set.notifCard')}</label>
             <label className="check"><input type="checkbox" checked={s.notifications.residency} onChange={(e) => setN({ residency: e.target.checked })} /> {t('set.notifRes')}</label>

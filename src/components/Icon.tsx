@@ -34,9 +34,12 @@ const P: Record<string, string> = {
   more: 'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
 };
 
+/** Icons that point in a reading direction and must mirror in right-to-left languages. */
+const DIRECTIONAL = new Set(['chevron', 'back', 'left', 'right', 'send']);
+
 export function Icon({ name, size, title }: { name: keyof typeof P | string; size?: number; title?: string }) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined}>
+    <svg className={DIRECTIONAL.has(name) ? 'flip-rtl' : undefined} viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined}>
       {title && <title>{title}</title>}
       <path d={P[name] ?? P.info} />
     </svg>

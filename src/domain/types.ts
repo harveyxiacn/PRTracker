@@ -39,16 +39,8 @@ export interface Profile {
   taxYearsFiled: number[];
 }
 
-export type ApplicationKind =
-  | 'ee_cec'
-  | 'ee_fsw'
-  | 'ee_fst'
-  | 'pnp_ee'
-  | 'pnp_base'
-  | 'spousal'
-  | 'citizenship'
-  | 'pr_card'
-  | 'other';
+/** Program id from `PROGRAMS` in programs.ts (e.g. 'ee_cec', 'pnp_base', 'study_permit'). */
+export type ApplicationKind = string;
 
 export interface Milestone {
   key: string;
@@ -67,11 +59,18 @@ export interface Application {
   expectedDays?: number | null;
   /** Visa office / processing centre (optional, for comparing timelines). */
   office?: string;
+  /** Province/territory code for provincial nominee applications. */
+  province?: string;
+  /** ISO 3166 alpha-2 country applied from (temporary residence, child sponsorship). */
+  country?: string;
+  /** Free-text stream name, e.g. "OINP Human Capital Priorities". */
+  stream?: string;
   archived?: boolean;
 }
 
 export interface Settings {
-  language: 'en' | 'zh';
+  /** UI language code from i18n/languages.ts (e.g. 'en', 'fr', 'zh-Hant', 'ar'). */
+  language: string;
   theme: 'system' | 'light' | 'dark';
   /** IRCC counts the day you leave and the day you return as days in Canada. */
   boundaryDaysPresent: boolean;

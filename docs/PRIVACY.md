@@ -30,9 +30,14 @@ agent) like any website. The native apps load the UI from the device itself.
 
 ## Community records
 
-A shared record contains only: application type, **month** of submission, optional office
-label (≤ 40 characters), and day counts between submission and each milestone. The intake
+A shared record contains only: program, **month** of submission, optional office label
+(≤ 40 characters), optional province code (PNP) and country code (permits), a `source` tag
+(`app` or `paste`), and day counts between submission and each milestone. The intake
 workflow rejects any other field. Records are published under CC0.
+
+The “Paste a timeline” parser runs entirely on the device. When someone shares a timeline
+they found in a public post, only the same anonymised fields are kept: no usernames, post
+text or links.
 
 ## Threat model notes
 

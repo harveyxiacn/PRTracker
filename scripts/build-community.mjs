@@ -3,8 +3,16 @@
 // approved GitHub issue: node scripts/build-community.mjs --add-from-issue issue.md
 import { readFile, writeFile, appendFile, mkdir } from 'node:fs/promises';
 
-const KINDS = ['ee_cec', 'ee_fsw', 'ee_fst', 'pnp_ee', 'pnp_base', 'spousal', 'citizenship', 'pr_card', 'other'];
-const KEY_RE = /^[a-z_]{2,24}$/;
+// Keep in sync with PROGRAMS in src/domain/programs.ts (checked by a unit test).
+export const KINDS = ['ee_cec', 'ee_fsw', 'ee_fst', 'pnp_ee', 'pnp_base', 'qc_skilled', 'qc_peq', 'aip', 'rcip', 'fcip', 'caregiver', 'startup',
+  'spousal_out', 'spousal_in', 'spousal', 'child', 'pgp', 'protected', 'hc', 'study_permit', 'work_permit', 'visitor_visa', 'super_visa',
+  'study_ext', 'work_ext', 'pgwp', 'owp_spouse', 'visitor_record', 'citizenship', 'pr_card', 'prtd', 'other'];
+const KEY_RE = /^[a-z_0-9]{2,24}$/;
+// Keep in sync with OFFICES in src/domain/programs.ts (checked by a unit test).
+export const OFFICES = ['Ottawa', 'Sydney', 'Edmonton', 'Mississauga', 'Montreal', 'Vancouver', 'Winnipeg', 'Etobicoke', 'Calgary', 'Toronto', 'Halifax',
+  'Case Processing Centre', 'Domestic Network', 'International Network', 'Centralized Intake Office',
+  'New Delhi', 'Chandigarh', 'Manila', 'Beijing', 'Hong Kong', 'Islamabad', 'Nairobi', 'Dakar', 'Abu Dhabi', 'Ankara', 'Paris', 'London',
+  'Mexico City', 'Bogota', 'Sao Paulo', 'Lima', 'Port of Spain', 'Accra', 'Lagos', 'Rabat', 'Cairo', 'Singapore', 'Ho Chi Minh City', 'Tokyo', 'Seoul'];
 
 export function validate(r) {
   if (!r || typeof r !== 'object') return 'not an object';
@@ -14,8 +22,11 @@ export function validate(r) {
   for (const [k, v] of Object.entries(r.days)) {
     if (!KEY_RE.test(k) || !Number.isInteger(v) || v < 0 || v > 3650) return `bad day value ${k}`;
   }
-  if (r.office !== undefined && (typeof r.office !== 'string' || r.office.length > 40)) return 'bad office';
-  const extra = Object.keys(r).filter((k) => !['kind', 'submittedMonth', 'days', 'office'].includes(k));
+  if (r.office !== undefined && !OFFICES.includes(r.office)) return 'office not in the allowed list';
+  if (r.province !== undefined && !/^[A-Z]{2}$/.test(r.province)) return 'bad province';
+  if (r.country !== undefined && !/^[A-Z]{2}$/.test(r.country)) return 'bad country';
+  if (r.source !== undefined && !['app', 'reddit', 'paste'].includes(r.source)) return 'bad source';
+  const extra = Object.keys(r).filter((k) => !['kind', 'submittedMonth', 'days', 'office', 'province', 'country', 'source'].includes(k));
   if (extra.length) return `unexpected fields: ${extra.join(',')}`;
   return null;
 }
@@ -29,7 +40,9 @@ async function addFromIssue(file) {
   const rec = JSON.parse(body.slice(start, end + 1));
   const err = validate(rec);
   if (err) throw new Error(`Invalid record: ${err}`);
-  const clean = { kind: rec.kind, submittedMonth: rec.submittedMonth, days: rec.days, ...(rec.office ? { office: rec.office } : {}) };
+  const clean = { kind: rec.kind, submittedMonth: rec.submittedMonth, days: rec.days };
+  for (const k of ['office', 'province', 'country']) if (rec[k]) clean[k] = rec[k];
+  clean.source = rec.source === 'paste' ? 'paste' : 'app';
   await mkdir('community', { recursive: true });
   await appendFile('community/records.jsonl', JSON.stringify(clean) + '\n');
   console.log('added', clean);
@@ -43,12 +56,19 @@ async function build() {
     /* none yet */
   }
   const records = [];
+  const seen = new Set();
   lines.forEach((l, i) => {
     try {
       const r = JSON.parse(l);
       const err = validate(r);
+      // The same public post pasted by several people must count once.
+      const key = JSON.stringify([r.kind, r.submittedMonth, r.province, r.country, Object.entries(r.days ?? {}).sort()]);
       if (err) console.warn(`line ${i + 1}: ${err}`);
-      else records.push(r);
+      else if (seen.has(key)) console.warn(`line ${i + 1}: duplicate, skipped`);
+      else {
+        seen.add(key);
+        records.push(r);
+      }
     } catch {
       console.warn(`line ${i + 1}: invalid JSON`);
     }
@@ -60,6 +80,8 @@ async function build() {
   console.log(`community.json: ${records.length} records`);
 }
 
-const i = process.argv.indexOf('--add-from-issue');
-if (i > 0) await addFromIssue(process.argv[i + 1]);
-await build();
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('build-community.mjs')) {
+  const i = process.argv.indexOf('--add-from-issue');
+  if (i > 0) await addFromIssue(process.argv[i + 1]);
+  await build();
+}

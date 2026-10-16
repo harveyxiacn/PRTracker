@@ -1,22 +1,28 @@
 import { useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Status } from '../components/ui';
+import { PROGRAMS, program } from '../domain/programs';
+import { PasteTimelineSheet } from './PasteTimeline';
 import { FINAL_MILESTONE, percentile } from '../domain/timeline';
 import type { ApplicationKind } from '../domain/types';
 import { fmtNum } from '../i18n';
 import { openExternal } from '../platform';
 import { useApp } from '../store/AppContext';
 
-const KINDS: ApplicationKind[] = ['ee_cec', 'ee_fsw', 'ee_fst', 'pnp_ee', 'pnp_base', 'spousal', 'citizenship', 'pr_card'];
+/** Always listed; other programs appear once they have community data. */
+const CORE: ApplicationKind[] = ['ee_cec', 'ee_fsw', 'pnp_ee', 'pnp_base', 'spousal_out', 'spousal_in', 'citizenship', 'pr_card'];
 
 export function CommunityScreen() {
   const { t, lang, open, refreshOpen, toast } = useApp();
   const [busy, setBusy] = useState(false);
+  const [pasting, setPasting] = useState(false);
   const records = open.community?.records ?? [];
+  const withData = new Set(records.map((r) => r.kind));
+  const KINDS = PROGRAMS.map((p) => p.id).filter((id) => CORE.includes(id) || withData.has(id));
 
   const rows = KINDS.map((k) => {
     const ds = records.filter((r) => r.kind === k).map((r) => r.days[FINAL_MILESTONE[k]]).filter((d): d is number => typeof d === 'number').sort((a, b) => a - b);
-    return { kind: k, n: ds.length, p25: ds.length ? percentile(ds, 0.25) : null, median: ds.length ? percentile(ds, 0.5) : null, p75: ds.length ? percentile(ds, 0.75) : null, ircc: open.ircc?.times?.[k] ?? null };
+    return { kind: k, n: ds.length, p25: ds.length ? percentile(ds, 0.25) : null, median: ds.length ? percentile(ds, 0.5) : null, p75: ds.length ? percentile(ds, 0.75) : null, ircc: open.ircc?.times?.[program(k).irccTimeKey ?? k] ?? null };
   });
   const maxDays = Math.max(1, ...rows.map((r) => Math.max(r.p75 ?? 0, r.ircc ?? 0)));
 
@@ -58,7 +64,7 @@ export function CommunityScreen() {
                 ) : null}
                 {r.ircc !== null && <div style={{ position: 'absolute', left: `calc(${(r.ircc / maxDays) * 100}% - 5px)`, top: 2, width: 10, height: 10, borderRadius: '50%', border: '2px solid var(--d-out)', background: 'var(--surface)' }} />}
               </div>
-              <span role="cell" className="num small" style={{ textAlign: 'right' }}>{r.median !== null ? `${fmtNum(r.median, lang)}d` : r.ircc !== null ? `${fmtNum(r.ircc, lang)}d*` : '—'}</span>
+              <span role="cell" className="num small" style={{ textAlign: 'end' }}>{r.median !== null ? `${fmtNum(r.median, lang)}d` : r.ircc !== null ? `${fmtNum(r.ircc, lang)}d*` : '—'}</span>
             </div>
           ))}
         </div>
@@ -93,13 +99,17 @@ export function CommunityScreen() {
 
       <section className="card">
         <h2>{t('com.how')}</h2>
-        <ol className="small" style={{ paddingLeft: 18 }}>
+        <ol className="small" style={{ paddingInlineStart: 18 }}>
           <li>{t('com.how1')}</li>
           <li>{t('com.how2')}</li>
           <li>{t('com.how3')}</li>
         </ol>
-        <button className="btn sm" onClick={() => openExternal('https://github.com/harveyxiacn/PRTracker/tree/main/community')}><Icon name="external" size={16} /> {t('com.dataset')}</button>
+        <div className="row wrap">
+          <button className="btn sm" onClick={() => setPasting(true)}><Icon name="upload" size={16} /> {t('paste.title')}</button>
+          <button className="btn sm" onClick={() => openExternal('https://github.com/harveyxiacn/PRTracker/tree/main/community')}><Icon name="external" size={16} /> {t('com.dataset')}</button>
+        </div>
       </section>
+      {pasting && <PasteTimelineSheet onClose={() => setPasting(false)} />}
     </>
   );
 }

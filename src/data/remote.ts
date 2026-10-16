@@ -1,14 +1,16 @@
 // Open data the app reads (never writes): IRCC processing times, Express Entry draws and
 // anonymised community timelines, mirrored to GitHub Pages by a scheduled workflow.
 // Requests carry no personal data. A copy is bundled with the app for offline use.
-import type { ApplicationKind } from '../domain/types';
 import type { CommunityRecord } from '../domain/timeline';
+import type { IrccCountrySeries } from '../domain/programs';
 
 export interface IrccData {
   updated: string; // IRCC "lastupdated" text
   fetchedAt: string;
-  /** Normalised processing time in days per application kind. */
-  times: Partial<Record<ApplicationKind, number>>;
+  /** Normalised processing time in days per program id / IRCC time key. */
+  times: Record<string, number>;
+  /** Per-country series (study, work, visitor…) -> ISO country -> days. */
+  byCountry: Partial<Record<IrccCountrySeries, Record<string, number>>>;
   /** Every IRCC entry as published (path -> text), for the "all processing times" list. */
   entries: Record<string, string>;
 }
@@ -78,10 +80,17 @@ function validIrcc(v: unknown): IrccData | undefined {
   if (!v || typeof v !== 'object') return undefined;
   const o = v as Partial<IrccData>;
   const times: IrccData['times'] = {};
-  for (const [k, n] of Object.entries(o.times ?? {})) if (typeof n === 'number' && n > 0) times[k as keyof IrccData['times']] = n;
+  for (const [k, n] of Object.entries(o.times ?? {})) if (typeof n === 'number' && n > 0) times[k] = n;
+  const byCountry: IrccData['byCountry'] = {};
+  for (const [series, map] of Object.entries(o.byCountry ?? {})) {
+    if (!map || typeof map !== 'object') continue;
+    const clean: Record<string, number> = {};
+    for (const [cc, n] of Object.entries(map)) if (/^[A-Z]{2}$/.test(cc) && typeof n === 'number' && n > 0) clean[cc] = n;
+    byCountry[series as IrccCountrySeries] = clean;
+  }
   const entries: Record<string, string> = {};
   for (const [k, s] of Object.entries(o.entries ?? {})) if (typeof s === 'string') entries[k] = s;
-  return { updated: String(o.updated ?? ''), fetchedAt: String(o.fetchedAt ?? ''), times, entries };
+  return { updated: String(o.updated ?? ''), fetchedAt: String(o.fetchedAt ?? ''), times, byCountry, entries };
 }
 
 function validCommunity(v: unknown): CommunityData | undefined {

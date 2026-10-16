@@ -1,12 +1,17 @@
 // "Maple" — the on-device smart assistant. Rule-based intent matching over the user's
 // own data; answers are computed locally, nothing is sent anywhere.
-import { addDays, diffDays, type ISODate } from '../domain/dates';
+import { addDays, addMonths, diffDays, type ISODate } from '../domain/dates';
 import { computeInsights, type Insights } from '../domain/insights';
 import { CITIZENSHIP_REQUIRED, RESIDENCY_REQUIRED, withExtraTrip } from '../domain/presence';
 import { predict } from '../domain/timeline';
 import type { AppData } from '../domain/types';
 import type { OpenData } from '../data/remote';
-import { findDates, findDuration, findYear } from './parse';
+import { countryName, COUNTRY_CODES } from '../domain/countries';
+import { glossaryLookup, kbSearch } from './kb';
+import { lexHas, lexKb, lexWords, type IntentId } from './lexicon';
+import { findDates, findDuration, findYear, normalizeDigits } from './parse';
+import { daysOutsideLastMonths, explainCitizenship, filterTrips, planTrip, returnFor, travelBudget, tripStats } from './query';
+import { tripLength } from '../domain/presence';
 
 export type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -19,6 +24,19 @@ export interface AssistantReply {
   intent: string;
   text: string;
   actions?: AssistantAction[];
+  /** Conversation memory to pass into the next `answer()` call (follow-up questions). */
+  memory?: Memory;
+  /** Source link shown under knowledge-base answers. */
+  source?: string;
+}
+
+/** What Maple remembers from the previous turn, so "and 3 months?" works. */
+export interface Memory {
+  intent?: string;
+  dep?: ISODate;
+  ret?: ISODate;
+  dur?: number;
+  target?: ISODate;
 }
 
 interface Ctx {
@@ -27,6 +45,8 @@ interface Ctx {
   open?: OpenData;
   t: Translate;
   today: ISODate;
+  mem: Memory;
+  lang: string;
 }
 
 type Handler = (q: string, ctx: Ctx) => AssistantReply | null;
@@ -45,10 +65,60 @@ function needPr(ctx: Ctx): AssistantReply | null {
   };
 }
 
-const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = [
+/** Questions and hypotheticals ("when do I need to be back?", "what if I returned…") are not log commands. */
+const QUESTIONISH = /\b(when|need|must|what if|will|should|would|if|how)\b|\?|？|什么时候|什麼時候|何时|必须|必須|如果|需要|要不要/;
+/** Future-tense departure ("I'm leaving on Dec 1 for 3 weeks"). */
+const FUTURE_LEAVE = /\b(i'?m leaving|i am leaving|flying out|will leave|leaving on|going to leave)\b|要走|将要|打算|准备出国|準備出國/;
+
+const presenceInput = (ctx: Ctx) => ({
+  profile: ctx.data.profile,
+  trips: ctx.data.trips,
+  today: ctx.today,
+  boundaryDaysPresent: ctx.data.settings.boundaryDaysPresent,
+});
+
+/** A place mentioned in the question: one of the user's destinations, or a country name. */
+function findPlace(q: string, ctx: Ctx): string | undefined {
+  const dests = [...new Set(ctx.data.trips.map((t) => t.destination?.trim()).filter((d): d is string => !!d))];
+  const hit = dests.filter((d) => q.includes(d.toLowerCase())).sort((a, b) => b.length - a.length)[0];
+  if (hit) return hit;
+  for (const code of COUNTRY_CODES) {
+    for (const loc of [ctx.lang, 'en']) {
+      const name = countryName(code, loc).toLowerCase();
+      if (name.length >= 4 && q.includes(name)) {
+        // Match trips logged with either the English or the local name.
+        return dests.find((d) => [countryName(code, 'en'), countryName(code, ctx.lang)].some((n) => d.toLowerCase().includes(n.toLowerCase()))) ?? countryName(code, 'en');
+      }
+    }
+  }
+  return undefined;
+}
+
+// Data-query trigger words (other languages come from lexicons via lexWords()).
+const QUERY_WORDS = {
+  longest: [/\b(longest|biggest) (trip|absence|time away)\b|\bmy longest\b/, '最长的一次', '最長的一次', '最长一次', '最長一次'],
+  shortest: [/\bshortest\b/, '最短'],
+  last: [/\b(last|latest|most recent|previous) trip\b|\bwhen did i (last )?(travel|leave|go)\b/, '上次', '最近一次'],
+  next: [/\b(next|upcoming|planned) trips?\b/, '下次出国', '下一次', '计划的行程'],
+  most: [/\b(most visited|where do i go most|most often)\b/, '最常去', '去得最多'],
+  count: [/\bhow many (trips|times)\b|\bnumber of trips\b/, '几次', '多少次'],
+  total: [/\b(last|past) \d+ months\b|\b(in the )?(last|past) year\b/, '过去', '過去', '最近一年'],
+};
+const queryHit = (q: string, k: keyof typeof QUERY_WORDS) =>
+  has(q, ...QUERY_WORDS[k]) || lexWords(k as 'longest').some((w) => q.includes(w));
+
+const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] = [
+  {
+    id: 'glossary',
+    match: (q) => !!glossaryLookup(q),
+    run: (q, ctx) => {
+      const term = glossaryLookup(q)!;
+      return { intent: 'glossary', text: `${term.toUpperCase()}: ${ctx.t(`gl.${term}`)}` };
+    },
+  },
   {
     id: 'log_return',
-    match: (q) => has(q, /\b(i'?m back|i am back|came back|got back|returned|arrived back|back in canada|back home)\b/, '我回来了', '回到加拿大', '入境了', '已经回来', '回来了'),
+    match: (q) => !QUESTIONISH.test(q) && has(q, /\b(i'?m back|i am back|came back|got back|returned|arrived back|back in canada|back home)\b/, '我回来了', '回到加拿大', '入境了', '已经回来', '回来了'),
     run: (q, ctx) => {
       const trip = ctx.insights.ongoingTrip;
       const dates = findDates(q, ctx.today, 'past');
@@ -72,11 +142,13 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
   },
   {
     id: 'log_departure',
-    match: (q) => has(q, /\b(i left|i'?m leaving|i am leaving|left canada|departed|flying out)\b/, '我走了', '离开了', '出境了', '今天出国', '我出发'),
+    match: (q) => !/\b(what if|if i)\b|如果/.test(q) && has(q, /\b(i left|i'?m leaving|i am leaving|left canada|departed|flying out)\b/, '我走了', '离开了', '出境了', '今天出国', '我出发'),
     run: (q, ctx) => {
-      const dates = findDates(q, ctx.today, 'past');
+      const future = FUTURE_LEAVE.test(q);
+      const dates = findDates(q, ctx.today, future ? 'future' : 'past');
       const dep = dates[0]?.date ?? ctx.today;
-      const ret = dates[1]?.date;
+      const dur = findDuration(q);
+      const ret = dates[1]?.date ?? (dur ? returnFor(dep, dur, ctx.data.settings.boundaryDaysPresent) : undefined);
       return {
         intent: 'log_departure',
         text: ret ? ctx.t('as.confirmTrip', { dep, ret }) : ctx.t('as.confirmDeparture', { dep }),
@@ -85,8 +157,80 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
     },
   },
   {
+    id: 'faq',
+    match: (q) => !!kbSearch(q, lexKb()),
+    run: (q, ctx) => {
+      const e = kbSearch(q, lexKb())!;
+      return { intent: 'faq', text: ctx.t(`kb.${e.id}`), source: e.source };
+    },
+  },
+  {
+    id: 'plan_target',
+    match: (q) =>
+      findDates(q, '2000-01-01').length > 0 &&
+      has(q, /\b(by|before)\b[^.?!]*\b(apply|citizenship)|\b(apply|citizenship)\b[^.?!]*\b(by|before)\b|how (many|much) (more )?(days|time) can i (still )?(travel|be away|spend)/, '之前入籍', '前入籍', '之前申请', '还能出国', '还可以出国'),
+    run: (q, ctx) => {
+      const np = needPr(ctx);
+      if (np) return np;
+      const target = findDates(q, ctx.today)[0]?.date ?? ctx.mem.target;
+      // A past date ("I landed on 2024-05-01…") is not a goal; let other intents answer.
+      if (!target || target <= ctx.today) return null;
+      const b = travelBudget(ctx.insights.model, target);
+      const buffer = ctx.data.settings.citizenshipBuffer;
+      const lines =
+        b.creditedAtTarget < CITIZENSHIP_REQUIRED
+          ? [ctx.t('as.planTooSoon', { target, credited: b.creditedAtTarget, earliest: b.earliest ?? '—' })]
+          : [ctx.t('as.planBudget', { target, days: b.budget, credited: b.creditedAtTarget }), ctx.t('as.planBudgetSafe', { days: Math.max(0, b.budget - buffer), buffer })];
+      return { intent: 'plan_target', text: lines.join('\n'), memory: { intent: 'plan_target', target } };
+    },
+  },
+  {
+    id: 'plan_best',
+    match: (q) => has(q, /\b(best|good|right|ideal) time\b|\bwhen (should|can) i (travel|take|go|leave)\b|\bwithout (delaying|affecting|hurting)\b/, '什么时候出国', '何时出国', '最好的时间', '什么时候去', '不影响入籍'),
+    run: (q, ctx) => {
+      const np = needPr(ctx);
+      if (np) return np;
+      const dur = findDuration(q) ?? ctx.mem.dur;
+      if (!dur) return { intent: 'plan_best', text: ctx.t('as.planBestHelp'), memory: { intent: 'plan_best' } };
+      const p = planTrip(presenceInput(ctx), dur, ctx.data.profile.prCardExpiry);
+      const lines = [ctx.t('as.planBestHead', { days: dur })];
+      if (p.eligibleNow && p.eligibleIfNow) {
+        const shift = diffDays(p.eligibleIfNow, p.eligibleNow);
+        lines.push(shift > 0 ? ctx.t('as.planBestNow', { shift, date: p.eligibleIfNow }) : ctx.t('as.planBestNoShift'));
+        if (shift > 0) lines.push(ctx.t('as.planBestAfter', { date: p.eligibleNow }));
+      }
+      lines.push(p.residencyOkNow ? ctx.t('as.whatifResOk') : ctx.t('as.planBestResBad'));
+      if (p.cardExpiresDuring) lines.push(ctx.t('as.whatifCard', { date: ctx.data.profile.prCardExpiry! }));
+      return { intent: 'plan_best', text: lines.join('\n'), memory: { intent: 'plan_best', dur } };
+    },
+  },
+  {
+    id: 'explain',
+    match: (q) =>
+      has(q, /\b(explain|breakdown|how (is|was|did you) (it|this|that|my date|my count) (calculated|counted|computed)|how did you (get|calculate))\b/, '怎么算', '怎麼算', '如何计算', '如何計算', '解释', '解釋') ||
+      (has(q, /\bwhy\b/, '为什么', '為什麼') && has(q, /\b(date|eligib|count|number|days|credited|that)\b/, '日期', '天数', '天數', '这个', '這個')),
+    run: (q, ctx) => {
+      const np = needPr(ctx);
+      if (np) return np;
+      // Only a future date is an application date ("why did my date move after my trip in 2025?" is not).
+      const fut = findDates(q, ctx.today).find((d) => d.date > ctx.today)?.date;
+      const asOf = fut ?? ctx.insights.citizenship?.eligibleDate ?? ctx.today;
+      const e = explainCitizenship(ctx.insights.model, ctx.data.trips, asOf);
+      return {
+        intent: 'explain',
+        text: [
+          ctx.t('as.explainHead', { date: e.asOf, from: e.windowStart, to: e.windowEnd }),
+          ctx.t('as.explainPr', { days: e.prDays }),
+          ctx.t('as.explainPrePr', { days: e.prePrDays, credit: e.prePrCredit }),
+          ctx.t('as.explainTrips', { n: e.tripsInWindow, days: e.daysAwayInWindow }),
+          ctx.t('as.explainTotal', { credited: e.credited, required: CITIZENSHIP_REQUIRED }),
+        ].join('\n'),
+      };
+    },
+  },
+  {
     id: 'residency',
-    match: (q) => has(q, /residen(cy|t) obligation|\b730\b|lose (my )?pr|keep (my )?pr|how (long|many days) (can|could) i (stay|be|go|travel)|max(imum)? (absence|days away)/, '居住义务', '移民监', '730', '保持身份', '能出去多久', '能出国多久', '最多出国', '最多能出', '最长能'),
+    match: (q) => !/citizen|入籍|公民/.test(q) && has(q, /residen(cy|t) obligation|\b730\b|lose (my )?pr|keep (my )?pr|how (long|many days) (can|could) i (stay|be|go|travel)|max(imum)? (absence|days away|time (away|outside))|longest i can (stay|be)/, '居住义务', '移民监', '730', '保持身份', '能出去多久', '能出国多久', '最多出国', '最多能出', '最长能', '待多久', '在国外待', '在國外待', '能离开多久', '能離開多久'),
     run: (_q, ctx) => {
       const np = needPr(ctx);
       if (np) return np;
@@ -97,6 +241,35 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
         lines.push(ctx.t(ctx.insights.ongoingTrip ? 'as.resReturnBy' : 'as.resMaxAway', { days: r.maxAbsence, date: r.mustReturnBy }));
       if (!r.compliant && r.regainDate) lines.push(ctx.t('as.resRegain', { date: r.regainDate }));
       return { intent: 'residency', text: lines.join('\n') };
+    },
+  },
+  {
+    id: 'trips_query',
+    match: (q) => (Object.keys(QUERY_WORDS) as (keyof typeof QUERY_WORDS)[]).some((k) => k !== 'total' && queryHit(q, k)) || (queryHit(q, 'total') && has(q, /\b(outside|abroad|away)\b/, '国外', '國外', '境外', '出国', '出國')),
+    run: (q, ctx) => {
+      const place = findPlace(q, ctx);
+      const today = ctx.today;
+      const bp = ctx.data.settings.boundaryDaysPresent;
+      const trips = filterTrips(ctx.data.trips, { place }, today);
+      const st = tripStats(trips, today, bp);
+      const where = place ? ctx.t('as.qIn', { place }) : '';
+      if (queryHit(q, 'longest') && st.longest)
+        return { intent: 'trips_query', text: ctx.t('as.qLongest', { where, days: st.longest.days, dep: st.longest.trip.departure, ret: st.longest.trip.return ?? today, place: st.longest.trip.destination ?? ctx.t('trips.abroad') }) };
+      if (queryHit(q, 'shortest') && st.shortest)
+        return { intent: 'trips_query', text: ctx.t('as.qShortest', { where, days: st.shortest.days, dep: st.shortest.trip.departure, place: st.shortest.trip.destination ?? ctx.t('trips.abroad') }) };
+      if (queryHit(q, 'next'))
+        return { intent: 'trips_query', text: st.next ? ctx.t('as.qNext', { dep: st.next.departure, ret: st.next.return ?? '—', place: st.next.destination ?? ctx.t('trips.abroad') }) : ctx.t('as.qNoNext') };
+      if (queryHit(q, 'last') && st.last)
+        return { intent: 'trips_query', text: ctx.t('as.qLast', { where, dep: st.last.departure, ret: st.last.return ?? ctx.t('trips.ongoing'), place: st.last.destination ?? ctx.t('trips.abroad'), ago: diffDays(today, st.last.return ?? today) }) };
+      if (queryHit(q, 'most') && st.topPlace)
+        return { intent: 'trips_query', text: ctx.t('as.qMost', { place: st.topPlace.place, n: st.topPlace.count, days: st.topPlace.days }) };
+      const months = /(\d+)\s*(months?|个月|個月|月)/.exec(normalizeDigits(q));
+      if (queryHit(q, 'total') && (months || /\blast year\b|过去一年|過去一年|最近一年/.test(q))) {
+        const n = months ? Number(months[1]) : 12;
+        return { intent: 'trips_query', text: ctx.t('as.qLastMonths', { n, days: daysOutsideLastMonths(ctx.insights.model, today, n), from: addMonths(today, -n) }) };
+      }
+      if (st.count === 0) return { intent: 'trips_query', text: ctx.t('as.qNone', { where }) };
+      return { intent: 'trips_query', text: ctx.t('as.qCount', { where, n: st.count, days: st.totalDays }) };
     },
   },
   {
@@ -115,7 +288,9 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
       const np = needPr(ctx);
       if (np) return np;
       const dates = findDates(q, ctx.today);
-      const dur = findDuration(q);
+      // Follow-ups reuse what is missing from the previous what-if ("and 3 months?", "what about May 1?").
+      const prev = ctx.mem.intent === 'whatif' ? ctx.mem : {};
+      const dur = findDuration(q) ?? (dates.length === 1 ? prev.dur : undefined);
       let dep: ISODate;
       let ret: ISODate;
       if (dates.length >= 2) {
@@ -123,12 +298,12 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
         ret = dates[1].date;
       } else if (dates.length === 1 && dur) {
         dep = dates[0].date;
-        ret = addDays(dep, dur + 1);
+        ret = returnFor(dep, dur, ctx.data.settings.boundaryDaysPresent);
       } else if (dur) {
-        dep = addDays(ctx.today, 1);
-        ret = addDays(dep, dur + 1);
+        dep = prev.dep ?? addDays(ctx.today, 1);
+        ret = returnFor(dep, dur, ctx.data.settings.boundaryDaysPresent);
       } else {
-        return { intent: 'whatif', text: ctx.t('as.whatifHelp') };
+        return { intent: 'whatif', text: ctx.t('as.whatifHelp'), memory: { intent: 'whatif' } };
       }
       if (ret < dep) [dep, ret] = [ret, dep];
       const input = {
@@ -139,7 +314,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
       };
       const after = withExtraTrip(input, dep, ret);
       const before = ctx.insights.model;
-      const away = Math.max(0, diffDays(ret, dep) - 1);
+      const away = tripLength({ id: 'x', departure: dep, return: ret }, ctx.today, ctx.data.settings.boundaryDaysPresent);
       const lines = [ctx.t('as.whatifHead', { dep, ret, days: away })];
       const b = before.citizenshipEligibleDate();
       const a = after.citizenshipEligibleDate();
@@ -163,6 +338,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
         intent: 'whatif',
         text: lines.join('\n'),
         actions: [{ kind: 'addTrip', departure: dep, return: ret, label: ctx.t('as.act.savePlanned') }],
+        memory: { intent: 'whatif', dep, ret, dur: away },
       };
     },
   },
@@ -181,7 +357,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
   },
   {
     id: 'citizenship',
-    match: (q) => has(q, /citizen|naturali[sz]|oath|passport|1095|apply.*(when|date)/, '公民', '入籍', '入籍申请', '宣誓', '护照', '1095'),
+    match: (q) => has(q, /citizen|naturali[sz]|oath|1095|apply.*(when|date)/, '公民', '入籍', '入籍申请', '宣誓', '1095'),
     run: (_q, ctx) => {
       const np = needPr(ctx);
       if (np) return np;
@@ -204,7 +380,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
       const apps = ctx.data.applications.filter((a) => !a.archived && a.submitted);
       if (!apps.length) return { intent: 'application', text: ctx.t('as.noApps'), actions: [{ kind: 'navigate', to: 'timeline', label: ctx.t('as.act.timeline') }] };
       const lines = apps.map((a) => {
-        const p = predict(a, ctx.today, ctx.open?.ircc?.times ?? {}, ctx.open?.community?.records ?? []);
+        const p = predict(a, ctx.today, ctx.open?.ircc ?? {}, ctx.open?.community?.records ?? []);
         if (!p) return '';
         const name = a.label || ctx.t(`app.kind.${a.kind}`);
         const range = p.p25 && p.p75 ? ctx.t('as.appRange', { p25: p.p25, p75: p.p75 }) : '';
@@ -269,16 +445,31 @@ export function suggestions(ctx: Pick<Ctx, 't' | 'insights'>): AssistantAction[]
   return list;
 }
 
-export function answer(question: string, data: AppData, t: Translate, open?: OpenData, today?: ISODate): AssistantReply {
+export function answer(
+  question: string,
+  data: AppData,
+  t: Translate,
+  open?: OpenData,
+  today?: ISODate,
+  memory: Memory = {},
+  lang: string = data.settings.language,
+): AssistantReply {
   const insights = computeInsights(data, today);
-  const ctx: Ctx = { data, insights, open, t, today: insights.today };
-  const q = question.trim().toLowerCase().replace(/[’‘]/g, "'");
+  const ctx: Ctx = { data, insights, open, t, today: insights.today, mem: memory, lang };
+  const q = normalizeDigits(question.trim().toLowerCase().replace(/[’‘]/g, "'"));
   if (!q) return summary(ctx);
   for (const h of handlers) {
-    if (h.match(q)) {
+    if (h.match(q) || lexHas(q, h.id)) {
       const r = h.run(q, ctx);
       if (r) return r;
     }
+  }
+  // Follow-up with only new numbers/dates ("and 3 months?", "what about June 1?").
+  const followUp = memory.intent && (findDuration(q) !== null || findDates(q, insights.today).length > 0);
+  if (followUp) {
+    const h = handlers.find((x) => x.id === memory.intent);
+    const r = h?.run(q, ctx);
+    if (r) return r;
   }
   return { intent: 'fallback', text: t('as.fallback'), actions: suggestions(ctx) };
 }

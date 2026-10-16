@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented, Status } from '../components/ui';
-import { calculateCrs, checkPrograms, toClb, type Education, type LanguageScores, type TestKind } from '../domain/crs';
+import { calculateCrs, checkPrograms, minClb, toClb, type Education, type LanguageScores, type TestKind } from '../domain/crs';
+import { OCCUPATION_CATEGORIES, standings, type DrawCategory } from '../domain/draws';
+import { CATEGORY_ORDER, PROGRAMS } from '../domain/programs';
+import { uid } from '../domain/types';
+import { fmtDate } from '../i18n';
+import { openExternal } from '../platform';
 import { fmtNum } from '../i18n';
 import { useApp } from '../store/AppContext';
 
 interface Form {
-  tab: 'crs' | 'programs';
+  tab: 'crs' | 'programs' | 'all';
+  /** Occupation-based draw categories the user believes they qualify for. */
+  drawCats: DrawCategory[];
   age: number;
   hasSpouse: boolean;
   education: Education;
@@ -38,7 +45,7 @@ interface Form {
 const L = (n: number): LanguageScores => ({ listening: n, reading: n, writing: n, speaking: n });
 
 const DEFAULT: Form = {
-  tab: 'crs', age: 29, hasSpouse: false, education: 'bachelor', testKind: 'ielts', lang1: { listening: 7, reading: 6.5, writing: 6.5, speaking: 6.5 },
+  tab: 'crs', drawCats: [], age: 29, hasSpouse: false, education: 'bachelor', testKind: 'ielts', lang1: { listening: 7, reading: 6.5, writing: 6.5, speaking: 6.5 },
   hasLang2: false, lang2: L(0), firstIsFrench: false, canadianWorkYears: 1, foreignWorkYears: 0, coq: false,
   spouseEducation: 'bachelor', spouseLang: L(0), spouseCanadianWork: 0, pnp: false, sibling: false, canadianEducation: 0,
   teer: 1, cdnSkilledMonths: 12, skilledMonths10y: 12, tradesMonths: 0, eca: true, jobOffer: false, fundsExempt: false,
@@ -73,7 +80,7 @@ const EDUS: Education[] = ['none', 'secondary', 'one_year', 'two_year', 'bachelo
 const ABILITIES = ['listening', 'reading', 'writing', 'speaking'] as const;
 
 export function EligibilityScreen() {
-  const { data, update, t, lang, open } = useApp();
+  const { data, update, t, lang, open, insights, go, toast } = useApp();
   const f: Form = { ...DEFAULT, ...(data.eligibilityForm as Partial<Form> | undefined) };
   // Merge into the latest stored form, not the one captured at render, so quick edits don't drop each other.
   const set = (patch: Partial<Form>) =>
@@ -122,14 +129,53 @@ export function EligibilityScreen() {
     </div>
   );
 
-  const draws = open.draws?.slice(0, 8) ?? [];
   const total = crs.totals.total;
+  // Draw categories you can be invited in: program eligibility, PNP, French, plus ticked occupations.
+  const eligibleCats = new Set<DrawCategory>(f.drawCats);
+  for (const p of programs) if (p.eligible) eligibleCats.add(p.program);
+  if (f.pnp) eligibleCats.add('pnp');
+  const french = f.firstIsFrench ? clb1 : f.hasLang2 ? f.lang2 : undefined;
+  if (french && minClb(french) >= 7) eligibleCats.add('french');
+  const stand = standings(open.draws ?? [], eligibleCats, total, insights.today);
+  const track = (kind: string) => {
+    const id = uid();
+    update((d) => ({ ...d, applications: [...d.applications, { id, kind, submitted: null, milestones: [] }] }));
+    toast(t('elig.tracking'));
+    go('timeline', id);
+  };
 
   return (
     <>
       <div style={{ marginTop: 8 }}>
-        <Segmented label={t('nav.eligibility')} value={f.tab} onChange={(tab) => set({ tab })} options={[{ value: 'crs', label: t('elig.crsTab') }, { value: 'programs', label: t('elig.programsTab') }]} />
+        <Segmented label={t('nav.eligibility')} value={f.tab} onChange={(tab) => set({ tab })} options={[{ value: 'crs', label: t('elig.crsTab') }, { value: 'programs', label: t('elig.programsTab') }, { value: 'all', label: t('elig.allTab') }]} />
       </div>
+
+      {f.tab === 'all' && (
+        <>
+          <p className="small muted" style={{ marginTop: 12 }}>{t('elig.allIntro')}</p>
+          {CATEGORY_ORDER.map((cat) => (
+            <section key={cat} className="card">
+              <h2>{t(`prog.cat.${cat}`)}</h2>
+              <ul className="list">
+                {PROGRAMS.filter((p) => p.category === cat && p.id !== 'spousal' && p.id !== 'other').map((p) => (
+                  <li key={p.id} style={{ alignItems: 'flex-start' }}>
+                    <div className="grow">
+                      <b>{t(`app.kind.${p.id}`)}</b> {p.status && <Status kind="warn">{t(`prog.status.${p.status}`)}</Status>}
+                      <div className="small muted">{t(`prog.desc.${p.id}`)}</div>
+                      <div className="row wrap" style={{ gap: 6, marginTop: 6 }}>
+                        <button className="btn sm" onClick={() => track(p.id)}><Icon name="plus" size={14} /> {t('elig.track')}</button>
+                        <button className="btn ghost sm" onClick={() => openExternal(p.url)}><Icon name="external" size={14} /> IRCC</button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+          <p className="tiny">{t('elig.allNote')}</p>
+        </>
+      )}
+      {f.tab !== 'all' && (<>
 
       <section className="card" aria-live="polite">
         <div className="row spread">
@@ -137,7 +183,7 @@ export function EligibilityScreen() {
             <div className="label">{t('elig.crsScore')}</div>
             <div className="hero-num">{fmtNum(total, lang)}</div>
           </div>
-          <div className="small" style={{ textAlign: 'right' }}>
+          <div className="small" style={{ textAlign: 'end' }}>
             {programs.filter((p) => p.eligible).length > 0
               ? programs.filter((p) => p.eligible).map((p) => <div key={p.program}><Status kind="good">{t(`elig.program.${p.program}`)}</Status></div>)
               : <Status kind="warn">{t('elig.noProgram')}</Status>}
@@ -151,22 +197,35 @@ export function EligibilityScreen() {
             <tr><td>{t('elig.additional')}</td><td className="n">{crs.totals.additional}</td></tr>
           </tbody>
         </table>
-        {draws.length > 0 && (
+        {stand.length > 0 && (
           <>
-            <h3>{t('elig.recentDraws')}</h3>
+            <h3>{t('elig.yourDraws')}</h3>
             <table className="data">
-              <thead><tr><th>{t('elig.drawDate')}</th><th>{t('elig.drawType')}</th><th className="n">CRS</th><th className="n" /></tr></thead>
+              <thead><tr><th>{t('elig.drawType')}</th><th>{t('elig.drawDate')}</th><th className="n">CRS</th><th className="n" /></tr></thead>
               <tbody>
-                {draws.map((d) => (
-                  <tr key={d.number + d.date}>
-                    <td>{d.date}</td><td>{d.name}</td><td className="n">{d.crs}</td>
-                    <td className="n">{total >= d.crs ? <Status kind="good">{t('elig.above')}</Status> : <span className="tiny">−{d.crs - total}</span>}</td>
+                {stand.map((x) => (
+                  <tr key={x.category}>
+                    <td>{t(`draw.${x.category}`)}<div className="tiny">{t('elig.draws12m', { n: x.count12m, min: x.min12m })}</div></td>
+                    <td>{fmtDate(x.latest.date, lang)}</td>
+                    <td className="n">{x.latest.crs}</td>
+                    <td className="n">{x.margin >= 0 ? <Status kind="good">+{x.margin}</Status> : <span className="tiny">{x.margin}</span>}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </>
         )}
+        <h3>{t('elig.occupations')}</h3>
+        <div className="chips">
+          {OCCUPATION_CATEGORIES.map((c) => {
+            const on = f.drawCats.includes(c);
+            return (
+              <button key={c} className="chip" aria-pressed={on} onClick={() => set({ drawCats: on ? f.drawCats.filter((x) => x !== c) : [...f.drawCats, c] })}>
+                {t(`draw.${c}`)}
+              </button>
+            );
+          })}
+        </div>
         <p className="tiny">{t('elig.disclaimer')}</p>
       </section>
 
@@ -239,13 +298,14 @@ export function EligibilityScreen() {
                 {p.eligible ? <Status kind="good">{t('elig.meets')}</Status> : <Status kind="warn">{t('elig.notYet')}</Status>}
               </div>
               {p.points !== undefined && <div className="small muted">{t('elig.fswPoints', { n: p.points })}</div>}
-              <ul className="small" style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+              <ul className="small" style={{ margin: '6px 0 0', paddingInlineStart: 18 }}>
                 {p.reasons.map((r) => <li key={r}>{t(r)}</li>)}
               </ul>
             </div>
           ))}
         </section>
       )}
+      </>)}
     </>
   );
 }

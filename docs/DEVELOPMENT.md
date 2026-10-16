@@ -46,9 +46,14 @@ UI lives in `src/screens`, and the assistant lives in `src/assistant`.
 
 ## Adding a language
 
-1. Copy `src/i18n/en.ts` to `src/i18n/<code>.ts` and translate (keep `{placeholders}`).
-2. Register it in `src/i18n/index.ts` and in the `Settings.language` type.
-3. Add assistant keywords for the language in `src/assistant/engine.ts` (and number words in `parse.ts`).
+1. Add an entry to `LANGUAGES` in `src/i18n/languages.ts` (code, native name, `dir`, Intl locale).
+2. Create `src/i18n/locales/<code>.ts` exporting `{ strings, lexicon }` (see an existing locale): every key of `en.ts`, the same `{placeholders}`, and a Maple lexicon (intent keywords, units, relative days, query words, FAQ keywords).
+3. `npm test`: `i18n.test.ts` fails on missing or extra keys and on placeholder mismatches.
+4. If the script needs a font, add a `:root[lang=…]` rule in `styles.css`; for RTL set `dir: 'rtl'`.
+
+## Adding a program
+
+Add it to `PROGRAMS` in `src/domain/programs.ts` (reuse a template or add one), add `app.kind.<id>` and `prog.desc.<id>` to every locale, add the id to `KINDS` in `scripts/build-community.mjs` (a test checks this), and give it a search phrase in `SEARCH_TERMS` (Timeline.tsx).
 
 ## Adding an assistant intent
 

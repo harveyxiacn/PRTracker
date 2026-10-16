@@ -154,14 +154,14 @@ export function Home() {
             <button className="btn ghost sm" onClick={() => go('timeline')}>{t('common.open')} <Icon name="chevron" size={16} /></button>
           </div>
           {apps.map((a) => {
-            const p = predict(a, insights.today, open.ircc?.times ?? {}, open.community?.records ?? []);
+            const p = predict(a, insights.today, open.ircc ?? {}, open.community?.records ?? []);
             return (
               <button key={a.id} className="btn block" style={{ justifyContent: 'flex-start', marginTop: 10, height: 'auto', padding: 12, flexDirection: 'column', alignItems: 'stretch', fontWeight: 400 }} onClick={() => go('timeline', a.id)}>
                 <div className="row spread"><b>{a.label || t(`app.kind.${a.kind}`)}</b><span className="small muted">{p ? `${p.percent}%` : ''}</span></div>
                 {p && (
                   <>
                     <div className="progress accent" style={{ margin: '8px 0 4px' }}><div style={{ width: `${p.percent}%` }} /></div>
-                    <div className="tiny" style={{ textAlign: 'left' }}>{t('home.appEta', { date: fmtDate(p.p50, lang) })}</div>
+                    <div className="tiny" style={{ textAlign: 'start' }}>{t('home.appEta', { date: fmtDate(p.p50, lang) })}</div>
                   </>
                 )}
               </button>
@@ -198,6 +198,6 @@ export function Home() {
   );
 }
 
-export function fmtVars(vars: Record<string, string | number>, lang: 'en' | 'zh') {
+export function fmtVars(vars: Record<string, string | number>, lang: string) {
   return Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? fmtDate(v, lang) : v]));
 }
