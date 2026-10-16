@@ -27,13 +27,20 @@ export function AssistantScreen() {
 
   // Greeting: (re)built when the screen opens and again once the language's strings have loaded,
   // as long as the conversation hasn't started.
+  // Switching person (household) starts a fresh conversation, so old "Log this trip" buttons and
+  // follow-up memory can't act on the wrong person.
+  const activeId = data.household?.activeId;
+  const lastActive = useRef(activeId);
   useEffect(() => {
+    const switched = lastActive.current !== activeId;
+    lastActive.current = activeId;
+    if (switched) setMemory({});
     setMsgs((cur) => {
-      if (cur.length > 1 || (cur.length === 1 && cur[0].role !== 'assistant')) return cur;
+      if (!switched && (cur.length > 1 || (cur.length === 1 && cur[0].role !== 'assistant'))) return cur;
       const r = answer('', data, tt, open);
       return [{ role: 'assistant', text: r.text, at: new Date().toISOString(), actions: r.actions }];
     });
-  }, [t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [t, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });

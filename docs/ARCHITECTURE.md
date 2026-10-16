@@ -36,6 +36,11 @@
 | `src/domain/history.ts` | Address/activity history windows, gaps, overlaps, CSV/text export | IMM 5669, citizenship |
 | `src/domain/crsPlanner.ts`, `crsForm.ts` | CRS improvement suggestions; mapping of the saved calculator form to `CrsInput` | |
 | `src/security/` | `crypto.ts` (encrypted backups), `pin.ts` (app-lock hash), `ics.ts` (calendar export) | WebCrypto only |
+| `src/domain/people.ts` | Household: swap-based multi-person (active person's data stays in `profile`/`trips`), summaries, joint date, reminders, sanitising | every screen works unchanged |
+| `src/native/` | `widget.ts` (Android widget snapshot), `privacy.ts` (FLAG_SECURE) → local Capacitor plugin `PrTrackerNative` (`android/.../PrTrackerNativePlugin.java`), widget `PrTrackerWidget.java` | no-ops on web/iOS |
+| `src/data/trends*.ts`, `src/screens/Trends.tsx` | Processing-time history loader, pure helpers, step chart | |
+| `src/data/redditCore.ts`, `scripts/fetch-reddit.ts` | Opt-in Reddit ingestion (official API, hashed dedupe) | inactive without secrets |
+| `src/domain/demo.ts` | Sample data for demo mode and visual QA | |
 | `src/assistant/` | Maple: `parse` (dates/durations, any digits), `engine` (ordered intents + memory), `query` (data queries & planners), `kb` (FAQ & glossary), `lexicon` (per-language keywords) | returns text + actions + memory, never mutates data |
 | `src/store/` | `AppContext` (state, routing, toasts, theme, notification sync), storage adapters, CSV | debounced saves (250 ms) |
 | `src/notify/` | Schedules/cancels local notifications | stable numeric IDs from reminder IDs |
@@ -86,3 +91,5 @@ earliest eligibility date is linear over ≤ 2.5k candidate days. Everything rec
 | `data.yml` | daily cron | mirrors IRCC processing times and EE draws, rebuilds community data, commits if changed |
 | `community-intake.yml` | issue labeled `timeline-approved` | validates and appends the record, closes the issue |
 | `ios.yml` | manual | builds the iOS app for the simulator (unsigned) |
+| `visual.yml` | PRs, manual | Playwright screenshots of every screen in en/zh/ar/hi (+ dark mode) with overflow / raw-key / console checks; artifact `screenshots` |
+| `reddit.yml` | weekly, manual | opt-in Reddit ingestion (skips without secrets), rebuilds community data, redeploys Pages |

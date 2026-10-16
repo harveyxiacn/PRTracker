@@ -31,7 +31,7 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
 - Encrypted backups, PIN app lock, calendar (.ics) export
 - Code-splitting and lighter offline cache
 
-## 🚧 v0.4 — Household, widgets & quality (in progress)
+## ✅ v0.4 — Household, widgets & quality (2026-10-16)
 - **Household:** track a spouse or family member's days; "apply together from" date
 - **Android home-screen widget** (citizenship countdown, residency, PR card) and **block screenshots** option
 - **Processing-time trends** charts from daily IRCC snapshots

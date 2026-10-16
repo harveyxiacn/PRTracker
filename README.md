@@ -21,6 +21,9 @@ It runs on **Android, iOS and the web** in **14 languages**, and **your data nev
 | 🧾 **Personal history** | Addresses and activities for IMM 5669 (past 10 years or since age 18) and citizenship (5 years), with gap and overlap detection and a form-ready CSV/table export |
 | 📈 **CRS improvement planner** | Ranks the changes that would raise your score (language, French, work, education, spouse, PNP), combines your chosen plan, and compares it with recent draws |
 | 🔒 **Security** | Passphrase-encrypted backups (AES-256-GCM), an optional PIN app lock, and calendar export (.ics) of reminders and trips |
+| 👨‍👩‍👧 **Household** | Track your spouse or family too, with each person's own dates, and see when you can apply for citizenship together |
+| 📱 **Android widget** | Citizenship countdown, residency status and PR card on your home screen; optional screenshot blocking |
+| 📈 **Processing-time trends** | How IRCC's published times change over time, overall and for your country |
 | 🔔 **Local reminders** | Scheduled on the phone, so no push server is needed |
 | 🌐 **14 languages** | English, Français, 简体中文, 繁體中文, Español, Português, हिन्दी, ਪੰਜਾਬੀ, Tagalog, Tiếng Việt, 한국어, العربية, فارسی, اردو. Right-to-left layout for Arabic, Persian and Urdu; languages load on demand |
 | 🌓 Light/dark theme, offline PWA | |
@@ -49,7 +52,7 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 | v0.1 | Core tracker: citizenship & residency days, trips, calendar, timelines, Maple | ✅ |
 | v0.2 | Worldwide: 32 programs, per-country times, paste-a-timeline, 14 languages | ✅ |
 | v0.3 | Paperwork & privacy: documents, personal history, CRS planner, encryption, PIN lock | ✅ |
-| v0.4 | Household, Android widget, screenshot blocking, processing trends, Reddit (opt-in), demo + visual QA | 🚧 |
+| v0.4 | Household, Android widget, screenshot blocking, processing trends, Reddit (opt-in), demo + visual QA | ✅ |
 | v0.5 | iOS & accessibility: WidgetKit, biometric unlock, a11y audit, more languages | 🗓️ |
 | v0.6 | Application helper: citizenship absences table, CBSA history import, PR card renewal helper | 🗓️ |
 | v0.7 | Community 2.0: office/stream curves, processing-time alerts, moderation | 🗓️ |

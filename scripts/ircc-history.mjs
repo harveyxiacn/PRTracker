@@ -14,12 +14,16 @@ const dateIdx = args.indexOf('--date');
 const date = dateIdx >= 0 ? args[dateIdx + 1] : new Date().toISOString().slice(0, 10);
 const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--date') ?? 'public/data';
 
+/** Missing file -> undefined. A file that exists but can't be parsed is an error (never overwrite it). */
 async function readJson(file) {
+  let text;
   try {
-    return JSON.parse(await readFile(file, 'utf8'));
-  } catch {
-    return undefined;
+    text = await readFile(file, 'utf8');
+  } catch (e) {
+    if (e && e.code === 'ENOENT') return undefined;
+    throw e;
   }
+  return JSON.parse(text);
 }
 
 const ircc = await readJson(path.join(dir, 'ircc.json'));

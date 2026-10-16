@@ -107,7 +107,10 @@ describe('Maple v4: household', () => {
     expect(r.text).toContain('Sam');
     expect(r.text).toContain('Apply together from 2028-01-01');
   });
-  it('explains how to add a family member when alone', () => {
-    expect(ask('When can we apply together?').text).toContain(en['ppl.onlyYou']);
+  it('falls through to the normal answers for a single person or other topics', () => {
+    expect(ask('When can we apply for citizenship together?').intent).not.toBe('household');
+    const d = base();
+    d.household = { activeId: 'me', activeName: 'Alex', others: [{ id: 'sam', name: 'Sam', profile: { prDate: '2025-01-01', statusPeriods: [], taxYearsFiled: [] }, trips: [] }] };
+    expect(ask('can we apply together for spousal sponsorship?', d).intent).not.toBe('household');
   });
 });

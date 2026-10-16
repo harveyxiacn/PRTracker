@@ -207,7 +207,8 @@ function LineChart({ points, lang, label, unit }: { points: TrendPoint[]; lang: 
         width={width}
         height={HEIGHT}
         viewBox={`0 0 ${width} ${HEIGHT}`}
-        role="img"
+        role="group"
+        aria-roledescription="chart"
         aria-label={`${label}. ${describe(points[0])} → ${describe(lastP)}`}
         tabIndex={0}
         onPointerMove={onMove}

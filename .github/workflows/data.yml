@@ -26,6 +26,7 @@ jobs:
       - run: node --experimental-strip-types scripts/ircc-history.mjs public/data
       - run: node scripts/build-community.mjs
       - name: Commit if changed
+        id: commit
         run: |
           git config user.name "pr-tracker-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -34,7 +35,9 @@ jobs:
           if git diff --cached --quiet -I '"fetchedAt"' -I '"updated"' -- public/data; then echo "No data changes"; exit 0; fi
           git commit -m "data: refresh IRCC processing times and draws"
           git push
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
       - name: Trigger web deploy
+        if: steps.commit.outputs.pushed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --ref main

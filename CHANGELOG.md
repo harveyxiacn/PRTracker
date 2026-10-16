@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com), versions: SemVer.
 
+## [0.4.0] - 2026-10-16
+
+### Added
+- **Household:**
+  - Track a spouse or family member. Each person has their own PR date, card, pre-PR status and trips.
+  - A switcher in the top bar, a household card with an "apply together from" date, reminders for every member, and a Maple answer for "when can we apply together?".
+- **Android home-screen widget:**
+  - Shows the citizenship countdown, residency status and PR card (or the date you've been abroad since).
+  - Built from a small, already-localised snapshot; no names or free text.
+- **Block screenshots and app previews** (Android FLAG_SECURE), applied on cold start.
+- **Processing-time trends:**
+  - The daily IRCC mirror now keeps history (`ircc-history.json`).
+  - Community shows step charts with a "+N days vs 90 days ago" figure, keyboard navigation and a table view.
+- **Reddit timelines (opt-in):** weekly ingestion through Reddit's official API once the maintainer adds API keys (see docs/REDDIT.md). Only anonymised facts are stored; no ids, usernames or text.
+- **Demo mode:** "Try with sample data" (`?demo=1`). Nothing is saved, and no notifications or widget updates are made.
+- **Visual QA:** a Playwright workflow that screenshots 10 screens in 4 languages (incl. RTL) plus dark mode and checks for overflow, raw keys and console errors.
+- **History:** an option to check gaps by month, as IRCC forms ask.
+- **Roadmap:** docs/ROADMAP.md and a table in the README.
+
+### Fixed
+- Icons without an explicit size stretched to the full card width. Visual QA caught it.
+- Calendar month and weekday names now follow the UI language.
+- The Maple greeting is rebuilt once the language loads.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added

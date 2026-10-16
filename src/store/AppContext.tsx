@@ -8,9 +8,9 @@ import { en } from '../i18n/en';
 import { syncNotifications } from '../notify/notifications';
 import { updateWidgetSnapshot, type WidgetSnapshot } from '../native/widget';
 import { setPrivacyScreen } from '../native/privacy';
-import { householdReminders } from '../domain/people';
+import { DEFAULT_PERSON_NAME, SELF_ID, householdReminders } from '../domain/people';
 import { diffDays } from '../domain/dates';
-import { fmtDate, fmtNum } from '../i18n';
+import { fmtDate } from '../i18n';
 import { loadData, saveData } from './storage';
 
 export type Route =
@@ -32,6 +32,8 @@ interface Ctx {
   toast: (msg: string) => void;
   /** Showing sample data (nothing is saved). */
   demo: boolean;
+  /** Reschedule all OS reminders (all household members); no-op in demo. Returns how many. */
+  resyncNotifications: () => Promise<number>;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -172,21 +174,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Reschedule local notifications when anything that affects them changes.
   const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.household ?? null) + JSON.stringify(data?.settings.notifications) + loadedLang : '';
+  /** The single place that schedules OS notifications: every household member, never in demo mode. */
+  const resyncNotifications = useCallback(async (): Promise<number> => {
+    if (!data || !insights || demoMode.current) return 0;
+    // Other household members' reminders carry their name in the title ("Me" is translated).
+    const others = householdReminders(data, insights.today);
+    const nameOf = (n: unknown) => (n === DEFAULT_PERSON_NAME ? t('ppl.me') : String(n));
+    const tt: typeof t = (k, v) => (k === 'ppl.remTitle' && v ? t(k, { name: nameOf(v.name), title: t(String(v.personTitle), v) }) : t(k, v));
+    const all = [...insights.reminders, ...others.map((r) => ({ ...r, title: 'ppl.remTitle', vars: { ...r.vars, personTitle: r.title } }))];
+    return syncNotifications(all, data.settings, tt);
+  }, [data, insights, t]);
   useEffect(() => {
     if (!data || !insights || !data.onboarded || demoMode.current) return;
-    // Other household members' reminders carry their name in the title.
-    const others = householdReminders(data, insights.today);
-    const tt: typeof t = (k, v) => (k === 'ppl.remTitle' && v ? t(k, { name: v.name, title: t(String(v.personTitle), v) }) : t(k, v));
-    const all = [...insights.reminders, ...others.map((r) => ({ ...r, title: 'ppl.remTitle', vars: { ...r.vars, personTitle: r.title } }))];
-    syncNotifications(all, data.settings, tt).catch((e) => console.warn('notifications', e));
+    resyncNotifications().catch((e) => console.warn('notifications', e));
   }, [reminderSig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Android home-screen widget: a small precomputed, already-localised snapshot (no names, no free text).
   useEffect(() => {
     if (!data || !insights || demoMode.current) return;
+    // Only the primary person (the one who set up the app) appears on the home screen.
+    if (data.household && data.household.activeId !== SELF_ID) return;
     const lines: WidgetSnapshot['lines'] = [];
+    // With a PIN or screenshot block on, the home screen shows no status at all.
+    if (data.lock || data.privacyScreen) {
+      void updateWidgetSnapshot({ updated: new Date().toISOString(), title: t('nat.widgetTitle'), lines: [{ label: '🔒', value: t('sec.lockOn') }], route: 'home' });
+      return;
+    }
     const c = insights.citizenship;
-    if (c) lines.push({ label: t('nat.citizenship'), value: c.eligible ? t('nat.eligible') : t('nat.daysLeft', { n: fmtNum(c.daysUntilEligible ?? 0, lang) }), tone: 'good' });
+    // Dates, not countdowns: the widget only refreshes when the app runs, so a date never goes stale.
+    if (c) lines.push({ label: t('nat.citizenship'), value: c.eligible ? t('nat.eligible') : c.eligibleDate ? fmtDate(c.eligibleDate, lang) : '—', tone: 'good' });
     const r = insights.residency;
     if (r) lines.push({ label: t('nat.residency'), value: r.compliant ? t('nat.onTrack') : t('nat.atRisk'), tone: r.compliant ? 'good' : 'critical' });
     if (insights.ongoingTrip) lines.push({ label: t('nat.abroadSince'), value: fmtDate(insights.ongoingTrip.departure, lang), tone: 'warn' });
@@ -195,7 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       lines.push({ label: t('nat.prCard'), value: t('nat.expires', { date: fmtDate(insights.prCard.expiry, lang) }), tone: left < 0 ? 'critical' : left < 270 ? 'warn' : 'good' });
     }
     void updateWidgetSnapshot({ updated: new Date().toISOString(), title: t('nat.widgetTitle'), lines: data.onboarded ? lines : [], route: 'home' });
-  }, [insights, t]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [insights, t, data?.lock, data?.privacyScreen, data?.household?.activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the native screenshot block in sync with the saved setting (e.g. after a restore).
   useEffect(() => {
@@ -215,7 +231,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (!data || !insights) return <div className="empty-state" style={{ paddingTop: 120 }}>…</div>;
 
   return (
-    <AppCtx.Provider value={{ data, update, replaceAll, insights, t, lang, open, refreshOpen, route, go, param, toast, demo: demoMode.current }}>
+    <AppCtx.Provider value={{ data, update, replaceAll, insights, t, lang, open, refreshOpen, route, go, param, toast, demo: demoMode.current, resyncNotifications }}>
       {children}
       {toastMsg && (
         <div role="status" aria-live="polite" style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom))', zIndex: 60, display: 'flex', justifyContent: 'center' }}>

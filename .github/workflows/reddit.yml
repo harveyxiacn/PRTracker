@@ -27,24 +27,24 @@ jobs:
     steps:
       # Job-level `if` can't read env or secrets, so every step checks instead.
       - name: Check configuration
-        if: env.REDDIT_CLIENT_ID == '' || env.REDDIT_CLIENT_SECRET == '' || env.REDDIT_HASH_SALT == ''
+        if: env.REDDIT_CLIENT_ID == '' || env.REDDIT_CLIENT_SECRET == '' || env.REDDIT_HASH_SALT == '' || env.REDDIT_USERNAME == ''
         run: echo "Reddit secrets not configured; skipping (see docs/REDDIT.md)."
       - uses: actions/checkout@v5
-        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
       - uses: actions/setup-node@v5
-        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
         with:
           node-version: 22
           cache: npm
-      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
         run: npm ci
-      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
         run: npx tsx scripts/fetch-reddit.ts
-      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+      - if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
         run: node scripts/build-community.mjs
       - name: Commit if changed
         id: commit
-        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != ''
+        if: env.REDDIT_CLIENT_ID != '' && env.REDDIT_CLIENT_SECRET != '' && env.REDDIT_HASH_SALT != '' && env.REDDIT_USERNAME != ''
         run: |
           git config user.name "pr-tracker-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

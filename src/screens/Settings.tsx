@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented } from '../components/ui';
 import { DEFAULT_DATA_URL, emptyData, type Settings } from '../domain/types';
-import { requestPermission, syncNotifications } from '../notify/notifications';
+import { requestPermission } from '../notify/notifications';
 import { isNative, openExternal, pickTextFile, saveTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
@@ -16,7 +16,7 @@ const VERSION = __APP_VERSION__;
 
 
 export function SettingsScreen() {
-  const { data, update, replaceAll, t, insights, toast } = useApp();
+  const { data, update, replaceAll, t, insights, toast, demo, resyncNotifications } = useApp();
   const s = data.settings;
   const p = data.profile;
   const setS = (patch: Partial<Settings>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
@@ -33,7 +33,7 @@ export function SettingsScreen() {
   const enableNotifications = async () => {
     const ok = await requestPermission();
     if (ok) {
-      const n = await syncNotifications(insights.reminders, s, t);
+      const n = await resyncNotifications();
       setPermMsg(t('set.notifScheduled', { n }));
     } else setPermMsg(t('set.notifDenied'));
   };
@@ -89,7 +89,7 @@ export function SettingsScreen() {
             <label className="check"><input type="checkbox" checked={s.notifications.documents !== false} onChange={(e) => setN({ documents: e.target.checked })} /> {t('set.notifDocs')}</label>
           </div>
         )}
-        <button className="btn sm" onClick={enableNotifications}><Icon name="bell" size={16} /> {t('set.notifAllow')}</button>
+        <button className="btn sm" onClick={enableNotifications} disabled={demo}><Icon name="bell" size={16} /> {t('set.notifAllow')}</button>
         {permMsg && <p className="small">{permMsg}</p>}
         <p className="tiny">{isNative() ? t('set.notifNative') : t('set.notifWeb')}</p>
       </section>
@@ -100,6 +100,8 @@ export function SettingsScreen() {
         <div className="row wrap">
           <button className="btn sm" onClick={() => saveTextFile(`pr-tracker-backup-${insights.today}.json`, exportJson(data))}><Icon name="download" size={16} /> {t('set.export')}</button>
           <button
+            disabled={demo}
+           
             className="btn sm"
             onClick={async () => {
               const text = await pickTextFile('.json,application/json');
@@ -117,6 +119,8 @@ export function SettingsScreen() {
             <Icon name="upload" size={16} /> {t('set.import')}
           </button>
           <button
+            disabled={demo}
+           
             className="btn sm danger"
             onClick={async () => {
               if (!confirm(t('set.wipeConfirm'))) return;
@@ -137,7 +141,7 @@ export function SettingsScreen() {
         <section className="card">
           <h2><Icon name="shield" /> {t('nat.privacyScreen')}</h2>
           <label className="check">
-            <input type="checkbox" checked={!!data.privacyScreen} onChange={(e) => { const v = e.target.checked; update((d) => ({ ...d, privacyScreen: v })); void setPrivacyScreen(v); }} />
+            <input type="checkbox" disabled={demo} checked={!!data.privacyScreen} onChange={(e) => { const v = e.target.checked; update((d) => ({ ...d, privacyScreen: v })); void setPrivacyScreen(v); }} />
             {t('nat.privacyScreen')}
           </label>
           <p className="tiny">{t('nat.privacyScreenHint')}</p>
@@ -145,7 +149,7 @@ export function SettingsScreen() {
         </section>
       )}
 
-      <SecuritySection />
+      {!demo && <SecuritySection />}
 
       <section className="card">
         <h2><Icon name="info" /> {t('set.about')}</h2>

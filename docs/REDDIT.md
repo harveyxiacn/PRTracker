@@ -75,7 +75,10 @@ delete `community/reddit.jsonl` and `community/reddit-seen.txt` and run
   no usernames, text or post ids, and records are never displayed individually with a link
   back to Reddit.
 - **Deletion.** Records are not linked to posts (only a salted hash of the id is kept, to
-  avoid double counting), so a deleted post leaves no content or identifier in the dataset.
+  avoid double counting), so the dataset holds no content or identifier of the post.
+  Note: the combination of month, day counts, province/country and office could in principle be
+  matched back to a public post by someone searching Reddit, so this data is *anonymised*, not
+  *anonymous*. Have the Reddit Data API Terms reviewed before enabling, and honour removal requests.
   Posts already removed or deleted when the search runs are skipped. If someone asks for
   their timeline to be removed, it can be found by its facts (program, month, day counts)
   and deleted from `community/reddit.jsonl`.

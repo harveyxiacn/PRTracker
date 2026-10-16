@@ -47,6 +47,13 @@ text or links.
 - **App lock:** only a salted PBKDF2 hash of the PIN is stored. After 5 wrong tries there is an exponential back-off. The only reset is wiping all data.
 - **Calendar export (.ics):** reminder titles and trip destinations go into a file you choose to import into your calendar app. That calendar may sync to a cloud account.
 
+## Household, widget and Reddit (v0.4)
+
+- **Household:** names are only labels you choose (a first name or nickname is enough), stored on this device like the rest of your data.
+- **Android widget:** shows a short snapshot (citizenship countdown, residency status, PR card expiry or "abroad since" date) on your home screen. It contains no names or free text. Anyone who can see your home screen can see it, so don't add the widget if that's a concern.
+- **Block screenshots:** an opt-in Android setting (FLAG_SECURE) that also hides the app preview in recent apps.
+- **Reddit ingestion:** runs only in the project's GitHub Actions, never in the app. It reads public posts through Reddit's official API and stores only anonymised facts (program, month, day counts, province/country/office from a fixed list), plus salted hashes of post ids for de-duplication. No usernames, post ids, links or text are stored. See docs/REDDIT.md.
+
 ## Threat model notes
 
 - Someone with your unlocked phone can open the app unless you set the PIN lock.

@@ -62,6 +62,16 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] Export reminders (.ics) → import into Google/Apple Calendar → events at the right dates with a 9:00 alert.
 - [ ] Maple: “When does my passport expire?”, “Any gaps in my address history?”, “How can I raise my CRS?”.
 
+**v0.4: household, widget, trends, demo**
+- [ ] Settings → Household → add “Sam” → the top-bar switcher appears. Switch → Home, Calendar and Trips show Sam’s data. Switch back → your data is unchanged.
+- [ ] The Home household card shows both people and “Apply together from …”. Ask Maple: “When can we apply together?”.
+- [ ] Android: long-press the home screen → Widgets → PR Tracker → it shows citizenship days, residency and PR card, and updates after you log a trip.
+- [ ] Android: Settings → “Block screenshots and app previews” → screenshots are blocked and the recent-apps preview is blank, still after a restart.
+- [ ] Community → Processing-time trends: pick a series and a country. The chart appears after a few days of data.
+- [ ] Onboarding → “Try with sample data” → the banner shows, and changes aren’t saved after “Exit demo”.
+- [ ] History → “Check gaps by month” switches to a month-level comparison.
+- [ ] CI: Actions → Visual QA → download the `screenshots` artifact and skim every language.
+
 **Settings & privacy**
 - [ ] Switch language and theme (light/dark/system).
 - [ ] Export backup → Delete all data → onboarding → *Restore from a backup file* → everything is back.

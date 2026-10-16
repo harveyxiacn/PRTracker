@@ -10,7 +10,8 @@ import { hashPostId, parseSeen, postToRecord, type RedditPost, type RejectReason
 import { validate } from './build-community.mjs';
 
 const { REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_HASH_SALT } = process.env;
-const USER_AGENT = `pr-tracker-community/1.0 (by u/${REDDIT_USERNAME || 'unknown'})`;
+// Reddit's recommended format: <platform>:<app id>:<version> (by /u/<username>)
+const USER_AGENT = `github-actions:io.github.harveyxiacn.prtracker:1.0 (by /u/${REDDIT_USERNAME})`;
 const QUERY = '(eCOPR OR COPR OR AOR OR "PPR") timeline';
 const MAX_PAGES = 3;
 const PAGE_DELAY_MS = 2000; // well under Reddit's 60 requests/minute for OAuth clients
