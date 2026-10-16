@@ -4,9 +4,9 @@ import { activeLocales, lexRelative, lexUnits } from './lexicon';
 
 /** Arabic-Indic, Persian, Devanagari, Gurmukhi and full-width digits -> ASCII. */
 export function normalizeDigits(s: string): string {
-  return s.replace(/[\u0660-\u0669\u06f0-\u06f9\u0966-\u096f\u0a66-\u0a6f\uff10-\uff19]/g, (c) => {
+  return s.replace(/[\u0660-\u0669\u06f0-\u06f9\u0966-\u096f\u0a66-\u0a6f\u09e6-\u09ef\u0ae6-\u0aef\u0be6-\u0bef\uff10-\uff19]/g, (c) => {
     const code = c.charCodeAt(0);
-    for (const base of [0x0660, 0x06f0, 0x0966, 0x0a66, 0xff10]) if (code >= base && code <= base + 9) return String(code - base);
+    for (const base of [0x0660, 0x06f0, 0x0966, 0x0a66, 0x09e6, 0x0ae6, 0x0be6, 0xff10]) if (code >= base && code <= base + 9) return String(code - base);
     return c;
   });
 }

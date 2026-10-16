@@ -2,6 +2,41 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com), versions: SemVer.
 
+## [0.8.0] - 2026-10-16
+
+One release covering roadmap milestones v0.5 to v0.8.
+
+### Added
+- **Biometric unlock (v0.5):** Face ID, Touch ID or fingerprint instead of typing the PIN, on Android and iOS. The PIN always remains as the fallback, and nothing biometric is stored by the app.
+- **Accessibility (v0.5):**
+  - Sheets trap focus, return it to the opener and close with Escape (nested sheets handled).
+  - A skip-to-content link, translated close labels and visible focus rings everywhere.
+  - Touch targets at least 44px, WCAG AA contrast for small text and calendar day numbers, and forced-colours support.
+  - An automated axe audit (WCAG 2.1 AA) of 10 screens in English and Arabic runs with visual QA.
+- **Performance budget in CI (v0.5):** the build fails if the first-load bundle grows past 140 kB gzip (it is 137 kB).
+- **Five new languages (v0.5):** বাংলা, தமிழ், ગુજરાતી, Русский, Українська, all complete, with Maple keywords (19 languages in total). Maple also reads Bengali, Gujarati and Tamil digits.
+- **Application helper (v0.6), a new screen:**
+  - The citizenship **absences from Canada** list for any application date, with days counted the way IRCC counts them. Exports to CSV.
+  - A printable **physical-presence report**: periods before and after PR, credited days and absences, to compare with IRCC's calculator.
+  - A **PR card renewal check**: the residency obligation on the day you sign, whether you are in the 9-month renewal window, and links to the official forms.
+- **CBSA travel-history import (v0.6):** paste the text of your CBSA Travel History Report. The app finds the entry and exit dates (many formats, English and French), matches them to your trips within a day, and lets you add the ones you missed. The pasted text is never saved.
+- **Smart cross-checks (v0.6) on Home**, for example:
+  - a language test expiring before your Express Entry submission;
+  - a passport or PR card expiring during a planned trip;
+  - a medical exam or work permit running out while your PR application is in progress;
+  - tax years missing for citizenship.
+- **Community 2.0 (v0.7):**
+  - "**N% of similar applicants had finished by day X**" curves on each application. They use the same office if there's enough data, otherwise the province, country or program.
+  - **Processing-time alerts** on Home when IRCC's published time changes for your application type or country.
+  - A read-only moderation report for the open dataset (duplicates, outliers, impossible milestone order).
+  - The intake workflow now comments on rejected submissions.
+- **Encrypted person sharing (v0.8):** send one household member's dates and trips to another phone as a passphrase-encrypted `.prperson` file (AES-256-GCM, PBKDF2 600,000 iterations). Still no server. The file name never contains a name.
+- **Maple:** new answers for "export my absences", "print my presence report", "check my trips against CBSA" and "what percent of people like me have finished by now?".
+- **Store launch kit (v1.0 prep):** privacy policy page, store listing text, data-safety answers, an iOS privacy manifest (docs/STORE.md) and backup-compatibility tests for v0.1 and v0.3 backups.
+
+### Changed
+- Light theme: secondary text is darker. Dark theme: the accent is slightly deeper so white text on buttons passes contrast.
+
 ## [0.4.0] - 2026-10-16
 
 ### Added

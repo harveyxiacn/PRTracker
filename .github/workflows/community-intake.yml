@@ -3,13 +3,16 @@ name: Community timeline intake
 # A maintainer adds the `timeline-approved` label to a "Share my timeline" issue after
 # checking it contains no personal information. This workflow validates the JSON record,
 # appends it to community/records.jsonl, rebuilds public/data/community.json and closes
-# the issue.
+# the issue. When the record is invalid, it comments the reason on the issue and removes the
+# label (re-add it after the record is fixed).
 on:
   issues:
     types: [labeled]
 
+# One group per issue: a shared group keeps only one pending run and would silently cancel the
+# others when several issues are approved at once. Concurrent pushes are retried below instead.
 concurrency:
-  group: community-data
+  group: community-intake-${{ github.event.issue.number }}
 
 permissions:
   contents: write
@@ -26,18 +29,51 @@ jobs:
         with:
           node-version: 22
       - name: Add record
+        id: add
         env:
           BODY: ${{ github.event.issue.body }}
         run: |
           printf '%s' "$BODY" > "$RUNNER_TEMP/issue.md"
-          node scripts/build-community.mjs --add-from-issue "$RUNNER_TEMP/issue.md"
+          if ! node scripts/build-community.mjs --add-from-issue "$RUNNER_TEMP/issue.md" 2> "$RUNNER_TEMP/error.txt"; then
+            cat "$RUNNER_TEMP/error.txt" >&2
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/error.txt" >&2
+      - name: Explain why the record was rejected
+        if: failure() && steps.add.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # The reason can echo parts of the submitted JSON: keep one short line of plain characters.
+          reason=$(head -n 1 "$RUNNER_TEMP/error.txt" 2>/dev/null | tr -cd '[:alnum:] .,:_()=-' | cut -c1-200)
+          {
+            echo "Thanks for sharing your timeline! It could not be added automatically:"
+            echo
+            echo "> ${reason:-unknown error}"
+            echo
+            echo "Please edit the JSON record in this issue (only the fields the app generates: kind, submittedMonth, days, and optionally office, province, country)."
+            echo "A maintainer will review it again."
+          } > "$RUNNER_TEMP/comment.md"
+          gh issue comment "$NUMBER" --body-file "$RUNNER_TEMP/comment.md" --repo "$GITHUB_REPOSITORY"
+          # So that re-adding the label after a fix runs this workflow again.
+          gh issue edit "$NUMBER" --remove-label timeline-approved --repo "$GITHUB_REPOSITORY" || true
+          exit 1
       - name: Commit
         run: |
           git config user.name "pr-tracker-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add community/records.jsonl public/data/community.json
-          git commit -m "community: add timeline from #${{ github.event.issue.number }}"
-          git push
+          for attempt in 1 2 3 4 5; do
+            git add community/records.jsonl public/data/community.json
+            git commit -m "community: add timeline from #${{ github.event.issue.number }}"
+            if git push; then exit 0; fi
+            # Another approval landed first: start again from the new main and re-add this record.
+            sleep $((attempt * 5))
+            git fetch origin main
+            git reset --hard origin/main
+            node scripts/build-community.mjs --add-from-issue "$RUNNER_TEMP/issue.md"
+          done
+          exit 1
       - name: Redeploy web app with the new data
         env:
           GH_TOKEN: ${{ github.token }}

@@ -7,6 +7,7 @@ import { canadaVisaSearchUrl } from '../domain/pasteParser';
 import { CATEGORY_ORDER, PNP_NAMES, PROGRAMS, PROVINCES, program } from '../domain/programs';
 import { MILESTONES, FINAL_MILESTONE, predict, similarRecords, toCommunityRecord } from '../domain/timeline';
 import { PasteTimelineSheet } from './PasteTimeline';
+import { FinishCurveCard } from './Curves';
 import { uid, type Application, type ApplicationKind } from '../domain/types';
 import { fmtDate, fmtNum } from '../i18n';
 import { openExternal } from '../platform';
@@ -269,6 +270,8 @@ function AppDetail({ app }: { app: Application }) {
           })}
         </div>
       </section>
+
+      <FinishCurveCard app={app} />
 
       <section className="card">
         <h2><Icon name="users" /> {t('tl.others')}</h2>

@@ -41,6 +41,12 @@
 | `src/data/trends*.ts`, `src/screens/Trends.tsx` | Processing-time history loader, pure helpers, step chart | |
 | `src/data/redditCore.ts`, `scripts/fetch-reddit.ts` | Opt-in Reddit ingestion (official API, hashed dedupe) | inactive without secrets |
 | `src/domain/demo.ts` | Sample data for demo mode and visual QA | |
+| `src/domain/forms.ts`, `src/screens/Forms.tsx` | Application helper: citizenship absences, presence report (totals come from `PresenceModel`), PR card renewal check, print view | route `forms` |
+| `src/domain/cbsa.ts`, `src/screens/CbsaImport.tsx` | CBSA Travel History Report parser (format-agnostic) and ±1-day reconciliation with trips | pasted text is never stored |
+| `src/domain/crossChecks.ts` | Document/trip/application cross-checks, merged with proactive tips on Home | same shape as tips |
+| `src/domain/curves.ts`, `ptAlerts.ts`, `src/screens/Curves.tsx` | Finish curves (empirical CDF, nearest-rank percentiles, scope fallback) and processing-time change alerts | Curves is lazy-loaded on Home |
+| `src/security/share.ts`, `src/screens/Share.tsx` | Encrypted `.prperson` export/import of one household member | reuses `crypto.ts` |
+| `src/security/biometric.ts` | Face ID / fingerprint via `@aparajita/capacitor-biometric-auth`; web returns unavailable | PIN is always the fallback |
 | `src/assistant/` | Maple: `parse` (dates/durations, any digits), `engine` (ordered intents + memory), `query` (data queries & planners), `kb` (FAQ & glossary), `lexicon` (per-language keywords) | returns text + actions + memory, never mutates data |
 | `src/store/` | `AppContext` (state, routing, toasts, theme, notification sync), storage adapters, CSV | debounced saves (250 ms) |
 | `src/notify/` | Schedules/cancels local notifications | stable numeric IDs from reminder IDs |
@@ -48,7 +54,7 @@
 | `src/i18n/` | `en.ts` (source, bundled), `locales/<code>.ts` (one lazy chunk per language: strings + Maple lexicon), `languages.ts` (registry: native name, `dir`, Intl locale) | parity, placeholders and referenced keys enforced by tests |
 | `src/screens/` | One file per screen | |
 | `android/`, `ios/` | Capacitor native shells | generated, with small committed patches (signing, backup off, notification icon) |
-| `scripts/` | Data mirror, community builder, icon generator | run in CI or by hand |
+| `scripts/` | Data mirror, community builder and moderation report, icon generator, bundle budget (`check-bundle.mjs`) | run in CI or by hand |
 
 ## Data model (`src/domain/types.ts`)
 
@@ -85,11 +91,11 @@ earliest eligibility date is linear over ≤ 2.5k candidate days. Everything rec
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | push to main, PRs | typecheck, unit tests, web build, **Android debug APK** artifact |
+| `ci.yml` | push to main, PRs | typecheck, unit tests, web build, **bundle budget**, **Android debug APK** artifact |
 | `release.yml` | tag `v*` | tests, build, signed APK/AAB if secrets exist, debug APK, web zip → GitHub Release |
 | `pages.yml` | push to main | deploys the PWA and `/data` to GitHub Pages |
 | `data.yml` | daily cron | mirrors IRCC processing times and EE draws, rebuilds community data, commits if changed |
-| `community-intake.yml` | issue labeled `timeline-approved` | validates and appends the record, closes the issue |
+| `community-intake.yml` | issue labeled `timeline-approved` | validates and appends the record, closes the issue; on rejection comments the reason and removes the label |
 | `ios.yml` | manual | builds the iOS app for the simulator (unsigned) |
 | `visual.yml` | PRs, manual | Playwright screenshots of every screen in en/zh/ar/hi (+ dark mode) with overflow / raw-key / console checks; artifact `screenshots` |
 | `reddit.yml` | weekly, manual | opt-in Reddit ingestion (skips without secrets), rebuilds community data, redeploys Pages |

@@ -114,3 +114,32 @@ describe('Maple v4: household', () => {
     expect(ask('can we apply together for spousal sponsorship?', d).intent).not.toBe('household');
   });
 });
+
+describe('Maple v5: forms, CBSA, finish curve', () => {
+  it('sends absence and presence-report questions to the application helper', () => {
+    for (const q of ['Export my absences for the citizenship application', 'print my physical presence report', 'PR card renewal check']) {
+      const r = ask(q);
+      expect(r.intent, q).toBe('forms');
+      expect(r.actions?.[0]).toMatchObject({ kind: 'navigate', to: 'forms' });
+    }
+  });
+
+  it('points CBSA questions to the travel-history import', () => {
+    const r = ask('How do I check my trips against CBSA records?');
+    expect(r.intent).toBe('cbsa');
+    expect(r.actions?.[0]).toMatchObject({ to: 'trips' });
+  });
+
+  it('answers "% finished by now" from community timelines', () => {
+    const d = base();
+    d.applications = [{ id: 'a', kind: 'ee_cec', submitted: '2026-05-01', milestones: [] }];
+    const records = [100, 120, 140, 160, 180, 200, 220, 240, 260, 280].map((copr) => ({ kind: 'ee_cec', submittedMonth: '2025-01', days: { aor: 10, copr } }));
+    const open = { origin: 'bundled' as const, community: { updated: '2026-10-01', records } };
+    // 2026-05-01 → 2026-10-16 is day 168: 4 of 10 had finished (100, 120, 140, 160).
+    const r = answer('What percent of people finished by now?', d, t, open as never, TODAY);
+    expect(r.intent).toBe('curve');
+    expect(r.text).toContain('40%');
+    expect(r.text).toContain('day 168');
+    expect(ask('What percent of people finished by now?', d).text).toBe(en['c2.maple.noCurve']);
+  });
+});

@@ -4,7 +4,7 @@
 in the world.** Track any IRCC application (Express Entry, provincial nominee programs, Quebec,
 pilots, family sponsorship, study/work permits, citizenship), count your days in Canada, see
 exactly when you can apply for citizenship, and keep your PR status safe while travelling.
-It runs on **Android, iOS and the web** in **14 languages**, and **your data never leaves your device**.
+It runs on **Android, iOS and the web** in **19 languages**, and **your data never leaves your device**.
 
 | | |
 |---|---|
@@ -20,12 +20,16 @@ It runs on **Android, iOS and the web** in **14 languages**, and **your data nev
 | 🗂️ **Documents & expiries** | Passport, permits, language tests (valid 2 years), ECA (5 years), medical (12 months), police certificates, biometrics. Expiry reminders and a document checklist for each program; only metadata is stored, never document numbers |
 | 🧾 **Personal history** | Addresses and activities for IMM 5669 (past 10 years or since age 18) and citizenship (5 years), with gap and overlap detection and a form-ready CSV/table export |
 | 📈 **CRS improvement planner** | Ranks the changes that would raise your score (language, French, work, education, spouse, PNP), combines your chosen plan, and compares it with recent draws |
-| 🔒 **Security** | Passphrase-encrypted backups (AES-256-GCM), an optional PIN app lock, and calendar export (.ics) of reminders and trips |
-| 👨‍👩‍👧 **Household** | Track your spouse or family too, with each person's own dates, and see when you can apply for citizenship together |
+| 🔒 **Security** | Passphrase-encrypted backups (AES-256-GCM), an optional PIN app lock with Face ID / fingerprint unlock, and calendar export (.ics) of reminders and trips |
+| 🧮 **Application helper** | Citizenship absences list (CSV), a printable physical-presence report, and a PR card renewal check on your signing date |
+| 🛂 **CBSA travel-history import** | Paste your CBSA Travel History Report; entries are matched to your trips and the missing ones can be added in one tap |
+| ⚠️ **Smart cross-checks** | Warns when a language test, passport, PR card, medical or permit expires at a bad moment for your application or trips |
+| 👨‍👩‍👧 **Household** | Track your spouse or family too, with each person's own dates, see when you can apply for citizenship together, and send a person's trips to a partner's phone as an encrypted file |
 | 📱 **Android widget** | Citizenship countdown, residency status and PR card on your home screen; optional screenshot blocking |
-| 📈 **Processing-time trends** | How IRCC's published times change over time, overall and for your country |
+| 📈 **Processing-time trends** | How IRCC's published times change over time, overall and for your country, with alerts when they change for your application |
+| 📊 **"% finished by now" curves** | How many similar applicants (same office, province, country or program) had finished by your day |
 | 🔔 **Local reminders** | Scheduled on the phone, so no push server is needed |
-| 🌐 **14 languages** | English, Français, 简体中文, 繁體中文, Español, Português, हिन्दी, ਪੰਜਾਬੀ, Tagalog, Tiếng Việt, 한국어, العربية, فارسی, اردو. Right-to-left layout for Arabic, Persian and Urdu; languages load on demand |
+| 🌐 **19 languages** | English, Français, 简体中文, 繁體中文, Español, Português, हिन्दी, ਪੰਜਾਬੀ, বাংলা, தமிழ், ગુજરાતી, Русский, Українська, Tagalog, Tiếng Việt, 한국어, العربية, فارسی, اردو. Right-to-left layout for Arabic, Persian and Urdu; languages load on demand |
 | 🌓 Light/dark theme, offline PWA | |
 
 > ⚠️ Estimates for planning only, not legal advice. Always confirm with IRCC’s official tools.
@@ -53,11 +57,11 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 | v0.2 | Worldwide: 32 programs, per-country times, paste-a-timeline, 14 languages | ✅ |
 | v0.3 | Paperwork & privacy: documents, personal history, CRS planner, encryption, PIN lock | ✅ |
 | v0.4 | Household, Android widget, screenshot blocking, processing trends, Reddit (opt-in), demo + visual QA | ✅ |
-| v0.5 | iOS & accessibility: WidgetKit, biometric unlock, a11y audit, more languages | 🗓️ |
-| v0.6 | Application helper: citizenship absences table, CBSA history import, PR card renewal helper | 🗓️ |
-| v0.7 | Community 2.0: office/stream curves, processing-time alerts, moderation | 🗓️ |
-| v0.8 | Serverless encrypted sync between devices and household members | 💡 |
-| v1.0 | Play Store & App Store launch, security and consultant review | 🗓️ |
+| v0.5 | Accessibility, biometric unlock, performance budget, 5 more languages (iOS WidgetKit/TestFlight wait for an Apple account) | ✅ |
+| v0.6 | Application helper: citizenship absences, presence report, CBSA history import, PR card renewal check, cross-checks | ✅ |
+| v0.7 | Community 2.0: "% finished by day N" curves, processing-time alerts, moderation | ✅ |
+| v0.8 | Encrypted person sharing between phones, no server | ✅ |
+| v1.0 | Play Store & App Store launch, security and consultant review (launch kit ready in docs/STORE.md) | 🚧 |
 
 Details: [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -73,6 +77,7 @@ Details: [docs/ROADMAP.md](docs/ROADMAP.md).
 | [docs/RELEASING.md](docs/RELEASING.md) | Versioning, signing, Android/iOS/web releases |
 | [docs/TESTING.md](docs/TESTING.md) | Automated tests and the on-phone test checklist |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Version-by-version roadmap |
+| [docs/STORE.md](docs/STORE.md) | Store launch kit (listing, data-safety answers, checklist) |
 | [docs/devlog/](docs/devlog/) | Development log |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 

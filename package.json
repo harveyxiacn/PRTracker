@@ -1,7 +1,7 @@
 {
   "name": "pr-tracker",
   "private": true,
-  "version": "0.4.0",
+  "version": "0.8.0",
   "description": "Privacy-first Canadian PR & citizenship day tracker (Android, iOS, Web). All data stays on device.",
   "type": "module",
   "license": "MIT",
@@ -16,9 +16,12 @@
     "data:community": "node scripts/build-community.mjs",
     "cap:sync": "npm run build && cap sync",
     "icons": "node scripts/gen-icons.mjs && capacitor-assets generate --iconBackgroundColor \"#c8102e\" --splashBackgroundColor \"#c8102e\" --splashBackgroundColorDark \"#121211\"",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "test:a11y": "playwright test tests/visual/a11y.spec.ts"
   },
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^9.1.2",
     "@capacitor/android": "^7.0.0",
     "@capacitor/app": "^7.0.0",
     "@capacitor/browser": "^7.0.0",
@@ -33,6 +36,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.0.0",
     "@playwright/test": "^1.48.0",

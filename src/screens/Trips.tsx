@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Empty, Field, Sheet, Status } from '../components/ui';
 import { isISODate } from '../domain/dates';
@@ -117,9 +117,12 @@ export function TripEditor({ state }: { state: TripEditorState }) {
   );
 }
 
+const CbsaImportSheet = lazy(() => import('./CbsaImport').then((m) => ({ default: m.CbsaImportSheet })));
+
 export function TripsScreen() {
   const { data, update, t, lang, insights, toast } = useApp();
   const editor = useTripEditor();
+  const [cbsa, setCbsa] = useState(false);
   const trips = [...data.trips].sort((a, b) => b.departure.localeCompare(a.departure));
   const issues = new Map(insights.tripIssues.map((i) => [i.tripId, i.kind]));
   const groups = new Map<string, Trip[]>();
@@ -197,6 +200,17 @@ export function TripsScreen() {
         </div>
         <p className="tiny">{t('trips.cbsaHint')}</p>
       </section>
+
+      <section className="card">
+        <h2><Icon name="search" /> {t('cbsa.cardTitle')}</h2>
+        <p className="small muted">{t('cbsa.cardBody')}</p>
+        <button className="btn sm" onClick={() => setCbsa(true)}><Icon name="search" size={16} /> {t('cbsa.open')}</button>
+      </section>
+      {cbsa && (
+        <Suspense fallback={null}>
+          <CbsaImportSheet onClose={() => setCbsa(false)} />
+        </Suspense>
+      )}
       <TripEditor state={editor} />
     </>
   );

@@ -3,7 +3,7 @@
 import { addDays, addMonths, diffDays, type ISODate } from '../domain/dates';
 import { computeInsights, type Insights } from '../domain/insights';
 import { CITIZENSHIP_REQUIRED, RESIDENCY_REQUIRED, withExtraTrip } from '../domain/presence';
-import { predict } from '../domain/timeline';
+import { FINAL_MILESTONE, predict } from '../domain/timeline';
 import type { AppData } from '../domain/types';
 import type { OpenData } from '../data/remote';
 import { countryName, COUNTRY_CODES } from '../domain/countries';
@@ -19,6 +19,7 @@ import { formToCrsInput, readCrsForm } from '../domain/crsForm';
 import { calculateCrs } from '../domain/crs';
 import { daysOutsideLastMonths, explainCitizenship, filterTrips, planTrip, returnFor, travelBudget, tripStats } from './query';
 import { tripLength } from '../domain/presence';
+import { finishCurve, finishedShare } from '../domain/curves';
 
 export type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -178,6 +179,43 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       const lines = [ctx.t('as.docChecklistHead', { program: ctx.t(`app.kind.${kind}`) }), ...keys.slice(0, 10).map((k) => `• ${ctx.t(`doc.chk.${k}`)}`)];
       if (keys.length > 10) lines.push(ctx.t('as.docChecklistMore', { n: keys.length - 10 }));
       return { intent: 'doc_checklist', text: lines.join('\n'), actions: [{ kind: 'navigate', to: 'documents', label: ctx.t('as.act.documents') }] };
+    },
+  },
+  {
+    // "Export my absences for the citizenship form", "print presence report", "PR card renewal check".
+    id: 'forms',
+    match: (q) =>
+      has(q, /\b(list|export|print)\b[^.?!]{0,30}\b(absences|trips for (the )?citizenship)\b|\babsences? (list|for (the )?citizenship)\b|\b(physical )?presence report\b|\bcit ?0407\b|\b(pr )?card renewal (check|form|application)\b/, '缺席清单', '出境记录表', '出境記錄表', '居住天数报告', '居住天數報告', '续卡申请', '續卡申請'),
+    // Lexicon words like "absences" also occur in days-outside questions; those keep their own answer.
+    run: (q, ctx) => (!/\b(absences|presence report|renewal)\b/.test(q) && (lexHas(q, 'days_outside') || lexHas(q, 'residency')) ? null : { intent: 'forms', text: ctx.t('form.intro'), actions: [{ kind: 'navigate', to: 'forms', label: ctx.t('nav.forms') }] }),
+  },
+  {
+    // "Check my trips against CBSA", "official travel history".
+    id: 'cbsa',
+    match: (q) => has(q, /\bcbsa\b|\b(official )?travel history report\b|\bentry (exit )?records?\b/, '入境记录', '入境記錄', '出入境记录', '出入境記錄'),
+    // "Longest trip in my travel history" is a trip query, not the CBSA import.
+    run: (q, ctx) => (queryHit(q, 'longest') || queryHit(q, 'last') || queryHit(q, 'count') ? null : { intent: 'cbsa', text: ctx.t('cbsa.cardBody'), actions: [{ kind: 'navigate', to: 'trips', label: ctx.t('cbsa.open') }] }),
+  },
+  {
+    // "What % of people like me have finished by now?"
+    id: 'curve',
+    match: (q) => has(q, /\b(what|how many) (percent|%|share|people)\b[^.?!]{0,40}\b(finish|finished|done|got (their )?(ppr|copr|decision))\b|\bfinished by now\b|% (of )?(people|applicants)\b/, '百分之多少', '多少人已经', '多少人已經', '多少比例'),
+    run: (q, ctx) => {
+      // Generic "what percent" lexicon phrases also appear in CRS/residency/citizenship questions.
+      if (['crs', 'residency', 'citizenship', 'days_outside'].some((i) => lexHas(q, i as IntentId))) return null;
+      const apps = ctx.data.applications.filter((a) => !a.archived && a.submitted);
+      const app = apps[apps.length - 1];
+      if (!app?.submitted) return { intent: 'curve', text: ctx.t('as.noApps'), actions: [{ kind: 'navigate', to: 'timeline', label: ctx.t('as.act.timeline') }] };
+      const curve = finishCurve(app, ctx.open?.community?.records ?? []);
+      const act = [{ kind: 'navigate' as const, to: 'timeline', label: ctx.t('as.act.timeline') }];
+      if (!curve) return { intent: 'curve', text: ctx.t('c2.maple.noCurve'), actions: act };
+      const done = app.milestones.find((m) => m.key === (FINAL_MILESTONE[app.kind] ?? 'decision') && m.date)?.date;
+      const day = Math.max(0, diffDays(done ?? ctx.today, app.submitted));
+      return {
+        intent: 'curve',
+        text: ctx.t('c2.maple.share', { pct: Math.round(finishedShare(curve, day)), day, scope: ctx.t(`c2.scope.${curve.scope}`), n: curve.n, p50: curve.p50 ?? '—' }),
+        actions: act,
+      };
     },
   },
   {
