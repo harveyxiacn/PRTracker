@@ -14,6 +14,7 @@ import { checklistFor, nextExpiries, emptyDocuments } from '../domain/documents'
 import { guessKind } from '../domain/pasteParser';
 import { emptyHistory, historySummary } from '../domain/history';
 import { describeImprovement, improvements } from '../domain/crsPlanner';
+import { applyTogetherDate, householdSummary } from '../domain/people';
 import { formToCrsInput, readCrsForm } from '../domain/crsForm';
 import { calculateCrs } from '../domain/crs';
 import { daysOutsideLastMonths, explainCitizenship, filterTrips, planTrip, returnFor, travelBudget, tripStats } from './query';
@@ -218,6 +219,24 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
             gaps ? ctx.t('as.histGaps', { n: gaps, first: (s.addressGaps[0] ?? s.activityGaps[0]).from }) : ctx.t('as.histNoGaps'),
           ].join('\n');
       return { intent: 'history', text, actions: [{ kind: 'navigate', to: 'history', label: ctx.t('as.act.history') }] };
+    },
+  },
+  {
+    // "When can we apply together?", "my spouse's days" (answers with existing household strings).
+    id: 'household',
+    // Narrow: spousal-sponsorship and "abroad with my spouse" questions must reach their own answers.
+    match: (q) => has(q, /\b(apply together|apply for citizenship together|(we|us) (both )?(apply|become citizens)|my (spouse|wife|husband|partner)'?s (days|date|citizenship)|household)\b/, '一起申请', '一起入籍', '一起申請', '同时申请', '同時申請', '配偶的天数', '配偶的天數', '家庭成员', '家庭成員'),
+    run: (_q, ctx) => {
+      const people = householdSummary(ctx.data, ctx.today);
+      if (people.length < 2) return { intent: 'household', text: `${ctx.t('ppl.onlyYou')} ${ctx.t('ppl.intro')}`, actions: [{ kind: 'navigate', to: 'settings', label: ctx.t('ppl.addMember') }] };
+      const lines = people.map((p) => {
+        const cit = !p.isPr ? ctx.t('ppl.notPr') : p.citizenshipDate && p.citizenshipDate <= ctx.today ? ctx.t('ppl.citEligible') : p.citizenshipDate ? ctx.t('ppl.citFrom', { date: p.citizenshipDate }) : '—';
+        const res = p.residencyOk === null ? '' : ` · ${ctx.t(p.residencyOk ? 'ppl.resOk' : 'ppl.resRisk')}`;
+        return `• ${p.name}: ${cit}${res}${p.abroad ? ` · ${ctx.t('ppl.abroad')}` : ''}`;
+      });
+      const together = applyTogetherDate(people);
+      if (together) lines.push(together <= ctx.today ? ctx.t('ppl.applyTogetherNow') : ctx.t('ppl.applyTogether', { date: together }));
+      return { intent: 'household', text: lines.join('\n') };
     },
   },
   {

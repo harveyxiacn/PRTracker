@@ -39,7 +39,8 @@ const DIRECTIONAL = new Set(['chevron', 'back', 'left', 'right', 'send']);
 
 export function Icon({ name, size, title }: { name: keyof typeof P | string; size?: number; title?: string }) {
   return (
-    <svg className={DIRECTIONAL.has(name) ? 'flip-rtl' : undefined} viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined}>
+    // Default 20px: an unsized inline SVG otherwise stretches to the full container width.
+    <svg className={DIRECTIONAL.has(name) ? 'flip-rtl' : undefined} viewBox="0 0 24 24" width={size ?? 20} height={size ?? 20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined}>
       {title && <title>{title}</title>}
       <path d={P[name] ?? P.info} />
     </svg>

@@ -53,7 +53,6 @@ export function demoData(today: ISODate, language?: string): AppData {
   const ee: Application = {
     id: 'demo-app-ee',
     kind: 'ee_cec',
-    label: 'Express Entry (CEC)',
     submitted: sub,
     office: 'Ottawa',
     milestones: [
@@ -76,7 +75,6 @@ export function demoData(today: ISODate, language?: string): AppData {
   const citizenship: Application = {
     id: 'demo-app-cit',
     kind: 'citizenship',
-    label: 'Citizenship',
     submitted: null,
     milestones: [],
   };
@@ -85,11 +83,11 @@ export function demoData(today: ISODate, language?: string): AppData {
   const passportExpiry = addMonths(today, 5); // within the 6-month passport lead time → 'soon'
   const documents: DocumentsData = {
     items: [
-      { id: 'demo-doc-passport', kind: 'passport', label: 'Passport', holder: 'me', issued: addYears(passportExpiry, -10), expires: passportExpiry, country: 'PH' },
+      { id: 'demo-doc-passport', kind: 'passport', holder: 'me', issued: addYears(passportExpiry, -10), expires: passportExpiry, country: 'PH' },
       // Language results are valid 2 years; taken 21 months ago → expires in ≈3 months ('soon').
       { id: 'demo-doc-ielts', kind: 'language_test', label: 'IELTS General', holder: 'me', issued: addDays(addMonths(today, -21), -10), expires: null },
-      { id: 'demo-doc-eca', kind: 'eca', label: 'ECA (Master’s degree)', holder: 'me', issued: addMonths(today, -40), expires: null },
-      { id: 'demo-doc-prcard', kind: 'pr_card_copy', label: 'PR card', holder: 'me', issued: addDays(prDate, 30), expires: prCardExpiry },
+      { id: 'demo-doc-eca', kind: 'eca', label: 'WES', holder: 'me', issued: addMonths(today, -40), expires: null },
+      { id: 'demo-doc-prcard', kind: 'pr_card_copy', holder: 'me', issued: addDays(prDate, 30), expires: prCardExpiry },
     ],
     checklist: { 'demo-app-cit': { passport: true, photos: true, pr_card_copy: true, travel_history: true } },
   };

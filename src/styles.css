@@ -304,3 +304,9 @@ table.data td.n, table.data th.n { text-align: end; font-variant-numeric: tabula
 :root[lang='pa'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Gurmukhi', 'Raavi', 'Nirmala UI', sans-serif; }
 :root[lang='ko'] { --font: system-ui, -apple-system, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; }
 :root[lang='zh-Hant'], :root[lang='zh-TW'] { --font: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif; }
+
+/* Icons never stretch: headings, buttons, list rows and links get a fixed box. */
+svg { flex: none; }
+.card h2 svg { width: 20px; height: 20px; }
+.btn svg { width: 18px; height: 18px; }
+.btn.sm svg { width: 16px; height: 16px; }

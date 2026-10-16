@@ -93,3 +93,21 @@ describe('Maple v3: BOWP vs expiry list', () => {
     expect(r.text).toBe(en['kb.bowp']);
   });
 });
+
+describe('Maple v4: household', () => {
+  it('reports each person and the apply-together date', () => {
+    const d = base();
+    d.household = {
+      activeId: 'me',
+      activeName: 'Alex',
+      others: [{ id: 'sam', name: 'Sam', profile: { prDate: '2025-01-01', statusPeriods: [], taxYearsFiled: [] }, trips: [] }],
+    };
+    const r = ask('When can we apply together?', d);
+    expect(r.intent).toBe('household');
+    expect(r.text).toContain('Sam');
+    expect(r.text).toContain('Apply together from 2028-01-01');
+  });
+  it('explains how to add a family member when alone', () => {
+    expect(ask('When can we apply together?').text).toContain(en['ppl.onlyYou']);
+  });
+});

@@ -4,7 +4,7 @@ import { Segmented } from '../components/ui';
 import { addDays, daysInYear, toDay, weekdayMon0, type ISODate } from '../domain/dates';
 import type { DayKind, PresenceModel } from '../domain/presence';
 import type { Trip } from '../domain/types';
-import { fmtDate, fmtNum } from '../i18n';
+import { fmtDate, fmtNum, languageInfo } from '../i18n';
 import { useApp } from '../store/AppContext';
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -51,7 +51,7 @@ export function MiniYear({ year }: { year: number }) {
     const w = Math.floor((toDay(first) - toDay(start) + offset) / 7);
     return (
       <text key={m} x={w * (cell + gap)} y={10} fontSize={9} fill="var(--text-3)">
-        {new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-CA', { month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(year, m, 1)))}
+        {new Intl.DateTimeFormat(languageInfo(lang).intl, { month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(year, m, 1)))}
       </text>
     );
   });
@@ -100,8 +100,11 @@ export function CalendarScreen() {
   }, [model, data.trips, thisYear, minYear]);
 
   const monthName = (m: number, style: 'long' | 'short' = 'long') =>
-    new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en-CA', { month: style, timeZone: 'UTC' }).format(new Date(Date.UTC(2000, m - 1, 1)));
-  const dows = lang === 'zh' ? ['一', '二', '三', '四', '五', '六', '日'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    new Intl.DateTimeFormat(languageInfo(lang).intl, { month: style, timeZone: 'UTC' }).format(new Date(Date.UTC(2000, m - 1, 1)));
+  // Narrow weekday names (Mon..Sun) in the UI language; 2001-01-01 was a Monday.
+  const dows = Array.from({ length: 7 }, (_, i) =>
+    new Intl.DateTimeFormat(languageInfo(lang).intl, { weekday: 'narrow', timeZone: 'UTC' }).format(new Date(Date.UTC(2001, 0, 1 + i))),
+  );
 
   const renderMonth = (y: number, m: number, big: boolean) => {
     const first = `${y}-${pad(m)}-01`;
