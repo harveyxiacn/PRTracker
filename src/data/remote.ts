@@ -66,9 +66,28 @@ export async function loadOpenData(remoteBase: string, bundledBase = `${import.m
     ? ((draws as { draws: Draw[] }).draws)
     : undefined;
   return {
-    ircc: ircc as IrccData | undefined,
-    draws: drawList,
-    community: community as CommunityData | undefined,
+    ircc: validIrcc(ircc),
+    draws: drawList?.filter((d) => d && typeof d.crs === 'number' && typeof d.date === 'string'),
+    community: validCommunity(community),
     origin,
   };
+}
+
+// The data URL is user-configurable, so never trust the shape of what comes back.
+function validIrcc(v: unknown): IrccData | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Partial<IrccData>;
+  const times: IrccData['times'] = {};
+  for (const [k, n] of Object.entries(o.times ?? {})) if (typeof n === 'number' && n > 0) times[k as keyof IrccData['times']] = n;
+  const entries: Record<string, string> = {};
+  for (const [k, s] of Object.entries(o.entries ?? {})) if (typeof s === 'string') entries[k] = s;
+  return { updated: String(o.updated ?? ''), fetchedAt: String(o.fetchedAt ?? ''), times, entries };
+}
+
+function validCommunity(v: unknown): CommunityData | undefined {
+  if (!v || typeof v !== 'object' || !Array.isArray((v as CommunityData).records)) return undefined;
+  const records = (v as CommunityData).records.filter(
+    (r) => r && typeof r.kind === 'string' && /^\d{4}-\d{2}$/.test(String(r.submittedMonth)) && !!r.days && typeof r.days === 'object',
+  );
+  return { updated: String((v as CommunityData).updated ?? ''), records };
 }

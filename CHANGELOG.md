@@ -19,3 +19,10 @@ First public build.
 - Local reminders (Capacitor LocalNotifications on Android/iOS; in-app on web).
 - English and Simplified Chinese; light/dark themes; installable PWA; JSON backup/restore.
 - CI (tests, web build, Android APK), release, Pages, data-refresh, community-intake and iOS build workflows.
+
+### Fixed (pre-release review)
+- Trip editor no longer loses focus while typing; numeric fields accept partial input.
+- Edits are saved even if the app is closed immediately; corrupted storage is preserved, not overwritten.
+- Ongoing trip length, nested trip overlaps, pre-arrival years in the calendar table, “abroad now” for trips with a known return date.
+- Assistant intent and Chinese date/duration parsing fixes.
+- Open-data responses are validated; workflows redeploy Pages after data updates.

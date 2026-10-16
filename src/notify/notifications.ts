@@ -41,20 +41,26 @@ export async function syncNotifications(reminders: Reminder[], settings: Setting
   if (perm.display !== 'granted') return 0;
   const pending = await LocalNotifications.getPending();
   if (pending.notifications.length) await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
-  if (!list.length) return 0;
+  const now = Date.now();
+  const at = (r: Reminder) => {
+    const [y, m, d] = r.date.split('-').map(Number);
+    return new Date(y, m - 1, d, 9, 0, 0);
+  };
+  // A 09:00 slot that has already passed today would fire immediately on every re-sync.
+  const upcoming = list.filter((r) => at(r).getTime() > now);
+  if (!upcoming.length) return 0;
   await LocalNotifications.schedule({
-    notifications: list.map((r) => {
-      const [y, m, d] = r.date.split('-').map(Number);
+    notifications: upcoming.map((r) => {
       return {
         id: notificationId(r.id),
         title: t(r.title, r.vars),
         body: t(r.body, r.vars),
-        schedule: { at: new Date(y, m - 1, d, 9, 0, 0), allowWhileIdle: true },
+        schedule: { at: at(r), allowWhileIdle: true },
         extra: { reminderId: r.id },
       };
     }),
   });
-  return list.length;
+  return upcoming.length;
 }
 
 const SHOWN_KEY = 'prtracker.shownReminders';

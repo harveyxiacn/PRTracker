@@ -30,11 +30,14 @@ function mk(y: number, m: number, d: number): ISODate | null {
   return isISODate(iso) ? iso : null;
 }
 
-/** If no year is given, pick the next occurrence on/after today. */
-function withYear(m: number, d: number, today: ISODate, year?: number): ISODate | null {
+export type Prefer = 'future' | 'past';
+
+/** If no year is given, pick the next occurrence on/after today (or the latest on/before it). */
+function withYear(m: number, d: number, today: ISODate, year: number | undefined, prefer: Prefer): ISODate | null {
   if (year) return mk(year, m, d);
   const y = Number(today.slice(0, 4));
   const cand = mk(y, m, d);
+  if (prefer === 'past') return cand && cand <= today ? cand : mk(y - 1, m, d);
   if (cand && cand >= today) return cand;
   return mk(y + 1, m, d);
 }
@@ -45,7 +48,7 @@ export interface FoundDate {
 }
 
 /** Find all dates mentioned in the text, in order of appearance. */
-export function findDates(input: string, today: ISODate): FoundDate[] {
+export function findDates(input: string, today: ISODate, prefer: Prefer = 'future'): FoundDate[] {
   const text = normalizeChineseNumbers(input.toLowerCase());
   const found: FoundDate[] = [];
   const push = (date: ISODate | null, index: number) => {
@@ -57,13 +60,13 @@ export function findDates(input: string, today: ISODate): FoundDate[] {
   while ((m = iso.exec(text))) push(mk(+m[1], +m[2], +m[3]), m.index);
 
   const cn = /(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?/g;
-  while ((m = cn.exec(text))) push(withYear(+m[2], +m[3], today, m[1] ? +m[1] : undefined), m.index);
+  while ((m = cn.exec(text))) push(withYear(+m[2], +m[3], today, m[1] ? +m[1] : undefined, prefer), m.index);
 
   const monthNames = Object.keys(MONTHS).sort((a, b) => b.length - a.length).join('|');
   const md = new RegExp(`\\b(${monthNames})\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s*(\\d{4}))?`, 'g');
-  while ((m = md.exec(text))) push(withYear(MONTHS[m[1]], +m[2], today, m[3] ? +m[3] : undefined), m.index);
+  while ((m = md.exec(text))) push(withYear(MONTHS[m[1]], +m[2], today, m[3] ? +m[3] : undefined, prefer), m.index);
   const dm = new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${monthNames})\\.?(?:,?\\s*(\\d{4}))?`, 'g');
-  while ((m = dm.exec(text))) push(withYear(MONTHS[m[2]], +m[1], today, m[3] ? +m[3] : undefined), m.index);
+  while ((m = dm.exec(text))) push(withYear(MONTHS[m[2]], +m[1], today, m[3] ? +m[3] : undefined, prefer), m.index);
 
   const rel: [RegExp, number | 'nextMonth'][] = [
     [/\btoday\b|今天/g, 0],
@@ -81,11 +84,19 @@ export function findDates(input: string, today: ISODate): FoundDate[] {
 }
 
 /** Duration in days, e.g. "3 months", "2 weeks", "45 days", "两个月", "10天", "半年". */
+/** Remove date expressions so their digits ("3月5日", "2027-03-01") aren't read as durations. */
+function stripDates(text: string): string {
+  return text
+    .replace(/\d{4}[-/.]\d{1,2}[-/.]\d{1,2}/g, ' ')
+    .replace(/(?:\d{4}\s*年\s*)?\d{1,2}\s*月\s*\d{1,2}\s*[日号]?/g, ' ')
+    .replace(/\d{4}\s*年/g, ' ');
+}
+
 export function findDuration(input: string): number | null {
-  const text = normalizeChineseNumbers(input.toLowerCase());
+  const text = stripDates(normalizeChineseNumbers(input.toLowerCase()));
   if (/半年|half a year|six months/.test(text)) return 182;
   if (/一年|a year\b|one year/.test(input.toLowerCase())) return 365;
-  const m = /(\d+(?:\.\d+)?)\s*(days?|天|日|weeks?|wks?|周|星期|个?礼拜|months?|mos?|个月|月|years?|yrs?|年)/.exec(text);
+  const m = /(\d+(?:\.\d+)?)\s*(?:more\s+|other\s+)?(days?\b|天|日|weeks?\b|wks?\b|周|星期|个?礼拜|months?\b|mos?\b|个月|月|years?\b|yrs?\b|年)/.exec(text);
   if (!m) return null;
   const n = Number(m[1]);
   const u = m[2];

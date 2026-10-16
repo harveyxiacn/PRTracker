@@ -133,7 +133,9 @@ export function toCommunityRecord(app: Application): CommunityRecord | null {
   if (!app.submitted) return null;
   const days: Record<string, number> = {};
   for (const m of app.milestones) {
-    if (m.date && m.key !== 'submitted') days[m.key] = diffDays(m.date, app.submitted);
+    if (!m.date || m.key === 'submitted') continue;
+    const d = diffDays(m.date, app.submitted);
+    if (d >= 0) days[m.key] = d; // milestones before submission (profile, ITA…) aren't shared
   }
   return { kind: app.kind, submittedMonth: app.submitted.slice(0, 7), days, office: app.office || undefined };
 }

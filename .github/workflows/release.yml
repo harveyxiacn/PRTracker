@@ -13,6 +13,8 @@ permissions:
 
 jobs:
   release:
+    # A manual run must target a tag (Run workflow → "Use workflow from" → Tags).
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     env:
       KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}

@@ -54,7 +54,9 @@ async function build() {
     }
   });
   await mkdir('public/data', { recursive: true });
-  await writeFile('public/data/community.json', JSON.stringify({ updated: new Date().toISOString(), records }));
+  // One record per line so the data workflow can ignore the `updated` line when diffing.
+  const body = records.map((r) => '  ' + JSON.stringify(r)).join(',\n');
+  await writeFile('public/data/community.json', `{\n "updated": "${new Date().toISOString()}",\n "records": [\n${body}\n ]\n}\n`);
   console.log(`community.json: ${records.length} records`);
 }
 

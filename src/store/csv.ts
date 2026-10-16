@@ -11,32 +11,42 @@ export function tripsToCsv(trips: Trip[]): string {
   return ['departure,return,destination,purpose,note', ...rows].join('\n') + '\n';
 }
 
-function splitCsvLine(line: string): string[] {
-  const out: string[] = [];
+/** RFC 4180-style parser over the whole text, so quoted fields may contain commas and newlines. */
+export function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
   let cur = '';
   let q = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
+  const endField = () => {
+    row.push(cur.trim());
+    cur = '';
+  };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
     if (q) {
-      if (c === '"' && line[i + 1] === '"') {
+      if (c === '"' && text[i + 1] === '"') {
         cur += '"';
         i++;
       } else if (c === '"') q = false;
       else cur += c;
     } else if (c === '"') q = true;
-    else if (c === ',') {
-      out.push(cur);
-      cur = '';
+    else if (c === ',') endField();
+    else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      endField();
+      if (row.some((x) => x !== '')) rows.push(row);
+      row = [];
     } else cur += c;
   }
-  out.push(cur);
-  return out.map((s) => s.trim());
+  endField();
+  if (row.some((x) => x !== '')) rows.push(row);
+  return rows;
 }
 
 export function csvToTrips(text: string): { trips: Trip[]; errors: number[] } {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim());
-  if (!lines.length) return { trips: [], errors: [] };
-  const header = splitCsvLine(lines[0]).map((h) => h.toLowerCase());
+  const rows = parseCsv(text.replace(/^\uFEFF/, ''));
+  if (!rows.length) return { trips: [], errors: [] };
+  const header = rows[0].map((h) => h.toLowerCase());
   const col = (names: string[]) => header.findIndex((h) => names.includes(h));
   const iDep = col(['departure', 'depart', 'left', 'from', 'exit']);
   const iRet = col(['return', 'returned', 'back', 'to', 'entry']);
@@ -45,8 +55,7 @@ export function csvToTrips(text: string): { trips: Trip[]; errors: number[] } {
   const iNote = col(['note', 'notes', 'comment']);
   const trips: Trip[] = [];
   const errors: number[] = [];
-  lines.slice(1).forEach((line, n) => {
-    const c = splitCsvLine(line);
+  rows.slice(1).forEach((c, n) => {
     const dep = c[iDep];
     const ret = iRet >= 0 ? c[iRet] : '';
     if (!isISODate(dep) || (ret && !isISODate(ret))) {

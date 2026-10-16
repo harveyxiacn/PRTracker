@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented, Status } from '../components/ui';
 import { calculateCrs, checkPrograms, toClb, type Education, type LanguageScores, type TestKind } from '../domain/crs';
@@ -45,13 +45,39 @@ const DEFAULT: Form = {
   adapt: { spouseLanguageClb4: false, pastStudyInCanada: false, spousePastStudyInCanada: false, pastWorkInCanada: false, spousePastWorkInCanada: false, relativeInCanada: false },
 };
 
+/** Number input that keeps the raw text while typing ("6.", "") and commits a number. */
+function NumInput({ value, onChange, min, max, step }: { value: number; onChange: (n: number) => void; min?: number; max?: number; step?: number }) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => {
+    if (Number(text) !== value) setText(String(value));
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <input
+      className="input" type="text" inputMode="decimal" value={text} data-min={min} data-max={max} data-step={step}
+      onChange={(e) => {
+        const v = e.target.value.replace(',', '.');
+        if (!/^\d*\.?\d*$/.test(v)) return;
+        setText(v);
+        if (v !== '' && v !== '.' && !v.endsWith('.')) onChange(Math.min(max ?? Infinity, Number(v)));
+      }}
+      onBlur={() => {
+        const n = text === '' || text === '.' ? 0 : Number(text);
+        setText(String(n));
+        onChange(Math.min(max ?? Infinity, n));
+      }}
+    />
+  );
+}
+
 const EDUS: Education[] = ['none', 'secondary', 'one_year', 'two_year', 'bachelor', 'two_or_more', 'master', 'phd'];
 const ABILITIES = ['listening', 'reading', 'writing', 'speaking'] as const;
 
 export function EligibilityScreen() {
   const { data, update, t, lang, open } = useApp();
   const f: Form = { ...DEFAULT, ...(data.eligibilityForm as Partial<Form> | undefined) };
-  const set = (patch: Partial<Form>) => update((d) => ({ ...d, eligibilityForm: { ...f, ...patch } }));
+  // Merge into the latest stored form, not the one captured at render, so quick edits don't drop each other.
+  const set = (patch: Partial<Form>) =>
+    update((d) => ({ ...d, eligibilityForm: { ...DEFAULT, ...(d.eligibilityForm as Partial<Form> | undefined), ...patch } }));
 
   const clb1 = toClb(f.testKind, f.lang1);
   const crs = useMemo(
@@ -73,7 +99,7 @@ export function EligibilityScreen() {
 
   const num = (label: string, value: number, onChange: (n: number) => void, opts: { min?: number; max?: number; step?: number; hint?: string } = {}) => (
     <Field label={label} hint={opts.hint}>
-      <input className="input" type="number" inputMode="decimal" min={opts.min ?? 0} max={opts.max} step={opts.step ?? 1} value={Number.isFinite(value) ? value : ''} onChange={(e) => onChange(Number(e.target.value))} />
+      <NumInput value={Number.isFinite(value) ? value : 0} min={opts.min ?? 0} max={opts.max} step={opts.step ?? 1} onChange={onChange} />
     </Field>
   );
   const check = (label: string, value: boolean, onChange: (b: boolean) => void) => (
@@ -90,7 +116,7 @@ export function EligibilityScreen() {
     <div className="grid2" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
       {ABILITIES.map((a) => (
         <Field key={a} label={t(`lang.${a}`)}>
-          <input className="input" type="number" inputMode="decimal" step={step} min={0} max={f.testKind === 'ielts' ? 9 : 12} value={scores[a]} onChange={(e) => onChange({ ...scores, [a]: Number(e.target.value) })} />
+          <NumInput step={step} min={0} max={f.testKind === 'ielts' ? 9 : 12} value={scores[a]} onChange={(n) => onChange({ ...scores, [a]: n })} />
         </Field>
       ))}
     </div>

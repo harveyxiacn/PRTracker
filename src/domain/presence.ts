@@ -50,12 +50,15 @@ export function validateTrips(trips: Trip[], today: ISODate): TripIssue[] {
       if (ongoing > 1) issues.push({ tripId: t.id, kind: 'multiple_ongoing' });
     }
   }
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i - 1];
-    const cur = sorted[i];
-    const prevEnd = prev.return ?? '9999-12-31';
-    // Returning and leaving again on the same day is fine; anything earlier overlaps.
-    if (cur.departure < prevEnd) issues.push({ tripId: cur.id, kind: 'overlap', otherId: prev.id });
+  // Track the latest return so far, so a trip nested inside a long earlier one is caught.
+  let latest: Trip | undefined;
+  for (const cur of sorted) {
+    if (latest) {
+      const end = latest.return ?? '9999-12-31';
+      // Returning and leaving again on the same day is fine; anything earlier overlaps.
+      if (cur.departure < end) issues.push({ tripId: cur.id, kind: 'overlap', otherId: latest.id });
+    }
+    if (!latest || (cur.return ?? '9999-12-31') > (latest.return ?? '9999-12-31')) latest = cur;
   }
   return issues;
 }
@@ -104,6 +107,8 @@ export class PresenceModel {
   readonly end: number;
   readonly today: number;
   readonly prDay: number | null;
+  /** First day the user could have been in Canada (first entry / status / PR), if known. */
+  readonly firstPresentDay: number | null;
   private absent: Uint8Array;
   private boundary: Uint8Array;
   private status: Uint8Array; // 0 none, 1 tr, 2 pr
@@ -118,6 +123,8 @@ export class PresenceModel {
     this.boundaryPresent = boundaryPresent;
     this.today = toDay(today);
     this.prDay = profile.prDate ? toDay(profile.prDate) : null;
+    const fp = minDate(profile.firstEntry, profile.prDate, ...profile.statusPeriods.map((s) => s.start));
+    this.firstPresentDay = fp ? toDay(fp) : null;
     const earliest = minDate(
       profile.firstEntry,
       profile.prDate,
@@ -312,7 +319,8 @@ export class PresenceModel {
   }
 
   yearStats(year: number, trips: Trip[]): YearStats {
-    const from = `${year}-01-01`;
+    let from = `${year}-01-01`;
+    if (this.firstPresentDay !== null && toDay(from) < this.firstPresentDay) from = fromDay(this.firstPresentDay);
     const to0 = `${year}-12-31`;
     const to = to0 > fromDay(this.today) ? fromDay(this.today) : to0;
     const total = to < from ? 0 : toDay(to) - toDay(from) + 1;
@@ -355,9 +363,13 @@ export function withExtraTrip(input: PresenceInput, departure: ISODate, ret: ISO
 }
 
 export function tripLength(t: Trip, today: ISODate, boundaryDaysPresent = true): number {
-  const end = t.return ?? today;
+  if (!isISODate(t.departure)) return 0;
+  const ongoing = !isISODate(t.return);
+  const end = ongoing ? today : (t.return as ISODate);
   const span = toDay(end) - toDay(t.departure);
   if (span < 0) return 0;
+  // An ongoing trip counts as away through today (the return day hasn't happened yet).
+  if (ongoing) return boundaryDaysPresent ? span : span + 1;
   return boundaryDaysPresent ? Math.max(0, span - 1) : span + 1;
 }
 

@@ -47,6 +47,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toastMsg, setToast] = useState<string | null>(null);
   const [today, setToday] = useState(todayISO());
   const saveTimer = useRef<number | undefined>(undefined);
+  const pending = useRef<AppData | null>(null);
+  const flush = useCallback(() => {
+    window.clearTimeout(saveTimer.current);
+    if (pending.current) {
+      void saveData(pending.current);
+      pending.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     loadData().then((d) => {
@@ -55,10 +63,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
     const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
+    // Never lose the last edit when the app is closed or sent to the background.
+    const onHide = () => document.visibilityState === 'hidden' && flush();
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flush);
     // Keep "today" fresh if the app stays open past midnight.
     const tick = window.setInterval(() => setToday(todayISO()), 60_000);
     return () => {
       window.removeEventListener('hashchange', onHash);
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flush);
       window.clearInterval(tick);
     };
   }, []);
@@ -76,21 +90,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [data?.settings.dataUrl, !!data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const update = useCallback((fn: (d: AppData) => AppData) => {
-    setData((prev) => {
-      if (!prev) return prev;
-      const next = fn(prev);
-      window.clearTimeout(saveTimer.current);
-      saveTimer.current = window.setTimeout(() => void saveData(next), 250);
-      return next;
-    });
+    setData((prev) => (prev ? fn(prev) : prev));
   }, []);
+
+  // Debounced persistence of every change (flushed on hide/close).
+  const loaded = useRef(false);
+  useEffect(() => {
+    if (!data) return;
+    if (!loaded.current) {
+      loaded.current = true;
+      return;
+    }
+    pending.current = data;
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(flush, 250);
+  }, [data, flush]);
 
   const replaceAll = useCallback((d: AppData) => {
+    window.clearTimeout(saveTimer.current);
+    pending.current = null;
     setData(d);
-    void saveData(d);
   }, []);
 
-  const insights = useMemo(() => (data ? computeInsights(data, today) : null), [data, today]);
+  const insights = useMemo(() => {
+    if (!data) return null;
+    try {
+      return computeInsights(data, today);
+    } catch (e) {
+      // Malformed data must never blank the whole app.
+      console.error('insights failed', e);
+      return computeInsights({ ...data, trips: [], applications: [], profile: { statusPeriods: [], taxYearsFiled: [] } }, today);
+    }
+  }, [data, today]);
 
   // Theme
   useEffect(() => {

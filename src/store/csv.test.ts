@@ -26,3 +26,26 @@ describe('migrate', () => {
     expect(d.profile.statusPeriods).toEqual([]);
   });
 });
+
+describe('csv multiline', () => {
+  it('keeps newlines inside quoted notes', () => {
+    const csv = tripsToCsv([{ id: '1', departure: '2025-01-02', return: '2025-01-09', note: 'line 1\nline 2' }]);
+    const { trips, errors } = csvToTrips(csv);
+    expect(errors).toEqual([]);
+    expect(trips[0].note).toBe('line 1\nline 2');
+  });
+});
+
+describe('migrate nested data', () => {
+  it('repairs malformed imports instead of crashing later', () => {
+    const d = migrate({
+      profile: { statusPeriods: null, prCardExpiry: 'soon' },
+      trips: [{ id: 'a', departure: '2025-01-01', return: '' }],
+      applications: [{ id: 'x', kind: 'ee_cec', submitted: 'bad' }],
+    });
+    expect(d.profile.statusPeriods).toEqual([]);
+    expect(d.profile.prCardExpiry).toBeUndefined();
+    expect(d.trips[0].return).toBeNull();
+    expect(d.applications[0]).toMatchObject({ submitted: null, milestones: [] });
+  });
+});

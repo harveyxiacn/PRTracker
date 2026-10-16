@@ -49,12 +49,17 @@ export function ProfileFields() {
 }
 
 export function SettingsScreen() {
-  const { data, update, replaceAll, t, insights, toast, refreshOpen } = useApp();
+  const { data, update, replaceAll, t, insights, toast } = useApp();
   const s = data.settings;
   const p = data.profile;
   const setS = (patch: Partial<Settings>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
   const setN = (patch: Partial<Settings['notifications']>) => setS({ notifications: { ...s.notifications, ...patch } });
   const [permMsg, setPermMsg] = useState('');
+  const [urlDraft, setUrlDraft] = useState(s.dataUrl);
+  const commitUrl = () => {
+    const v = urlDraft.trim();
+    if (v !== s.dataUrl) setS({ dataUrl: v });
+  };
   const thisYear = Number(insights.today.slice(0, 4));
   const taxYears = Array.from({ length: 6 }, (_, i) => thisYear - 1 - i);
 
@@ -153,9 +158,9 @@ export function SettingsScreen() {
           </button>
         </div>
         <Field label={t('set.dataUrl')} hint={t('set.dataUrlHint')}>
-          <input className="input" value={s.dataUrl} onChange={(e) => setS({ dataUrl: e.target.value.trim() })} onBlur={() => void refreshOpen()} />
+          <input className="input" type="url" inputMode="url" value={urlDraft} onChange={(e) => setUrlDraft(e.target.value)} onBlur={commitUrl} onKeyDown={(e) => e.key === 'Enter' && commitUrl()} />
         </Field>
-        {s.dataUrl !== DEFAULT_DATA_URL && <button className="btn ghost sm" onClick={() => setS({ dataUrl: DEFAULT_DATA_URL })}>{t('set.resetUrl')}</button>}
+        {s.dataUrl !== DEFAULT_DATA_URL && <button className="btn ghost sm" onClick={() => { setUrlDraft(DEFAULT_DATA_URL); setS({ dataUrl: DEFAULT_DATA_URL }); }}>{t('set.resetUrl')}</button>}
       </section>
 
       <section className="card">

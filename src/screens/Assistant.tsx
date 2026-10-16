@@ -53,6 +53,8 @@ export function AssistantScreen() {
       update((d) => {
         const ongoing = d.trips.find((x) => !x.return && x.departure === a.departure);
         if (ongoing) return { ...d, trips: d.trips.map((x) => (x.id === ongoing.id ? { ...x, return: a.return ?? null } : x)) };
+        // Ignore a second tap on the same chip.
+        if (d.trips.some((x) => x.departure === a.departure && (x.return ?? null) === (a.return ?? null))) return d;
         return { ...d, trips: [...d.trips, { id: uid(), departure: a.departure, return: a.return ?? null }] };
       });
       toast(t('trips.saved'));

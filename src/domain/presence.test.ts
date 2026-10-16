@@ -163,3 +163,29 @@ describe('residency while abroad', () => {
     expect(r.maxAbsence).toBe(toDay(r.mustReturnBy!) - toDay(today));
   });
 });
+
+describe('review regressions', () => {
+  it('counts an ongoing trip as away through today', () => {
+    expect(tripLength({ id: 'o', departure: '2026-03-01' }, '2026-03-10')).toBe(9);
+    const m = new PresenceModel({ profile: profile({ prDate: '2020-01-01' }), trips: [{ id: 'o', departure: '2026-03-01' }], today: '2026-03-10' });
+    expect(m.absentBetween('2026-03-01', '2026-03-10')).toBe(9);
+  });
+
+  it('flags a trip nested inside a long earlier trip', () => {
+    const issues = validateTrips(
+      [
+        { id: 'long', departure: '2025-01-01', return: '2025-06-01' },
+        { id: 'short', departure: '2025-01-10', return: '2025-01-20' },
+        { id: 'nested', departure: '2025-03-01', return: '2025-03-05' },
+      ],
+      '2026-01-01',
+    );
+    expect(issues.filter((i) => i.kind === 'overlap').map((i) => i.tripId).sort()).toEqual(['nested', 'short']);
+  });
+
+  it('does not count years before arrival as in Canada', () => {
+    const m = new PresenceModel({ profile: profile({ prDate: '2024-01-01' }), trips: [], today: '2026-10-16' });
+    expect(m.yearStats(2021, []).inCanada).toBe(0);
+    expect(m.yearStats(2024, []).inCanada).toBe(366);
+  });
+});

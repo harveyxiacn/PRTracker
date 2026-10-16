@@ -75,3 +75,32 @@ describe('assistant', () => {
     expect(answer('blah', data(), t, undefined, TODAY).intent).toBe('fallback');
   });
 });
+
+describe('assistant review regressions', () => {
+  it('does not treat "landed" (PR landing) as a return', () => {
+    expect(answer('I landed in Canada on 2024-05-01, when can I apply for citizenship?', data(), t, undefined, TODAY).intent).toBe('citizenship');
+  });
+  it('does not route words containing "ee" to CRS', () => {
+    expect(answer('I need help keeping my data private', data(), t, undefined, TODAY).intent).toBe('privacy');
+  });
+  it('does not read Chinese month dates as durations', () => {
+    expect(findDuration('3月5日出国')).toBeNull();
+    expect(findDuration('10月1日出国2周')).toBe(14);
+    expect(findDuration('3 more weeks')).toBe(21);
+  });
+  it('routes max-absence questions to residency', () => {
+    for (const q of ['How many days can I be away?', '最多出国多少天', '我能出国多久']) {
+      expect(answer(q, data(), t, undefined, TODAY).intent).toBe('residency');
+    }
+  });
+  it('uses past dates when logging trips and accepts curly apostrophes', () => {
+    const r = answer('I left on Oct 1 and came back Oct 10', data(), t, undefined, TODAY);
+    expect(r.actions?.[0]).toMatchObject({ kind: 'addTrip', departure: '2026-10-01', return: '2026-10-10' });
+    const d = data();
+    d.trips.push({ id: 'b', departure: '2026-10-01' });
+    expect(answer('I’m back', d, t, undefined, TODAY).intent).toBe('log_return');
+  });
+  it('treats "status" as a summary, not application progress', () => {
+    expect(answer("What's my status?", data(), t, undefined, TODAY).intent).toBe('summary');
+  });
+});

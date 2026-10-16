@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # pushes made with GITHUB_TOKEN don't trigger pages.yml, so dispatch it
 
 jobs:
   refresh:
@@ -32,4 +33,4 @@ jobs:
       - name: Trigger web deploy
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main || true
+        run: gh workflow run pages.yml --ref main

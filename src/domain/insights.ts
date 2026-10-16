@@ -53,7 +53,8 @@ export function computeInsights(data: AppData, today: ISODate = todayISO()): Ins
   const { profile, trips, settings } = data;
   const model = new PresenceModel({ profile, trips, today, boundaryDaysPresent: settings.boundaryDaysPresent });
   const isPr = !!profile.prDate && profile.prDate <= today;
-  const ongoingTrip = trips.find((t) => !t.return && t.departure <= today);
+  // Abroad now: left on/before today and not back yet (no return, or a return after today).
+  const ongoingTrip = trips.find((t) => t.departure <= today && (!t.return || t.return > today));
   const reminders: Reminder[] = [];
   const out: Insights = { today, model, isPr, ongoingTrip, tripIssues: validateTrips(trips, today), reminders };
 
@@ -67,7 +68,9 @@ export function computeInsights(data: AppData, today: ISODate = todayISO()): Ins
       safeDate,
       daysUntilEligible: eligibleDate ? Math.max(0, diffDays(eligibleDate, today)) : null,
     };
-    if (eligibleDate && eligibleDate > today) {
+    // Remind on the eligibility day itself too, but not on every later day.
+    const becameEligibleToday = c.credited >= CITIZENSHIP_REQUIRED && model.citizenshipAt(addDays(today, -1)).credited < CITIZENSHIP_REQUIRED;
+    if (eligibleDate && eligibleDate >= today && (c.credited < CITIZENSHIP_REQUIRED || becameEligibleToday)) {
       reminders.push({
         id: 'cit-eligible', date: eligibleDate, category: 'citizenship', severity: 'info',
         title: 'rem.citEligible.title', body: 'rem.citEligible.body', vars: { date: eligibleDate },
@@ -111,14 +114,14 @@ export function computeInsights(data: AppData, today: ISODate = todayISO()): Ins
       daysUntilRenewal,
       state: daysUntilExpiry < 0 ? 'expired' : daysUntilRenewal <= 0 ? 'renew_now' : 'ok',
     };
-    if (renewalOpens > today)
+    if (renewalOpens >= today)
       reminders.push({
         id: 'card-renew', date: renewalOpens, category: 'prCard', severity: 'warn',
         title: 'rem.cardRenew.title', body: 'rem.cardRenew.body', vars: { date: expiry },
       });
     for (const lead of [90, 30]) {
       const d = addDays(expiry, -lead);
-      if (d > today)
+      if (d >= today)
         reminders.push({
           id: `card-expiry-${lead}`, date: d, category: 'prCard', severity: lead <= 30 ? 'critical' : 'warn',
           title: 'rem.cardExpiry.title', body: 'rem.cardExpiry.body', vars: { date: expiry, days: lead },

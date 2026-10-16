@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   issues: write
+  actions: write
 
 jobs:
   intake:
@@ -34,6 +35,10 @@ jobs:
           git add community/records.jsonl public/data/community.json
           git commit -m "community: add timeline from #${{ github.event.issue.number }}"
           git push
+      - name: Redeploy web app with the new data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main --repo ${{ github.repository }}
       - name: Close issue
         env:
           GH_TOKEN: ${{ github.token }}

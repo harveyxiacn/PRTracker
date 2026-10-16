@@ -14,24 +14,34 @@ export async function loadData(): Promise<AppData> {
     if (Capacitor.isNativePlatform()) raw = (await Preferences.get({ key: KEY })).value;
     else raw = (await get<string>(KEY)) ?? localStorageGet();
     if (!raw) return emptyData();
-    return migrate(JSON.parse(raw));
+    try {
+      return migrate(JSON.parse(raw));
+    } catch (e) {
+      // Keep the unreadable copy so it can be recovered instead of being overwritten.
+      console.error('Stored data unreadable, kept a copy', e);
+      await saveRaw(`${KEY}.corrupt.${Date.now()}`, raw).catch(() => undefined);
+      return emptyData();
+    }
   } catch (e) {
     console.error('Failed to load data', e);
     return emptyData();
   }
 }
 
-export async function saveData(data: AppData): Promise<void> {
-  const raw = JSON.stringify(data);
+async function saveRaw(key: string, raw: string): Promise<void> {
   if (Capacitor.isNativePlatform()) {
-    await Preferences.set({ key: KEY, value: raw });
+    await Preferences.set({ key, value: raw });
     return;
   }
   try {
-    await set(KEY, raw);
+    await set(key, raw);
   } catch {
-    localStorageSet(raw);
+    localStorageSet(raw, key);
   }
+}
+
+export async function saveData(data: AppData): Promise<void> {
+  await saveRaw(KEY, JSON.stringify(data));
 }
 
 export async function wipeData(): Promise<void> {
@@ -53,32 +63,55 @@ function localStorageGet(): string | null {
     return null;
   }
 }
-function localStorageSet(v: string) {
+function localStorageSet(v: string, key = KEY) {
   try {
-    localStorage.setItem(KEY, v);
+    localStorage.setItem(key, v);
   } catch {
     /* ignore */
   }
 }
 
-/** Fill defaults for fields added after the data was saved, and drop malformed rows. */
+const isoOrUndef = (v: unknown) => (isISODate(v) ? v : undefined);
+const isoOrNull = (v: unknown) => (isISODate(v) ? v : null);
+const arr = <T,>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
+
+/** Fill defaults for fields added after the data was saved, and drop or repair malformed rows. */
 export function migrate(input: unknown): AppData {
   const base = emptyData();
   if (!input || typeof input !== 'object') return base;
   const d = input as Partial<AppData>;
+  const p = (d.profile ?? {}) as Partial<AppData['profile']>;
   return {
     ...base,
     ...d,
     version: 1,
-    profile: { ...base.profile, ...(d.profile ?? {}) },
+    profile: {
+      ...base.profile,
+      ...p,
+      prDate: isoOrUndef(p.prDate),
+      prCardExpiry: isoOrUndef(p.prCardExpiry),
+      firstEntry: isoOrUndef(p.firstEntry),
+      statusPeriods: arr<AppData['profile']['statusPeriods'][number]>(p.statusPeriods)
+        .filter((s) => s && isISODate(s.start))
+        .map((s) => ({ ...s, end: isoOrNull(s.end) })),
+      taxYearsFiled: arr<number>(p.taxYearsFiled).filter((y) => Number.isInteger(y)),
+    },
     settings: {
       ...base.settings,
       ...(d.settings ?? {}),
       notifications: { ...base.settings.notifications, ...(d.settings?.notifications ?? {}) },
     },
-    trips: Array.isArray(d.trips) ? d.trips.filter((t) => t && isISODate(t.departure)) : [],
-    applications: Array.isArray(d.applications) ? d.applications.filter((a) => a && a.kind) : [],
-    chat: Array.isArray(d.chat) ? d.chat.slice(-200) : [],
+    trips: arr<AppData['trips'][number]>(d.trips)
+      .filter((t) => t && typeof t.id === 'string' && isISODate(t.departure))
+      .map((t) => ({ ...t, return: isoOrNull(t.return) })),
+    applications: arr<AppData['applications'][number]>(d.applications)
+      .filter((a) => a && typeof a.id === 'string' && typeof a.kind === 'string')
+      .map((a) => ({
+        ...a,
+        submitted: isoOrNull(a.submitted),
+        milestones: arr<AppData['applications'][number]['milestones'][number]>(a.milestones).filter((m) => m && typeof m.key === 'string' && isISODate(m.date)),
+      })),
+    chat: arr<NonNullable<AppData['chat']>[number]>(d.chat).slice(-200),
     onboarded: !!d.onboarded,
   };
 }

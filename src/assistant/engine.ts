@@ -48,10 +48,20 @@ function needPr(ctx: Ctx): AssistantReply | null {
 const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = [
   {
     id: 'log_return',
-    match: (q) => has(q, /\b(i'?m back|i am back|came back|returned|arrived back|landed)\b/, '我回来了', '回到加拿大', '入境了', '已经回来'),
+    match: (q) => has(q, /\b(i'?m back|i am back|came back|got back|returned|arrived back|back in canada|back home)\b/, '我回来了', '回到加拿大', '入境了', '已经回来', '回来了'),
     run: (q, ctx) => {
       const trip = ctx.insights.ongoingTrip;
-      const date = findDates(q, ctx.today)[0]?.date ?? ctx.today;
+      const dates = findDates(q, ctx.today, 'past');
+      // "I left on Oct 1 and came back Oct 10": a complete past trip.
+      if (dates.length >= 2) {
+        const [dep, ret] = [dates[0].date, dates[1].date].sort();
+        return {
+          intent: 'log_departure',
+          text: ctx.t('as.confirmTrip', { dep, ret }),
+          actions: [{ kind: 'addTrip', departure: dep, return: ret, label: ctx.t('as.act.logTrip') }],
+        };
+      }
+      const date = dates[0]?.date ?? ctx.today;
       if (!trip) return { intent: 'log_return', text: ctx.t('as.noOngoing') };
       return {
         intent: 'log_return',
@@ -64,7 +74,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
     id: 'log_departure',
     match: (q) => has(q, /\b(i left|i'?m leaving|i am leaving|left canada|departed|flying out)\b/, '我走了', '离开了', '出境了', '今天出国', '我出发'),
     run: (q, ctx) => {
-      const dates = findDates(q, ctx.today);
+      const dates = findDates(q, ctx.today, 'past');
       const dep = dates[0]?.date ?? ctx.today;
       const ret = dates[1]?.date;
       return {
@@ -75,8 +85,23 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
     },
   },
   {
+    id: 'residency',
+    match: (q) => has(q, /residen(cy|t) obligation|\b730\b|lose (my )?pr|keep (my )?pr|how (long|many days) (can|could) i (stay|be|go|travel)|max(imum)? (absence|days away)/, '居住义务', '移民监', '730', '保持身份', '能出去多久', '能出国多久', '最多出国', '最多能出', '最长能'),
+    run: (_q, ctx) => {
+      const np = needPr(ctx);
+      if (np) return np;
+      const r = ctx.insights.residency!;
+      const lines = [ctx.t(r.compliant ? 'as.resOk' : 'as.resBad', { present: r.present, required: RESIDENCY_REQUIRED, short: r.shortfall })];
+      if (r.anniversary) lines.push(ctx.t('as.resNew', { date: r.anniversary }));
+      if (r.compliant && r.mustReturnBy)
+        lines.push(ctx.t(ctx.insights.ongoingTrip ? 'as.resReturnBy' : 'as.resMaxAway', { days: r.maxAbsence, date: r.mustReturnBy }));
+      if (!r.compliant && r.regainDate) lines.push(ctx.t('as.resRegain', { date: r.regainDate }));
+      return { intent: 'residency', text: lines.join('\n') };
+    },
+  },
+  {
     id: 'days_outside',
-    match: (q) => !has(q, /what if|can i|should i/, '如果', '可以', '能不能') && (has(q, /\b(outside|abroad|away|out of canada)\b/, '国外', '境外', '在外', '出国') && has(q, /how many|days|多少|几天|天数/)) || has(q, /\bin canada\b.*\b(20\d\d)\b/),
+    match: (q) => !has(q, /what if|can i|should i/, '如果', '可以', '能不能') && (has(q, /\b(outside|abroad|away|out of canada)\b/, '国外', '境外', '在外', '出国') && has(q, /how many|days|多少|几天|天数/)),
     run: (q, ctx) => {
       const y = findYear(q) ?? Number(ctx.today.slice(0, 4));
       const s = ctx.insights.model.yearStats(y, ctx.data.trips);
@@ -142,21 +167,6 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
     },
   },
   {
-    id: 'residency',
-    match: (q) => has(q, /residen(cy|t) obligation|\b730\b|lose (my )?pr|keep (my )?pr|how long can i (stay|be) (away|outside)/, '居住义务', '移民监', '730', '保持身份', '能出去多久', '最多出国'),
-    run: (_q, ctx) => {
-      const np = needPr(ctx);
-      if (np) return np;
-      const r = ctx.insights.residency!;
-      const lines = [ctx.t(r.compliant ? 'as.resOk' : 'as.resBad', { present: r.present, required: RESIDENCY_REQUIRED, short: r.shortfall })];
-      if (r.anniversary) lines.push(ctx.t('as.resNew', { date: r.anniversary }));
-      if (r.compliant && r.mustReturnBy)
-        lines.push(ctx.t(ctx.insights.ongoingTrip ? 'as.resReturnBy' : 'as.resMaxAway', { days: r.maxAbsence, date: r.mustReturnBy }));
-      if (!r.compliant && r.regainDate) lines.push(ctx.t('as.resRegain', { date: r.regainDate }));
-      return { intent: 'residency', text: lines.join('\n') };
-    },
-  },
-  {
     id: 'pr_card',
     match: (q) => has(q, /pr card|maple card|\bcard\b.*(renew|expir)/, '枫叶卡', 'pr卡', '续卡', '换卡'),
     run: (_q, ctx) => {
@@ -189,7 +199,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
   },
   {
     id: 'application',
-    match: (q) => has(q, /\b(copr|ecopr|ppr|aor|my application|processing|status|biometric|medical|background)\b/, '申请进度', '进度', '审理', '多久', '排期', '体检', '背调', '打指纹', '护照信'),
+    match: (q) => has(q, /\b(copr|ecopr|ppr|aor|my application|processing|biometric|medical|background check)\b/, '申请进度', '进度', '审理', '多久', '排期', '体检', '背调', '打指纹', '护照信'),
     run: (_q, ctx) => {
       const apps = ctx.data.applications.filter((a) => !a.archived && a.submitted);
       if (!apps.length) return { intent: 'application', text: ctx.t('as.noApps'), actions: [{ kind: 'navigate', to: 'timeline', label: ctx.t('as.act.timeline') }] };
@@ -205,7 +215,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
   },
   {
     id: 'crs',
-    match: (q) => has(q, /\bcrs\b|express entry|eligib|\bcec\b|\bfsw\b|\bfst\b|\bpnp\b|apply for pr|qualify/, '分数', '快速通道', 'ee', '资格', '申请pr', '省提名'),
+    match: (q) => has(q, /\bcrs\b|express entry|\bee\b|eligib|\bcec\b|\bfsw\b|\bfst\b|\bpnp\b|apply for pr|qualify/, '分数', '快速通道', '资格', '申请pr', '省提名'),
     run: (_q, ctx) => {
       const draws = ctx.open?.draws?.slice(0, 3) ?? [];
       const lines = [ctx.t('as.crs')];
@@ -215,7 +225,7 @@ const handlers: { id: string; match: (q: string) => boolean; run: Handler }[] = 
   },
   {
     id: 'rules',
-    match: (q) => has(q, /\brule|half.?day|count|departure day|tax|language test|how (is|are).*(calculated|counted)/, '规则', '怎么算', '半天', '报税', '语言', '计算'),
+    match: (q) => has(q, /\brules?\b|half.?day|\bcount(ed|ing|s)?\b|departure day|\btax(es)?\b|language test|how (is|are).*(calculated|counted)/, '规则', '怎么算', '半天', '报税', '语言', '计算'),
     run: (_q, ctx) => ({ intent: 'rules', text: ctx.t('as.rules') }),
   },
   {
@@ -262,7 +272,7 @@ export function suggestions(ctx: Pick<Ctx, 't' | 'insights'>): AssistantAction[]
 export function answer(question: string, data: AppData, t: Translate, open?: OpenData, today?: ISODate): AssistantReply {
   const insights = computeInsights(data, today);
   const ctx: Ctx = { data, insights, open, t, today: insights.today };
-  const q = question.trim().toLowerCase();
+  const q = question.trim().toLowerCase().replace(/[’‘]/g, "'");
   if (!q) return summary(ctx);
   for (const h of handlers) {
     if (h.match(q)) {
