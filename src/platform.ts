@@ -12,7 +12,8 @@ export const isNative = () => Capacitor.isNativePlatform();
  */
 let externalDepth = 0;
 export const inExternalActivity = () => externalDepth > 0;
-async function external<T>(fn: () => Promise<T>): Promise<T> {
+/** Run a call that briefly leaves the app (share sheet, picker, biometric prompt) without locking it. */
+export async function external<T>(fn: () => Promise<T>): Promise<T> {
   externalDepth++;
   try {
     return await fn();

@@ -40,33 +40,38 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
   screen in 4 languages (incl. RTL) on each pull request
 - History gaps by **month** (as IRCC forms ask), optional
 
-## 🗓️ v0.5 — iOS & accessibility
-- iOS native polish: WidgetKit widget, Face ID / Touch ID unlock, TestFlight build pipeline
-  (needs an Apple Developer account)
-- Fingerprint / face unlock on Android (BiometricPrompt)
-- Accessibility audit from the visual-QA run: screen-reader labels, contrast, large text, reduced motion
-- Native-speaker translation review programme; new languages: বাংলা, தமிழ், ગુજરાતી, Русский, Українська
-- Performance budget in CI (main bundle < 400 KB, first paint on low-end Android)
+## ✅ v0.5 — Accessibility, biometrics & languages (released in 0.8.0, 2026-10-16)
+- ✅ Face ID / Touch ID / fingerprint unlock (PIN stays as the fallback)
+- ✅ Accessibility: focus-trapped sheets, skip link, 44px touch targets, WCAG AA contrast, forced colours,
+  automated axe audit (WCAG 2.1 AA) in visual QA
+- ✅ Performance budget in CI (first-load JS ≤ 140 kB gzip)
+- ✅ New languages: বাংলা, தமிழ், ગુજરાતી, Русский, Українська (19 in total)
+- ⛔ iOS WidgetKit widget and TestFlight pipeline: blocked until an Apple Developer account is available
+- 🗓️ Native-speaker translation review programme (volunteers welcome: open an issue)
 
-## 🗓️ v0.6 — Application helper
-- Export **citizenship "absences from Canada"** table and **IMM 5669** history in form order
-- **CBSA travel-history import** (paste the text of your CBSA/ATIP response) with matching to logged trips
-- Presence calculator report in the same layout as IRCC's calculator, ready to compare
-- PR card renewal helper: residency obligation at the signing date, document checklist, photo specs
-- Smarter reminders: "your language test expires before your likely ITA" style cross-checks
+## ✅ v0.6 — Application helper (released in 0.8.0)
+- ✅ Citizenship **absences from Canada** list for any application date, CSV export
+- ✅ Printable physical-presence report to compare with IRCC's calculator
+- ✅ **CBSA travel-history import** (paste the report text) with matching to logged trips
+- ✅ PR card renewal check: residency obligation on the signing date, 9-month window, document links
+- ✅ Smart cross-checks: language test / passport / PR card / medical / permit expiring at the wrong time
+- 🗓️ Photo specifications helper for PR card and citizenship photos
 
-## 🗓️ v0.7 — Community 2.0
-- Predictions by office and stream with "% of people finished by day N" curves
-- Alerts when IRCC processing times change for your application type or country
-- Moderation tools for the open dataset (spam/duplicate detection, review queue)
-- Optional data partnership with forums (only with permission; no scraping)
+## ✅ v0.7 — Community 2.0 (released in 0.8.0)
+- ✅ "% of similar applicants finished by day N" curves (office → province → country → program)
+- ✅ Alerts when IRCC processing times change for your application type or country
+- ✅ Moderation report for the open dataset (duplicates, outliers, impossible order); intake explains rejections
+- 💡 Optional data partnership with forums (only with permission; no scraping)
 
-## 💡 v0.8 — Serverless sync
-- End-to-end encrypted transfer between your devices (QR code / file), still with no backend
-- Household sharing between two phones via encrypted files
+## ✅ v0.8 — Serverless sharing (released in 0.8.0)
+- ✅ Send one household member's dates and trips to another phone as a passphrase-encrypted file
+- ✅ Moving everything to a new phone: the encrypted backup (since v0.3)
+- 💡 QR-code transfer between devices
 
-## 🗓️ v1.0 — Store launch
-- Google Play and App Store releases with release signing, privacy labels and store listings
+## 🚧 v1.0 — Store launch
+- ✅ Launch kit: privacy policy page, store listing text, data-safety answers, iOS privacy manifest (docs/STORE.md)
+- ✅ Backup compatibility tests for every earlier backup format
+- ⛔ Google Play and App Store releases with release signing (need the owner's Play Console and Apple Developer accounts)
 - Independent security review; content review with a licensed immigration consultant (RCIC)
 - Stable data schema with guaranteed migrations and long-term backup compatibility
 

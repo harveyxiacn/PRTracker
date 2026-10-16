@@ -31,6 +31,8 @@ const P: Record<string, string> = {
   home2: 'M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
   sparkle: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z',
   close: 'M18 6 6 18M6 6l12 12',
+  // Generic biometric glyph (scan frame + face) for Face ID / fingerprint unlock.
+  biometric: 'M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16a4 4 0 0 0 6 0',
   more: 'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
 };
 
@@ -40,7 +42,7 @@ const DIRECTIONAL = new Set(['chevron', 'back', 'left', 'right', 'send']);
 export function Icon({ name, size, title }: { name: keyof typeof P | string; size?: number; title?: string }) {
   return (
     // Default 20px: an unsized inline SVG otherwise stretches to the full container width.
-    <svg className={DIRECTIONAL.has(name) ? 'flip-rtl' : undefined} viewBox="0 0 24 24" width={size ?? 20} height={size ?? 20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined}>
+    <svg className={DIRECTIONAL.has(name) ? 'flip-rtl' : undefined} viewBox="0 0 24 24" width={size ?? 20} height={size ?? 20} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden={title ? undefined : true} role={title ? 'img' : undefined} focusable="false">
       {title && <title>{title}</title>}
       <path d={P[name] ?? P.info} />
     </svg>

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type Keyboard
 import { Icon } from '../components/Icon';
 import { Field, Sheet, Status } from '../components/ui';
 import { emptyData } from '../domain/types';
-import { pickTextFile, saveTextFile } from '../platform';
+import { external, pickTextFile, saveTextFile } from '../platform';
+import { authenticateBiometric, biometricInfo, type BiometricInfo } from '../security/biometric';
 import { decryptText, encryptText, isEncryptedBackup } from '../security/crypto';
 import { buildIcs, remindersToEvents, tripsToEvents } from '../security/ics';
 import { hashPin, isValidPin, verifyPin } from '../security/pin';
@@ -146,7 +147,8 @@ function PinSheet({ mode, onClose }: { mode: 'set' | 'change' | 'remove'; onClos
       }
       if (needNew) {
         const lock = await hashPin(next);
-        update((d) => ({ ...d, lock }));
+        // Changing the PIN keeps the biometric preference; setting a new one starts with it off.
+        update((d) => ({ ...d, lock: d.lock?.biometric ? { ...lock, biometric: true } : lock }));
         toast(t('sec.pinSaved'));
       } else {
         update((d) => ({ ...d, lock: null }));
@@ -196,8 +198,24 @@ function PinSheet({ mode, onClose }: { mode: 'set' | 'change' | 'remove'; onClos
 
 /** Settings card: encrypted backup, app lock and calendar export. */
 export function SecuritySection() {
-  const { data, replaceAll, t, insights, toast } = useApp();
+  const { data, update, replaceAll, t, insights, toast } = useApp();
   const [exporting, setExporting] = useState(false);
+  const [bio, setBio] = useState<BiometricInfo | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void biometricInfo().then((info) => alive && setBio(info));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const setBiometric = async (on: boolean) => {
+    // Confirm the enrolled biometric belongs to this user before trusting it to unlock the app.
+    if (on && !(await external(() => authenticateBiometric({ reason: t('bio.reason'), cancelTitle: t('bio.cancel'), title: t('bio.title') })))) return;
+    update((d) => (d.lock ? { ...d, lock: { ...d.lock, biometric: on } } : d));
+    toast(t(on ? 'bio.enabled' : 'bio.disabled'));
+  };
   const [encText, setEncText] = useState<string | null>(null);
   const [pinMode, setPinMode] = useState<'set' | 'change' | 'remove' | null>(null);
 
@@ -252,6 +270,15 @@ export function SecuritySection() {
           <button className="btn sm" onClick={() => setPinMode('set')}><Icon name="shield" size={16} /> {t('sec.setPin')}</button>
         )}
       </div>
+      {data.lock && bio?.available && (
+        <>
+          <label className="check" style={{ marginTop: 8 }}>
+            <input type="checkbox" checked={!!data.lock.biometric} onChange={(e) => void setBiometric(e.target.checked)} aria-describedby="bio-hint" />
+            <span>{t('bio.toggle')}</span>
+          </label>
+          <p className="tiny" id="bio-hint" style={{ marginTop: 0 }}>{t('bio.toggleHint')}</p>
+        </>
+      )}
 
       <h3>{t('sec.calendar')}</h3>
       <div className="row wrap">
@@ -318,9 +345,46 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
   const [attempts, setAttempts] = useState<Attempts>(loadAttempts);
   const [now, setNow] = useState(() => Date.now());
   const [forgot, setForgot] = useState(false);
+  const [bioReady, setBioReady] = useState(false);
+  const [bioBusy, setBioBusy] = useState(false);
+  const bioAutoTried = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const waiting = attempts.until > now;
   const waitSec = Math.ceil((attempts.until - now) / 1000);
+  const bioWanted = !!data.lock?.biometric;
+
+  // Biometrics are an alternative to the PIN (the OS rate-limits them), so they also work during a PIN back-off.
+  const tryBiometric = async () => {
+    if (bioBusy) return;
+    setBioBusy(true);
+    const ok = await authenticateBiometric({ reason: t('bio.reason'), cancelTitle: t('bio.cancel'), title: t('bio.title') });
+    setBioBusy(false);
+    if (ok) {
+      saveAttempts({ fails: 0, until: 0 });
+      onUnlock();
+    } else {
+      // Cancelled or not recognised: the PIN pad is right there.
+      rootRef.current?.focus();
+    }
+  };
+  const tryBiometricRef = useRef(tryBiometric);
+  tryBiometricRef.current = tryBiometric;
+
+  // Prompt once automatically when the lock screen appears (StrictMode re-runs are guarded by the ref).
+  useEffect(() => {
+    if (!bioWanted) return;
+    let alive = true;
+    void biometricInfo().then((info) => {
+      if (!alive || !info.available) return;
+      setBioReady(true);
+      if (bioAutoTried.current) return;
+      bioAutoTried.current = true;
+      void tryBiometricRef.current();
+    });
+    return () => {
+      alive = false;
+    };
+  }, [bioWanted]);
 
   useEffect(() => {
     if (!data.lock) onUnlock();
@@ -432,7 +496,13 @@ export function LockScreen({ onUnlock }: { onUnlock: () => void }) {
         </button>
       </div>
 
-      <button type="button" className="btn ghost" style={{ marginTop: 24 }} aria-expanded={forgot} onClick={() => setForgot((f) => !f)}>{t('sec.forgot')}</button>
+      {bioWanted && bioReady && (
+        <button type="button" className="btn" style={{ marginTop: 24 }} disabled={bioBusy || busy} onClick={() => void tryBiometric()}>
+          <Icon name="biometric" size={20} /> {t('bio.use')}
+        </button>
+      )}
+
+      <button type="button" className="btn ghost" style={{ marginTop: bioWanted && bioReady ? 8 : 24 }} aria-expanded={forgot} onClick={() => setForgot((f) => !f)}>{t('sec.forgot')}</button>
       {forgot && (
         <div style={{ maxWidth: 420 }}>
           <div className="tip warn" role="note">

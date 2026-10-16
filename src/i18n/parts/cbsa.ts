@@ -1,0 +1,53 @@
+// CBSA travel-history import (cbsa.*) and smart cross-checks (xc.*). Merged into en.ts by the lead.
+// xc.* vars: dates are ISO (Home formats them), days/n/from/to are numbers.
+export const cbsaEn: Record<string, string> = {
+  // Entry point on the Trips screen
+  'cbsa.cardTitle': 'Official travel history',
+  'cbsa.cardBody': 'Compare your trips with the entries CBSA recorded, and add the ones you missed.',
+  'cbsa.open': 'Import CBSA report',
+
+  // Sheet
+  'cbsa.title': 'Import CBSA travel history',
+  'cbsa.intro': 'The Canada Border Services Agency (CBSA) keeps a record of your entries to Canada, and of some exits. Paste it here to check your trips.',
+  'cbsa.how': 'How to get your report',
+  'cbsa.howBody': 'Ask CBSA for your Travel History Report through the Government of Canada’s online access to information and privacy (ATIP) request service. It’s free under the Privacy Act. Give your date of birth and ask for both your entries and your exits. It can take up to 30 days.',
+  'cbsa.ircc': 'Applying for citizenship or a PR card? IRCC can get this report itself. CBSA says requesting it separately for that purpose can slow things down.',
+  'cbsa.limits': 'Exit records only exist for land crossings into the US (from 2013 for some travellers, from July 2019 for everyone) and commercial flights (from June 2020). Older trips may show only the entry. Records are kept for 15 years.',
+  'cbsa.link': 'Open the CBSA page',
+  'cbsa.text': 'Report text',
+  'cbsa.placeholder': 'Copy the table rows from the PDF and paste them here, for example:\n2024/07/02  Peace Arch\n14-MAR-2023  Entry  YVR',
+  'cbsa.parse': 'Find dates',
+  'cbsa.privacy': 'The text is read on this device and is never saved. Only the trips you add are kept.',
+  'cbsa.none': 'No dates found. Copy the rows of the report, including the dates.',
+  'cbsa.found': 'Found {entries} entries and {exits} exits',
+  'cbsa.review': 'Show the dates found',
+  'cbsa.kind.entry': 'Entry',
+  'cbsa.kind.exit': 'Exit',
+  'cbsa.matched': '{n} entries match your logged trips',
+  'cbsa.allGood': 'Every entry in the report matches a trip you logged.',
+  'cbsa.unmatched': 'Entries with no logged trip ({n})',
+  'cbsa.unmatchedHelp': 'CBSA recorded you entering Canada on these days, but none of your trips ends then. Add the trip with the day you left.',
+  'cbsa.returnOn': 'Back in Canada {date}',
+  'cbsa.via': 'via {place}',
+  'cbsa.departure': 'Left Canada',
+  'cbsa.departureNeeded': 'Enter the day you left (on or before the return).',
+  'cbsa.fromExit': 'From the exit record',
+  'cbsa.add': 'Add trip',
+  'cbsa.addAll': 'Add all with a departure date ({n})',
+  'cbsa.added': 'Trips added: {n}',
+  'cbsa.noEntry': 'Logged trips with no CBSA entry ({n})',
+  'cbsa.noEntryHelp': 'This isn’t necessarily wrong: CBSA may be missing some entries, such as some land crossings. Check these dates against your passport stamps or tickets.',
+  'cbsa.tripRange': '{from} → {to}',
+
+  // Smart cross-checks (Home tips)
+  'xc.langAtSubmission': 'Your language test results expired on {date}, before your Express Entry application was submitted ({submitted}). Results must be less than 2 years old when you apply.',
+  'xc.langExpired': 'Your language test results expired on {date}. Take a new test before you submit your Express Entry application.',
+  'xc.langSoon': 'Your language test results expire on {date} (in {days} days). Submit your Express Entry application before then, or book a new test.',
+  'xc.passportTrip': 'Your passport expires on {date}, too close to your trip ({departure} → {return}). Renew it before you travel.',
+  'xc.passportSixMonths': 'Your passport expires on {date}, less than 6 months after you leave on {departure}. Many countries require 6 months of validity.',
+  'xc.prCardTrip': 'Your PR card expires on {date}, before you come back from your trip ({departure} → {return}). Renew it before you leave, or you’ll need a PR travel document (PRTD) to fly back.',
+  'xc.medicalOld': 'Your immigration medical exam is more than 12 months old (it was valid until {date}). IRCC may ask you to take a new one.',
+  'xc.permitPr': 'Your permit expires on {date} (in {days} days) while your PR application is in progress. Apply to extend it before then to keep maintained status, or check if you can get a bridging open work permit (BOWP).',
+  'xc.citNoApp': 'You meet the physical presence requirement for citizenship. Add a citizenship application here to track it once you apply.',
+  'xc.taxYears': 'You’ve recorded {n} filed tax years for {from}–{to}. For citizenship you must have filed taxes for 3 of the 5 years before you apply, if you were required to.',
+};

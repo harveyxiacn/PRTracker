@@ -9,7 +9,7 @@ import { en } from './en';
 import { LANGUAGES, matchLanguage } from './languages';
 import type { LocaleModule } from './index';
 
-const PREFIXES = ['app', 'nav', 'common', 'onb', 'home', 'tip', 'rem', 'cal', 'trips', 'tl', 'ms', 'pred', 'as', 'elig', 'edu', 'lang', 'com', 'set', 'status', 'prog', 'prov', 'paste', 'draw', 'kb', 'gl', 'hist', 'doc', 'crsp', 'sec', 'demo', 'nat', 'ppl', 'trend'];
+const PREFIXES = ['app', 'nav', 'common', 'onb', 'home', 'tip', 'rem', 'cal', 'trips', 'tl', 'ms', 'pred', 'as', 'elig', 'edu', 'lang', 'com', 'set', 'status', 'prog', 'prov', 'paste', 'draw', 'kb', 'gl', 'hist', 'doc', 'crsp', 'sec', 'demo', 'nat', 'ppl', 'trend', 'bio', 'a11y', 'share', 'form', 'cbsa', 'xc', 'c2'];
 const KEY_RE = new RegExp(`'((?:${PREFIXES.join('|')})\\.[A-Za-z0-9_.]+)'`, 'g');
 
 function sourceFiles(dir: string): string[] {
@@ -53,6 +53,8 @@ describe('i18n', () => {
     KB.forEach((e) => used.add(`kb.${e.id}`));
     GLOSSARY.forEach((g) => used.add(`gl.${g}`));
     ACTIVITY_KINDS.forEach((k) => used.add(`hist.kind.${k}`));
+    for (const k of ['worker', 'student', 'visitor', 'protected', 'other', 'pr']) used.add(`form.kind.${k}`);
+    for (const k of ['entry', 'exit']) used.add(`cbsa.kind.${k}`);
     for (const k of ['override', 'community', 'ircc', 'fallback']) used.add(`pred.source.${k}`);
     for (const k of ['pr_in', 'tr_in', 'none_in', 'out', 'out_planned', 'travel', 'future']) used.add(`cal.kind.${k}`);
     const missing = [...used].filter((k) => !(k in en) && !/\.(json|ts|tsx|png|svg|yml)$/.test(k));

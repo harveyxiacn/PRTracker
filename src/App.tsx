@@ -21,6 +21,7 @@ const CommunityScreen = named(() => import('./screens/Community'), 'CommunityScr
 const SettingsScreen = named(() => import('./screens/Settings'), 'SettingsScreen');
 const DocumentsScreen = named(() => import('./screens/Documents'), 'DocumentsScreen');
 const HistoryScreen = named(() => import('./screens/History'), 'HistoryScreen');
+const FormsScreen = named(() => import('./screens/Forms'), 'FormsScreen');
 
 const TABS: { route: Route; icon: string; key: string }[] = [
   { route: 'home', icon: 'home', key: 'nav.home' },
@@ -76,11 +77,23 @@ export function App() {
     settings: <SettingsScreen />,
     documents: <DocumentsScreen />,
     history: <HistoryScreen />,
+    forms: <FormsScreen />,
   }[route];
 
   const title = route === 'home' ? t('app.name') : t(`nav.${route}`);
   return (
     <div className="app">
+      {/* Hash routing (#/route) means a plain href="#main" would navigate, so move focus by hand. */}
+      <a
+        className="skip-link"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('main')?.focus();
+        }}
+      >
+        {t('a11y.skip')}
+      </a>
       <header className="topbar">
         {!TABS.some((x) => x.route === route) && (
           <button className="icon-btn" aria-label={t('common.back')} onClick={() => history.length > 1 ? history.back() : go('home')}>
@@ -102,7 +115,7 @@ export function App() {
           <button className="btn sm" onClick={() => (window.location.href = window.location.pathname)}>{t('demo.exit')}</button>
         </div>
       )}
-      <main className="main">
+      <main className="main" id="main" tabIndex={-1}>
         <Suspense fallback={<div className="empty-state" aria-busy="true">…</div>}>{screen}</Suspense>
       </main>
       <nav className="tabbar" aria-label={t('nav.main')}>

@@ -147,6 +147,7 @@ export function migrate(input: unknown): AppData {
       : undefined,
     household: sanitizeHousehold(d.household),
     lock: d.lock && typeof d.lock.pinHash === 'string' && typeof d.lock.salt === 'string' ? d.lock : null,
+    ptSeen: typeof d.ptSeen === 'string' && isISODate(d.ptSeen) ? d.ptSeen : undefined,
     onboarded: !!d.onboarded,
   };
 }

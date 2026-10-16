@@ -6,7 +6,8 @@
   --border: #e3e1dc;
   --text: #1a1a19;
   --text-2: #52514e;
-  --text-3: #7a7974;
+  /* ≥4.5:1 on --bg (4.97), --surface (5.42) and --surface-2 (4.71) for small/tiny text */
+  --text-3: #6b6a65;
   --accent: #c8102e;
   --accent-soft: #fbe9ec;
   --accent-text: #a30d25;
@@ -14,10 +15,14 @@
   --focus: #2a78d6;
   /* data colours (validated categorical slots: blue, orange, aqua) */
   --d-pr: #1baf7a;
-  --d-tr: #2a78d6;
+  --d-tr: #2873d0; /* was #2a78d6: white day numbers need 4.5:1 (now 4.72) */
   --d-out: #eb6834;
   --d-none: #e4e2dc;
   --d-future: #f3f2ef;
+  /* text on the data fills (big month view day numbers), all ≥4.5:1 */
+  --on-d-pr: #1a1a19;
+  --on-d-tr: #ffffff;
+  --on-d-out: #1a1a19;
   /* status (never used as series colours) */
   --good: #0ca30c;
   --good-text: #006300;
@@ -41,16 +46,19 @@
   --text: #f0efec;
   --text-2: #c3c2b7;
   --text-3: #95948c;
-  --accent: #e5485f;
+  --accent: #d6354e; /* was #e5485f: white on it was 3.87:1, now 4.69:1 */
   --accent-soft: #3a1a20;
   --accent-text: #ff8a9b;
   --on-accent: #ffffff;
   --focus: #6da7ec;
   --d-pr: #199e70;
   --d-tr: #3987e5;
-  --d-out: #d95926;
+  --d-out: #dc5e2b; /* was #d95926: dark day numbers 4.71:1 */
   --d-none: #383835;
   --d-future: #20201e;
+  --on-d-pr: #1a1a19;
+  --on-d-tr: #1a1a19;
+  --on-d-out: #1a1a19;
   --good-text: #4cd34c;
   --warn-text: #fab219;
   --critical-text: #ff7b7b;
@@ -67,16 +75,19 @@
     --text: #f0efec;
     --text-2: #c3c2b7;
     --text-3: #95948c;
-    --accent: #e5485f;
+    --accent: #d6354e; /* was #e5485f: white on it was 3.87:1, now 4.69:1 */
     --accent-soft: #3a1a20;
     --accent-text: #ff8a9b;
     --on-accent: #ffffff;
     --focus: #6da7ec;
     --d-pr: #199e70;
     --d-tr: #3987e5;
-    --d-out: #d95926;
+    --d-out: #dc5e2b; /* was #d95926: dark day numbers 4.71:1 */
     --d-none: #383835;
     --d-future: #20201e;
+    --on-d-pr: #1a1a19;
+    --on-d-tr: #1a1a19;
+    --on-d-out: #1a1a19;
     --good-text: #4cd34c;
     --warn-text: #fab219;
     --critical-text: #ff7b7b;
@@ -98,6 +109,14 @@ body {
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: var(--accent-text); }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Containers that receive focus programmatically (dialogs, <main> via the skip link) need no ring. */
+.sheet:focus, main:focus { outline: none; }
+.skip-link {
+  position: absolute; inset-inline-start: 8px; top: -200px; z-index: 200;
+  min-height: 44px; display: inline-flex; align-items: center; padding: 0 16px; border-radius: 12px;
+  background: var(--surface); color: var(--text); border: 2px solid var(--focus); font-weight: 600; text-decoration: none;
+}
+.skip-link:focus { top: calc(env(safe-area-inset-top) + 8px); }
 
 .app { min-height: 100dvh; display: flex; flex-direction: column; }
 .topbar {
@@ -199,7 +218,8 @@ textarea.input { min-height: 80px; resize: vertical; }
 .list { list-style: none; margin: 0; padding: 0; }
 .list > li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .list > li:last-child { border-bottom: 0; }
-.list button.item { all: unset; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; }
+.list button.item { all: unset; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; min-height: 44px; }
+.list button.item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
 
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
@@ -244,13 +264,18 @@ textarea.input { min-height: 80px; resize: vertical; }
 .cell.empty { visibility: hidden; }
 .cell.today { outline: 2px solid var(--text); outline-offset: 1px; z-index: 1; }
 .cell.sel { outline: 2px solid var(--focus); outline-offset: 1px; z-index: 2; }
+/* Keyboard focus must win over the today/selected outlines. */
+.mgrid .cell:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; z-index: 3; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-2); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 
 .month-big .mgrid { gap: 4px; }
 .month-big .cell { border-radius: 8px; font-size: 12px; color: var(--text); display: flex; align-items: center; justify-content: center; }
-.month-big .cell.pr_in, .month-big .cell.tr_in, .month-big .cell.out { color: #fff; font-weight: 600; }
+.month-big .cell.pr_in, .month-big .cell.tr_in, .month-big .cell.out, .month-big .cell.travel { font-weight: 600; }
+.month-big .cell.pr_in, .month-big .cell.travel { color: var(--on-d-pr); }
+.month-big .cell.tr_in, .month-big .cell.travel.pre { color: var(--on-d-tr); }
+.month-big .cell.out { color: var(--on-d-out); }
 
 /* chat */
 .chat { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
@@ -289,7 +314,7 @@ textarea.input { min-height: 80px; resize: vertical; }
 .steps i { flex: 1; height: 4px; border-radius: 4px; background: var(--border); }
 .steps i.on { background: var(--accent); }
 
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 table.data { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.data th, table.data td { text-align: start; padding: 6px 4px; border-bottom: 1px solid var(--border); }
 table.data td.n, table.data th.n { text-align: end; font-variant-numeric: tabular-nums; }
@@ -310,3 +335,19 @@ svg { flex: none; }
 .card h2 svg { width: 20px; height: 20px; }
 .btn svg { width: 18px; height: 18px; }
 .btn.sm svg { width: 16px; height: 16px; }
+:root[lang='bn'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Bengali', 'Nirmala UI', sans-serif; }
+:root[lang='ta'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Tamil', 'Nirmala UI', sans-serif; }
+:root[lang='gu'] { --font: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Gujarati', 'Nirmala UI', sans-serif; }
+
+/* Touch targets: 44px minimum on touch screens for the compact controls (WCAG 2.5.5 / platform HIG). */
+@media (pointer: coarse) {
+  .btn.sm, .chip, .segmented button, .ms input[type='date'] { min-height: 44px; }
+  .check { min-height: 44px; }
+}
+
+/* Windows High Contrast / forced colours: keep focus, selection and status visible. */
+@media (forced-colors: active) {
+  .btn, .chip, .segmented button, .badge, .icon-btn { border: 1px solid ButtonText; }
+  .chip[aria-pressed='true'], .segmented button[aria-pressed='true'], .tab[aria-current='page'] { outline: 2px solid Highlight; }
+  .cell.today, .cell.sel { outline-color: Highlight; }
+}

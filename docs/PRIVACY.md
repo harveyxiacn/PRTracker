@@ -43,7 +43,7 @@ text or links.
 
 - **Documents:** only the kind, holder (me/spouse/child), dates, country and a free note. The app asks you never to enter document numbers.
 - **Personal history:** addresses and activities you type yourself, stored only on the device. Exports are files you choose to save.
-- **Encrypted backups:** PBKDF2-SHA-256 (310,000 iterations, random 16-byte salt) and AES-256-GCM (random 12-byte IV) via WebCrypto. A forgotten passphrase cannot be recovered.
+- **Encrypted backups:** PBKDF2-SHA-256 (600,000 iterations, random 16-byte salt) and AES-256-GCM (random 12-byte IV) via WebCrypto. A forgotten passphrase cannot be recovered.
 - **App lock:** only a salted PBKDF2 hash of the PIN is stored. After 5 wrong tries there is an exponential back-off. The only reset is wiping all data.
 - **Calendar export (.ics):** reminder titles and trip destinations go into a file you choose to import into your calendar app. That calendar may sync to a cloud account.
 
@@ -53,6 +53,11 @@ text or links.
 - **Android widget:** shows a short snapshot (citizenship countdown, residency status, PR card expiry or "abroad since" date) on your home screen. It contains no names or free text. Anyone who can see your home screen can see it, so don't add the widget if that's a concern.
 - **Block screenshots:** an opt-in Android setting (FLAG_SECURE) that also hides the app preview in recent apps.
 - **Reddit ingestion:** runs only in the project's GitHub Actions, never in the app. It reads public posts through Reddit's official API and stores only anonymised facts (program, month, day counts, province/country/office from a fixed list), plus salted hashes of post ids for de-duplication. No usernames, post ids, links or text are stored. See docs/REDDIT.md.
+
+## Sharing between phones (v0.8)
+
+- "Send a person" creates a file containing only that person's PR/status dates and trips, encrypted with the same envelope as encrypted backups (PBKDF2-SHA-256 600,000 iterations, AES-256-GCM). The file name does not contain the person's name.
+- Send the passphrase by a different channel (in person, by phone). Anyone with both the file and the passphrase can read it. There is no server; the file goes wherever you send it.
 
 ## Threat model notes
 

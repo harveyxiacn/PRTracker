@@ -58,7 +58,8 @@ export function MiniYear({ year }: { year: number }) {
   const width = weeks * (cell + gap);
   return (
     <>
-      <div style={{ overflowX: 'auto', marginTop: 10 }}>
+      {/* Scrolls sideways on narrow phones, so keyboard users must be able to focus it. */}
+      <div style={{ overflowX: 'auto', marginTop: 10 }} tabIndex={0} role="region" aria-label={t('cal.miniLabel', { year })}>
         <svg viewBox={`0 0 ${width} ${14 + 7 * (cell + gap)}`} style={{ width: '100%', minWidth: 420, display: 'block', cursor: 'pointer' }} onClick={() => go('calendar')} role="img" aria-label={t('cal.miniLabel', { year })}>
           {labels}
           {rects}

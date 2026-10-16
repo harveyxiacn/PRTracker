@@ -5,6 +5,11 @@ import { securityEn } from './parts/security';
 import { nativeEn } from './parts/native';
 import { peopleEn } from './parts/people';
 import { trendsEn } from './parts/trends';
+import { shareEn } from './parts/share';
+import { biometricEn, a11yEn } from './parts/biometric';
+import { formsEn } from './parts/forms';
+import { cbsaEn } from './parts/cbsa';
+import { community2En } from './parts/community2';
 
 export const en: Record<string, string> = {
   'app.name': 'PR Tracker',
@@ -21,6 +26,7 @@ export const en: Record<string, string> = {
   'nav.settings': 'Settings',
   'nav.documents': 'Documents',
   'nav.history': 'Personal history',
+  'nav.forms': 'Application helper',
 
   // common
   'common.days': 'days',
@@ -714,4 +720,10 @@ export const en: Record<string, string> = {
   ...nativeEn,
   ...peopleEn,
   ...trendsEn,
+  ...shareEn,
+  ...biometricEn,
+  ...a11yEn,
+  ...formsEn,
+  ...cbsaEn,
+  ...community2En,
 };

@@ -9,6 +9,7 @@ import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
 import { exportJson, importJson, wipeData } from '../store/storage';
 import { SecuritySection } from './Security';
 import { PeopleSection } from './People';
+import { ShareSection } from './Share';
 import { privacyScreenSupported, setPrivacyScreen } from '../native/privacy';
 
 const VERSION = __APP_VERSION__;
@@ -58,6 +59,8 @@ export function SettingsScreen() {
       </section>
 
       <PeopleSection />
+
+      {!demo && <ShareSection />}
 
       <section className="card">
         <h2><Icon name="settings" /> {t('set.prefs')}</h2>

@@ -15,7 +15,7 @@ import { loadData, saveData } from './storage';
 
 export type Route =
   | 'home' | 'calendar' | 'trips' | 'timeline' | 'assistant'
-  | 'eligibility' | 'community' | 'settings' | 'documents' | 'history';
+  | 'eligibility' | 'community' | 'settings' | 'documents' | 'history' | 'forms';
 
 interface Ctx {
   data: AppData;
@@ -46,7 +46,7 @@ export function useApp(): Ctx {
 
 function routeFromHash(): { route: Route; param?: string } {
   const [r, p] = window.location.hash.replace(/^#\/?/, '').split('/');
-  const routes: Route[] = ['home', 'calendar', 'trips', 'timeline', 'assistant', 'eligibility', 'community', 'settings', 'documents', 'history'];
+  const routes: Route[] = ['home', 'calendar', 'trips', 'timeline', 'assistant', 'eligibility', 'community', 'settings', 'documents', 'history', 'forms'];
   return { route: (routes.includes(r as Route) ? r : 'home') as Route, param: p ? decodeURIComponent(p) : undefined };
 }
 

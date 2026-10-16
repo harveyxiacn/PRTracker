@@ -92,6 +92,14 @@ async function build() {
 
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('build-community.mjs')) {
   const i = process.argv.indexOf('--add-from-issue');
-  if (i > 0) await addFromIssue(process.argv[i + 1]);
+  if (i > 0) {
+    try {
+      await addFromIssue(process.argv[i + 1]);
+    } catch (e) {
+      // One clean line (no stack trace): the intake workflow posts it on the issue.
+      console.error(e instanceof Error ? e.message : String(e));
+      process.exit(1);
+    }
+  }
   await build();
 }

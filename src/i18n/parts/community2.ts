@@ -1,0 +1,47 @@
+// Community 2.0 (v0.7): finish curves and processing-time alerts. Merged into en.ts by the lead.
+export const community2En: Record<string, string> = {
+  // Finish curve (application detail)
+  'c2.curve.title': 'How long similar applications took',
+  'c2.curve.intro': 'Share of community applicants who had reached “{milestone}”, by days since submission.',
+  'c2.curve.chartLabel': 'Percent of similar applicants finished, by days since submission',
+  'c2.curve.share': '{pct}% of similar applicants had finished by day {day}',
+  'c2.curve.scope': 'scope: {scope}, n={n}',
+  'c2.curve.series': 'Similar applicants',
+  'c2.curve.you': 'You',
+  'c2.curve.youDay': 'You · day {day}',
+  'c2.curve.axisX': 'Days since submission',
+  'c2.curve.p50': 'Half finished by',
+  'c2.curve.p80': '80% finished by',
+  'c2.curve.p90': '90% finished by',
+  'c2.curve.dayN': 'day {n}',
+  'c2.curve.tipPct': '{pct}% finished',
+  'c2.curve.tipDay': 'by day {day}',
+  'c2.curve.noSubmitted': 'Add your submission date to see where you are on the curve.',
+  'c2.curve.onlyFinished': 'Only applicants who reported “{milestone}” are counted. Timelines that are still open are left out, so real waits can be longer.',
+  'c2.curve.empty': 'Not enough shared timelines for a curve yet (at least {n} finished applications are needed). Sharing yours helps others.',
+  'c2.curve.showTable': 'Show table',
+  'c2.curve.hideTable': 'Hide table',
+  'c2.curve.colDay': 'Day',
+  'c2.curve.colPct': '% finished',
+  'c2.scope.office': 'office',
+  'c2.scope.province': 'province',
+  'c2.scope.country': 'country',
+  'c2.scope.program': 'program',
+  'c2.scopeWith': '{scope} ({name})',
+
+  // Processing-time alerts (Home)
+  'c2.pt.title': 'Processing times changed',
+  'c2.pt.intro': 'IRCC updated its published processing times for applications you track.',
+  'c2.pt.change': '{series}: {from} → {to} days ({delta})',
+  'c2.pt.longer': 'Longer',
+  'c2.pt.shorter': 'Shorter',
+  'c2.pt.date': 'Changed {date}',
+  'c2.pt.note': 'These are IRCC estimates for new applications, not a forecast for your file.',
+  'c2.pt.gotIt': 'Got it',
+  'c2.s.child': 'Dependent child sponsorship',
+  'c2.s.childAdopted': 'Adopted child sponsorship',
+
+  // Maple (suggested answers; the lead wires the intent)
+  'c2.maple.share': '{pct}% of similar applicants had finished by day {day} (scope: {scope}, n={n}). Half had finished by day {p50}.',
+  'c2.maple.noCurve': 'There aren’t enough shared timelines like yours yet to say how many had finished by now.',
+};

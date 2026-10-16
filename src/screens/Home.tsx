@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { proactiveTips } from '../assistant/tips';
 import { Icon } from '../components/Icon';
 import { Ring, Status } from '../components/ui';
@@ -9,11 +10,19 @@ import { useApp } from '../store/AppContext';
 import { MiniYear } from './Calendar';
 import { TripEditor, useTripEditor } from './Trips';
 import { HouseholdCard } from './People';
+import { crossChecks } from '../domain/crossChecks';
+
+// Loaded after first paint: it fetches trend data and is not needed for the core counts.
+const ProcessingAlertsCard = lazy(() => import('./Curves').then((m) => ({ default: m.ProcessingAlertsCard })));
 
 export function Home() {
   const { data, insights, t, lang, go, open } = useApp();
   const editor = useTripEditor();
-  const tips = proactiveTips(data, insights);
+  const checks = crossChecks(data, insights);
+  const rank = { critical: 0, warn: 1, info: 2 } as const;
+  const tips = [...checks, ...proactiveTips(data, insights)]
+    .filter((x) => !(x.key === 'tip.citEligible' && checks.some((c) => c.key === 'xc.citNoApp')))
+    .sort((a, b) => rank[a.severity] - rank[b.severity]);
   const c = insights.citizenship;
   const r = insights.residency;
   const card = insights.prCard;
@@ -40,6 +49,10 @@ export function Home() {
           </div>
         </div>
       )}
+
+      <Suspense fallback={null}>
+        <ProcessingAlertsCard />
+      </Suspense>
 
       {tips.map((tip) => (
         <div key={tip.key} className={`tip ${tip.severity}`} role={tip.severity === 'critical' ? 'alert' : undefined}>
@@ -138,6 +151,16 @@ export function Home() {
               ? t('home.cardRenewIn', { days: fmtNum(card.daysUntilRenewal, lang), date: fmtDate(card.renewalOpens, lang) })
               : t('home.cardHow')}
           </div>
+        </section>
+      )}
+
+      {data.profile.prDate && (
+        <section className="card">
+          <div className="row spread">
+            <h2 style={{ margin: 0 }}><Icon name="card" /> {t('form.title')}</h2>
+            <button className="btn ghost sm" onClick={() => go('forms')}>{t('common.open')} <Icon name="chevron" size={16} /></button>
+          </div>
+          <p className="small muted" style={{ margin: '6px 0 0' }}>{t('form.intro')}</p>
         </section>
       )}
 
