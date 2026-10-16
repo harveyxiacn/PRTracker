@@ -6,6 +6,11 @@ import { loadOpenData, type OpenData } from '../data/remote';
 import { detectLang, languageInfo, loadLanguage, makeT, type Lang } from '../i18n';
 import { en } from '../i18n/en';
 import { syncNotifications } from '../notify/notifications';
+import { updateWidgetSnapshot, type WidgetSnapshot } from '../native/widget';
+import { setPrivacyScreen } from '../native/privacy';
+import { householdReminders } from '../domain/people';
+import { diffDays } from '../domain/dates';
+import { fmtDate, fmtNum } from '../i18n';
 import { loadData, saveData } from './storage';
 
 export type Route =
@@ -25,6 +30,8 @@ interface Ctx {
   go: (r: Route, param?: string) => void;
   param?: string;
   toast: (msg: string) => void;
+  /** Showing sample data (nothing is saved). */
+  demo: boolean;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -49,6 +56,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [today, setToday] = useState(todayISO());
   const saveTimer = useRef<number | undefined>(undefined);
   const pending = useRef<AppData | null>(null);
+  // Demo mode (?demo=1): sample data in memory only — never saved, so real data is untouched.
+  const demoMode = useRef(typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1');
   const flush = useCallback(() => {
     window.clearTimeout(saveTimer.current);
     if (pending.current) {
@@ -58,10 +67,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    loadData().then((d) => {
-      if (!d.onboarded && !d.trips.length) d.settings.language = detectLang();
-      setData(d);
-    });
+    if (demoMode.current) {
+      const lang = new URLSearchParams(window.location.search).get('lang') ?? detectLang();
+      void import('../domain/demo').then(({ demoData }) => setData(demoData(todayISO(), lang)));
+    } else {
+      loadData().then((d) => {
+        if (!d.onboarded && !d.trips.length) d.settings.language = detectLang();
+        setData(d);
+      });
+    }
     const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
     // Never lose the last edit when the app is closed or sent to the background.
@@ -123,6 +137,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loaded.current = true;
       return;
     }
+    if (demoMode.current) return;
     pending.current = data;
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(flush, 250);
@@ -156,11 +171,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [data?.settings.theme, loadedLang]);
 
   // Reschedule local notifications when anything that affects them changes.
-  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.settings.notifications) + loadedLang : '';
+  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.household ?? null) + JSON.stringify(data?.settings.notifications) + loadedLang : '';
   useEffect(() => {
-    if (!data || !insights || !data.onboarded) return;
-    syncNotifications(insights.reminders, data.settings, t).catch((e) => console.warn('notifications', e));
+    if (!data || !insights || !data.onboarded || demoMode.current) return;
+    // Other household members' reminders carry their name in the title.
+    const others = householdReminders(data, insights.today);
+    const tt: typeof t = (k, v) => (k === 'ppl.remTitle' && v ? t(k, { name: v.name, title: t(String(v.personTitle), v) }) : t(k, v));
+    const all = [...insights.reminders, ...others.map((r) => ({ ...r, title: 'ppl.remTitle', vars: { ...r.vars, personTitle: r.title } }))];
+    syncNotifications(all, data.settings, tt).catch((e) => console.warn('notifications', e));
   }, [reminderSig]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Android home-screen widget: a small precomputed, already-localised snapshot (no names, no free text).
+  useEffect(() => {
+    if (!data || !insights || demoMode.current) return;
+    const lines: WidgetSnapshot['lines'] = [];
+    const c = insights.citizenship;
+    if (c) lines.push({ label: t('nat.citizenship'), value: c.eligible ? t('nat.eligible') : t('nat.daysLeft', { n: fmtNum(c.daysUntilEligible ?? 0, lang) }), tone: 'good' });
+    const r = insights.residency;
+    if (r) lines.push({ label: t('nat.residency'), value: r.compliant ? t('nat.onTrack') : t('nat.atRisk'), tone: r.compliant ? 'good' : 'critical' });
+    if (insights.ongoingTrip) lines.push({ label: t('nat.abroadSince'), value: fmtDate(insights.ongoingTrip.departure, lang), tone: 'warn' });
+    else if (insights.prCard) {
+      const left = diffDays(insights.prCard.expiry, insights.today);
+      lines.push({ label: t('nat.prCard'), value: t('nat.expires', { date: fmtDate(insights.prCard.expiry, lang) }), tone: left < 0 ? 'critical' : left < 270 ? 'warn' : 'good' });
+    }
+    void updateWidgetSnapshot({ updated: new Date().toISOString(), title: t('nat.widgetTitle'), lines: data.onboarded ? lines : [], route: 'home' });
+  }, [insights, t]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep the native screenshot block in sync with the saved setting (e.g. after a restore).
+  useEffect(() => {
+    if (data && !demoMode.current) void setPrivacyScreen(!!data.privacyScreen);
+  }, [data?.privacyScreen, !!data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = useCallback((r: Route, p?: string) => {
     window.location.hash = `/${r}${p ? '/' + encodeURIComponent(p) : ''}`;
@@ -175,7 +215,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (!data || !insights) return <div className="empty-state" style={{ paddingTop: 120 }}>…</div>;
 
   return (
-    <AppCtx.Provider value={{ data, update, replaceAll, insights, t, lang, open, refreshOpen, route, go, param, toast }}>
+    <AppCtx.Provider value={{ data, update, replaceAll, insights, t, lang, open, refreshOpen, route, go, param, toast, demo: demoMode.current }}>
       {children}
       {toastMsg && (
         <div role="status" aria-live="polite" style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom))', zIndex: 60, display: 'flex', justifyContent: 'center' }}>

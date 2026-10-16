@@ -8,6 +8,7 @@ import { fmtDate, fmtNum } from '../i18n';
 import { useApp } from '../store/AppContext';
 import { MiniYear } from './Calendar';
 import { TripEditor, useTripEditor } from './Trips';
+import { HouseholdCard } from './People';
 
 export function Home() {
   const { data, insights, t, lang, go, open } = useApp();
@@ -21,6 +22,7 @@ export function Home() {
 
   return (
     <>
+      <HouseholdCard />
       {trip && (
         <div className="card" style={{ borderColor: 'var(--d-out)' }}>
           <div className="row">

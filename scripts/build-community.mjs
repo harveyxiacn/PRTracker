@@ -1,4 +1,5 @@
-// Validates anonymised community timelines (community/records.jsonl) and writes
+// Validates anonymised community timelines (community/records.jsonl, plus the optional
+// community/reddit.jsonl from scripts/fetch-reddit.ts) and writes
 // public/data/community.json. Also used by the intake workflow to add a record from an
 // approved GitHub issue: node scripts/build-community.mjs --add-from-issue issue.md
 import { readFile, writeFile, appendFile, mkdir } from 'node:fs/promises';
@@ -48,29 +49,38 @@ async function addFromIssue(file) {
   console.log('added', clean);
 }
 
+// App/paste submissions first, then timelines collected from public Reddit posts
+// (scripts/fetch-reddit.ts, optional). Missing files are fine.
+export const SOURCES = ['community/records.jsonl', 'community/reddit.jsonl'];
+
 async function build() {
-  let lines = [];
-  try {
-    lines = (await readFile('community/records.jsonl', 'utf8')).split('\n').filter((l) => l.trim());
-  } catch {
-    /* none yet */
+  const lines = [];
+  for (const file of SOURCES) {
+    try {
+      (await readFile(file, 'utf8')).split('\n').forEach((l, i) => {
+        if (l.trim()) lines.push({ l, where: `${file}:${i + 1}`, reddit: file.endsWith('reddit.jsonl') });
+      });
+    } catch {
+      /* none yet */
+    }
   }
   const records = [];
   const seen = new Set();
-  lines.forEach((l, i) => {
+  lines.forEach(({ l, where, reddit }) => {
     try {
       const r = JSON.parse(l);
-      const err = validate(r);
-      // The same public post pasted by several people must count once.
+      // Records from the Reddit file are always marked as such.
+      const err = validate(r) ?? (reddit && r.source !== 'reddit' ? 'reddit record without source "reddit"' : null);
+      // The same public post pasted by several people (or also collected from Reddit) must count once.
       const key = JSON.stringify([r.kind, r.submittedMonth, r.province, r.country, Object.entries(r.days ?? {}).sort()]);
-      if (err) console.warn(`line ${i + 1}: ${err}`);
-      else if (seen.has(key)) console.warn(`line ${i + 1}: duplicate, skipped`);
+      if (err) console.warn(`${where}: ${err}`);
+      else if (seen.has(key)) console.warn(`${where}: duplicate, skipped`);
       else {
         seen.add(key);
         records.push(r);
       }
     } catch {
-      console.warn(`line ${i + 1}: invalid JSON`);
+      console.warn(`${where}: invalid JSON`);
     }
   });
   await mkdir('public/data', { recursive: true });

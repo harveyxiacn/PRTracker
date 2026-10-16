@@ -47,6 +47,9 @@ export function Onboarding() {
           >
             {t('onb.restore')}
           </button>
+          <button className="btn ghost block" onClick={() => (window.location.href = `${window.location.pathname}?demo=1&lang=${encodeURIComponent(data.settings.language)}`)}>
+            {t('onb.tryDemo')}
+          </button>
         </>
       )}
 

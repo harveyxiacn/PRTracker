@@ -8,6 +8,8 @@ import { useApp } from '../store/AppContext';
 import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
 import { exportJson, importJson, wipeData } from '../store/storage';
 import { SecuritySection } from './Security';
+import { PeopleSection } from './People';
+import { privacyScreenSupported, setPrivacyScreen } from '../native/privacy';
 
 const VERSION = __APP_VERSION__;
 
@@ -54,6 +56,8 @@ export function SettingsScreen() {
           })}
         </div>
       </section>
+
+      <PeopleSection />
 
       <section className="card">
         <h2><Icon name="settings" /> {t('set.prefs')}</h2>
@@ -128,6 +132,18 @@ export function SettingsScreen() {
         </Field>
         {s.dataUrl !== DEFAULT_DATA_URL && <button className="btn ghost sm" onClick={() => { setUrlDraft(DEFAULT_DATA_URL); setS({ dataUrl: DEFAULT_DATA_URL }); }}>{t('set.resetUrl')}</button>}
       </section>
+
+      {privacyScreenSupported() && (
+        <section className="card">
+          <h2><Icon name="shield" /> {t('nat.privacyScreen')}</h2>
+          <label className="check">
+            <input type="checkbox" checked={!!data.privacyScreen} onChange={(e) => { const v = e.target.checked; update((d) => ({ ...d, privacyScreen: v })); void setPrivacyScreen(v); }} />
+            {t('nat.privacyScreen')}
+          </label>
+          <p className="tiny">{t('nat.privacyScreenHint')}</p>
+          <p className="tiny">{t('nat.widgetHint')}</p>
+        </section>
+      )}
 
       <SecuritySection />
 

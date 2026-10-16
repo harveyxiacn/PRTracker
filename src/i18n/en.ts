@@ -2,6 +2,9 @@ import { documentsEn } from './parts/documents';
 import { historyEn } from './parts/history';
 import { crsPlannerEn } from './parts/crsPlanner';
 import { securityEn } from './parts/security';
+import { nativeEn } from './parts/native';
+import { peopleEn } from './parts/people';
+import { trendsEn } from './parts/trends';
 
 export const en: Record<string, string> = {
   'app.name': 'PR Tracker',
@@ -49,6 +52,9 @@ export const en: Record<string, string> = {
   'onb.tripsHint': 'Add past trips so the counts are accurate. You can import a CSV or add them one by one later.',
   'onb.tripsLater': 'Tip: tell Maple “I left on March 3 and came back April 2” and it will log the trip for you.',
   'onb.finish': 'Finish',
+  'onb.tryDemo': 'Try with sample data first',
+  'demo.banner': 'You are looking at sample data. Nothing you change here is saved.',
+  'demo.exit': 'Exit demo',
 
   // home
   'home.abroad': 'Abroad · day {days}',
@@ -705,4 +711,7 @@ export const en: Record<string, string> = {
   ...documentsEn,
   ...crsPlannerEn,
   ...securityEn,
+  ...nativeEn,
+  ...peopleEn,
+  ...trendsEn,
 };

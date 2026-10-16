@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon';
 import { Status } from '../components/ui';
 import { PROGRAMS, program } from '../domain/programs';
 import { PasteTimelineSheet } from './PasteTimeline';
+import { ProcessingTrends } from './Trends';
 import { FINAL_MILESTONE, percentile } from '../domain/timeline';
 import type { ApplicationKind } from '../domain/types';
 import { fmtNum } from '../i18n';
@@ -83,6 +84,8 @@ export function CommunityScreen() {
         </table>
         <p className="tiny">{t('com.unit')}</p>
       </section>
+
+      <ProcessingTrends />
 
       {open.ircc && Object.keys(open.ircc.entries).length > 0 && (
         <section className="card">

@@ -208,7 +208,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
     run: (q, ctx) => {
       const h = ctx.data.history ?? emptyHistory();
       const purpose = /citizen|入籍|公民/.test(q) ? 'citizenship' : 'pr';
-      const s = historySummary(h, purpose, ctx.today);
+      const s = historySummary(h, purpose, ctx.today, !!ctx.data.historyMonthly);
       const gaps = s.addressGaps.length + s.activityGaps.length;
       const text = !h.addresses.length && !h.activities.length
         ? ctx.t('as.histNone')

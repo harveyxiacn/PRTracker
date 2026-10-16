@@ -157,3 +157,18 @@ describe('historySummary', () => {
     expect(coverage(s.addressGaps, s.window)).toBe(0);
   });
 });
+
+describe('monthly gap mode', () => {
+  it('treats month-level hand-overs as continuous', () => {
+    const w = { from: '2020-01-01', to: '2020-12-31' };
+    const entries = [
+      { from: '2020-01-01', to: '2020-03-01' },
+      { from: '2020-04-01', to: null },
+    ];
+    expect(findGaps('addresses', entries, w).map((g) => [g.from, g.to])).toEqual([['2020-03-02', '2020-03-31']]);
+    expect(findGaps('addresses', entries, w, { monthly: true })).toEqual([]);
+    // A whole missing month is still a gap.
+    const holed = [{ from: '2020-01-15', to: '2020-02-10' }, { from: '2020-04-20', to: null }];
+    expect(findGaps('addresses', holed, w, { monthly: true }).map((g) => [g.from, g.to])).toEqual([['2020-03-01', '2020-03-31']]);
+  });
+});

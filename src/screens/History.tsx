@@ -245,7 +245,7 @@ export function HistoryScreen() {
   const [editing, setEditing] = useState<Editing | null>(null);
 
   const today = insights.today;
-  const summary = historySummary(history, purpose, today);
+  const summary = historySummary(history, purpose, today, !!data.historyMonthly);
   const w = summary.window;
   const gapTotal = summary.addressGaps.length + summary.activityGaps.length;
   const overlaps = findOverlaps('addresses', history.addresses);
@@ -321,6 +321,10 @@ export function HistoryScreen() {
       </section>
 
       <div className="tip info"><Icon name="info" /><div>{t('hist.tip')}</div></div>
+      <label className="check">
+        <input type="checkbox" checked={!!data.historyMonthly} onChange={(e) => update((d) => ({ ...d, historyMonthly: e.target.checked }))} />
+        {t('hist.monthly')}
+      </label>
 
       <Segmented<ListKind>
         label={t('hist.section')}

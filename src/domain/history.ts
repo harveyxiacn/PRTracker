@@ -2,7 +2,7 @@
 // for IRCC forms (IMM 5669 Schedule A: past 10 years or since age 18, whichever is most
 // recent, no gaps allowed; citizenship: the 5 years before applying).
 // Implementation owner: history agent. Keep every exported name and signature below.
-import { addDays, addYears, diffDays, isISODate, maxDate, minDate, type ISODate } from './dates';
+import { addDays, addMonths, addYears, diffDays, isISODate, maxDate, minDate, type ISODate } from './dates';
 import { countryName } from './countries';
 
 export type ActivityKind = 'work' | 'self_employed' | 'study' | 'unemployed' | 'homemaker' | 'retired' | 'travel' | 'other';
@@ -92,9 +92,19 @@ function validSpan(e: Span): boolean {
 }
 
 /** Uncovered day ranges inside the window (open-ended entries run to the window end). */
-export function findGaps(list: 'addresses' | 'activities', entries: Span[], w: HistoryWindow): Gap[] {
+/** First and last day of the month containing `d`. */
+const monthStart = (d: ISODate): ISODate => `${d.slice(0, 7)}-01`;
+const monthEnd = (d: ISODate): ISODate => addDays(addMonths(monthStart(d), 1), -1);
+
+/**
+ * Uncovered day ranges inside the window. With `monthly`, entries are widened to whole months
+ * (IRCC forms ask for month/year only), so "to 2020-03-01 … from 2020-04-01" is not a gap.
+ */
+export function findGaps(list: 'addresses' | 'activities', entries: Span[], w: HistoryWindow, opts: { monthly?: boolean } = {}): Gap[] {
+  const widen = (e: Span) => (opts.monthly ? { from: monthStart(e.from), to: e.to ? monthEnd(e.to) : e.to } : e);
   const spans = entries
     .filter(validSpan)
+    .map(widen)
     .map((e) => ({ from: maxDate(e.from, w.from)!, to: minDate(e.to ?? w.to, w.to)! }))
     .filter((s) => s.from <= s.to)
     .sort((a, b) => a.from.localeCompare(b.from));
@@ -196,9 +206,9 @@ export interface HistorySummary {
 }
 
 /** One-call summary for Home/Maple. */
-export function historySummary(data: HistoryData, purpose: HistoryPurpose, today: ISODate): HistorySummary {
+export function historySummary(data: HistoryData, purpose: HistoryPurpose, today: ISODate, monthly = false): HistorySummary {
   const window = historyWindow(purpose, today, data.birthDate);
-  const addressGaps = findGaps('addresses', data.addresses, window);
-  const activityGaps = findGaps('activities', data.activities, window);
+  const addressGaps = findGaps('addresses', data.addresses, window, { monthly });
+  const activityGaps = findGaps('activities', data.activities, window, { monthly });
   return { window, addressGaps, activityGaps, addressCoverage: coverage(addressGaps, window), activityCoverage: coverage(activityGaps, window) };
 }

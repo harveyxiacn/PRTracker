@@ -42,6 +42,22 @@ times and anonymised community timelines) from this repository’s GitHub Pages.
 your own timeline is opt-in and done through a GitHub issue that you review first.
 Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 
+## Roadmap
+
+| Version | Theme | Status |
+|---|---|---|
+| v0.1 | Core tracker: citizenship & residency days, trips, calendar, timelines, Maple | ✅ |
+| v0.2 | Worldwide: 32 programs, per-country times, paste-a-timeline, 14 languages | ✅ |
+| v0.3 | Paperwork & privacy: documents, personal history, CRS planner, encryption, PIN lock | ✅ |
+| v0.4 | Household, Android widget, screenshot blocking, processing trends, Reddit (opt-in), demo + visual QA | 🚧 |
+| v0.5 | iOS & accessibility: WidgetKit, biometric unlock, a11y audit, more languages | 🗓️ |
+| v0.6 | Application helper: citizenship absences table, CBSA history import, PR card renewal helper | 🗓️ |
+| v0.7 | Community 2.0: office/stream curves, processing-time alerts, moderation | 🗓️ |
+| v0.8 | Serverless encrypted sync between devices and household members | 💡 |
+| v1.0 | Play Store & App Store launch, security and consultant review | 🗓️ |
+
+Details: [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Documentation
 
 | Doc | What’s inside |
@@ -53,6 +69,7 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Set up, run, test, add a language or a rule |
 | [docs/RELEASING.md](docs/RELEASING.md) | Versioning, signing, Android/iOS/web releases |
 | [docs/TESTING.md](docs/TESTING.md) | Automated tests and the on-phone test checklist |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Version-by-version roadmap |
 | [docs/devlog/](docs/devlog/) | Development log |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 

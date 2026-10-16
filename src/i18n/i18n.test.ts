@@ -9,7 +9,7 @@ import { en } from './en';
 import { LANGUAGES, matchLanguage } from './languages';
 import type { LocaleModule } from './index';
 
-const PREFIXES = ['app', 'nav', 'common', 'onb', 'home', 'tip', 'rem', 'cal', 'trips', 'tl', 'ms', 'pred', 'as', 'elig', 'edu', 'lang', 'com', 'set', 'status', 'prog', 'prov', 'paste', 'draw', 'kb', 'gl', 'hist', 'doc', 'crsp', 'sec'];
+const PREFIXES = ['app', 'nav', 'common', 'onb', 'home', 'tip', 'rem', 'cal', 'trips', 'tl', 'ms', 'pred', 'as', 'elig', 'edu', 'lang', 'com', 'set', 'status', 'prog', 'prov', 'paste', 'draw', 'kb', 'gl', 'hist', 'doc', 'crsp', 'sec', 'demo', 'nat', 'ppl', 'trend'];
 const KEY_RE = new RegExp(`'((?:${PREFIXES.join('|')})\\.[A-Za-z0-9_.]+)'`, 'g');
 
 function sourceFiles(dir: string): string[] {

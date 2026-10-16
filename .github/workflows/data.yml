@@ -7,6 +7,9 @@ on:
     - cron: '17 11 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: community-data
+
 permissions:
   contents: write
   actions: write # pushes made with GITHUB_TOKEN don't trigger pages.yml, so dispatch it
@@ -20,6 +23,7 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/fetch-ircc.mjs public/data
+      - run: node --experimental-strip-types scripts/ircc-history.mjs public/data
       - run: node scripts/build-community.mjs
       - name: Commit if changed
         run: |

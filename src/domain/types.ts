@@ -105,6 +105,12 @@ export interface AppData {
   history?: HistoryData;
   /** v0.3: documents & expiries. */
   documents?: DocumentsData;
+  /** v0.4: other household members (the active person's data is in profile/trips). */
+  household?: import('./people').Household;
+  /** v0.4: Android FLAG_SECURE (block screenshots). */
+  privacyScreen?: boolean;
+  /** v0.4: compare history gaps by month (as IRCC forms do) instead of by day. */
+  historyMonthly?: boolean;
   /** v0.3: app lock (PIN hash, never the PIN itself). */
   lock?: { pinHash: string; salt: string } | null;
 }

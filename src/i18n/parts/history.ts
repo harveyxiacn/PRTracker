@@ -1,5 +1,6 @@
 // Personal history (addresses and activities for IRCC forms). Merged into en.ts by the lead.
 export const historyEn: Record<string, string> = {
+  'hist.monthly': 'Check gaps by month (like the IRCC forms, which ask for month and year)',
   'hist.title': 'Personal history',
   'hist.purpose': 'What is this for?',
   'hist.purpose.pr': 'PR (IMM 5669)',

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="prtracker_widget_bg">#FFFAF9F7</color>
+    <color name="prtracker_widget_border">#1F000000</color>
+    <color name="prtracker_widget_text">#FF1F1E1C</color>
+    <color name="prtracker_widget_muted">#FF5F5D58</color>
+    <color name="prtracker_widget_accent">#FFC8102E</color>
+    <color name="prtracker_widget_good">#FF0A7F0A</color>
+    <color name="prtracker_widget_warn">#FF8A5A00</color>
+    <color name="prtracker_widget_critical">#FFA42727</color>
+</resources>

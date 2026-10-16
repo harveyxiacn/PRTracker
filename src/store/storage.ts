@@ -6,6 +6,7 @@ import { clear, del, get, set } from 'idb-keyval';
 import { emptyData, uid, type AppData } from '../domain/types';
 import { DOC_KINDS } from '../domain/documents';
 import { ACTIVITY_KINDS } from '../domain/history';
+import { sanitizeHousehold } from '../domain/people';
 import { isISODate } from '../domain/dates';
 
 const KEY = 'prtracker.data.v1';
@@ -144,6 +145,7 @@ export function migrate(input: unknown): AppData {
           checklist: d.documents.checklist && typeof d.documents.checklist === 'object' ? d.documents.checklist : {},
         }
       : undefined,
+    household: sanitizeHousehold(d.household),
     lock: d.lock && typeof d.lock.pinHash === 'string' && typeof d.lock.salt === 'string' ? d.lock : null,
     onboarded: !!d.onboarded,
   };

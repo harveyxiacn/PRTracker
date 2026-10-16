@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 
 import { App as CapApp } from '@capacitor/app';
 import { LockScreen } from './screens/Security';
 import { inExternalActivity } from './platform';
+import { PersonSwitcher } from './screens/People';
 import { Icon } from './components/Icon';
 import { useApp, type Route } from './store/AppContext';
 import { CalendarScreen } from './screens/Calendar';
@@ -33,7 +34,7 @@ const TABS: { route: Route; icon: string; key: string }[] = [
 const RELOCK_AFTER_MS = 30_000;
 
 export function App() {
-  const { data, route, go, t } = useApp();
+  const { data, route, go, t, demo } = useApp();
   const [locked, setLocked] = useState(() => !!data.lock);
   // While backgrounded with a lock set, render nothing so the OS app-switcher snapshot is blank.
   const [obscured, setObscured] = useState(false);
@@ -87,12 +88,20 @@ export function App() {
           </button>
         )}
         <h1>{title}</h1>
+        <PersonSwitcher />
         {route !== 'settings' && (
           <button className="icon-btn" aria-label={t('nav.settings')} onClick={() => go('settings')}>
             <Icon name="settings" />
           </button>
         )}
       </header>
+      {demo && (
+        <div className="tip warn" role="status" style={{ margin: '0 16px' }}>
+          <Icon name="info" />
+          <div className="grow">{t('demo.banner')}</div>
+          <button className="btn sm" onClick={() => (window.location.href = window.location.pathname)}>{t('demo.exit')}</button>
+        </div>
+      )}
       <main className="main">
         <Suspense fallback={<div className="empty-state" aria-busy="true">…</div>}>{screen}</Suspense>
       </main>
