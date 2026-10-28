@@ -1,6 +1,13 @@
 {
- "fetchedAt": "2026-10-27T16:42:45.035Z",
+ "fetchedAt": "2026-10-28T17:11:12.542Z",
  "draws": [
+  {
+   "number": 453,
+   "date": "2026-10-28",
+   "name": "Transport Occupations, 2026-Version 2",
+   "size": 150,
+   "crs": 477
+  },
   {
    "number": 452,
    "date": "2026-10-27",
@@ -413,13 +420,6 @@
    "name": "French-Language proficiency 2026-Version 2",
    "size": 8500,
    "crs": 400
-  },
-  {
-   "number": 393,
-   "date": "2026-02-03",
-   "name": "Provincial Nominee Program",
-   "size": 423,
-   "crs": 749
   }
  ]
 }
