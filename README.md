@@ -61,6 +61,7 @@ Details: [docs/PRIVACY.md](docs/PRIVACY.md).
 | v0.6 | Application helper: citizenship absences, presence report, CBSA history import, PR card renewal check, cross-checks | ✅ |
 | v0.7 | Community 2.0: "% finished by day N" curves, processing-time alerts, moderation | ✅ |
 | v0.8 | Encrypted person sharing between phones, no server | ✅ |
+| v0.9 | Pre-launch RCIC review fixes; UI/UX pass: clearer Home, undo instead of confirm, draggable sheets, swipeable calendar, motion with a reduced-motion variant | ✅ |
 | v1.0 | Play Store & App Store launch, security and consultant review (launch kit ready in docs/STORE.md) | 🚧 |
 
 Details: [docs/ROADMAP.md](docs/ROADMAP.md).

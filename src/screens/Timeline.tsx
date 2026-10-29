@@ -80,17 +80,14 @@ export function TimelineScreen() {
   const app = param ? data.applications.find((a) => a.id === param) : undefined;
   if (app) return <AppDetail app={app} />;
 
-  const apps = data.applications;
-  return (
-    <>
-      <button className="btn primary block" style={{ marginTop: 8 }} onClick={() => setAdding(true)}><Icon name="plus" /> {t('tl.add')}</button>
-      {apps.length === 0 && <Empty icon="timeline">{t('tl.empty')}</Empty>}
-      {apps.map((a) => {
+  const active = data.applications.filter((a) => !a.archived);
+  const archived = data.applications.filter((a) => a.archived);
+  const card = (a: Application) => {
         const p = predict(a, insights.today, open.ircc ?? {}, open.community?.records ?? []);
         const doneCount = a.milestones.filter((m) => m.date).length;
         return (
-          <section key={a.id} className="card">
-            <button className="item" style={{ all: 'unset', display: 'block', width: '100%', cursor: 'pointer' }} onClick={() => go('timeline', a.id)}>
+          <section key={a.id} className="card app-card">
+            <button className="app-card-btn" onClick={() => go('timeline', a.id)}>
               <div className="row spread">
                 <b>{a.label || t(`app.kind.${a.kind}`)}</b>
                 <Icon name="chevron" size={18} />
@@ -107,7 +104,18 @@ export function TimelineScreen() {
             </button>
           </section>
         );
-      })}
+  };
+  return (
+    <>
+      <button className="btn primary block" style={{ marginTop: 8 }} onClick={() => setAdding(true)}><Icon name="plus" /> {t('tl.add')}</button>
+      {data.applications.length === 0 && <Empty icon="timeline">{t('tl.empty')}</Empty>}
+      {active.map(card)}
+      {archived.length > 0 && (
+        <details className="disclose archived-group">
+          <summary>{t('ux.archivedGroup', { n: archived.length })}</summary>
+          {archived.map(card)}
+        </details>
+      )}
       {adding && (
         <NewAppSheet
           onClose={() => setAdding(false)}
@@ -129,7 +137,18 @@ function NewAppSheet({ onClose, onCreate }: { onClose: () => void; onCreate: (a:
   const [submitted, setSubmitted] = useState('');
   const [extra, setExtra] = useState<Partial<Application>>({});
   return (
-    <Sheet title={t('tl.add')} onClose={onClose}>
+    <Sheet
+      title={t('tl.add')}
+      onClose={onClose}
+      footer={
+        <button
+          className="btn primary grow"
+          onClick={() => onCreate({ id: uid(), kind, ...extra, label: label.trim() || undefined, submitted: submitted || null, milestones: submitted ? [{ key: 'submitted', date: submitted }] : [] })}
+        >
+          {t('common.create')}
+        </button>
+      }
+    >
       <Field label={t('tl.kind')}>
         <ProgramSelect value={kind} onChange={setKind} />
       </Field>
@@ -141,12 +160,6 @@ function NewAppSheet({ onClose, onCreate }: { onClose: () => void; onCreate: (a:
       <Field label={t('tl.submitted')} hint={t('tl.submittedHint')}>
         <input className="input" type="date" value={submitted} onChange={(e) => setSubmitted(e.target.value)} />
       </Field>
-      <button
-        className="btn primary block"
-        onClick={() => onCreate({ id: uid(), kind, ...extra, label: label.trim() || undefined, submitted: submitted || null, milestones: submitted ? [{ key: 'submitted', date: submitted }] : [] })}
-      >
-        {t('common.create')}
-      </button>
     </Sheet>
   );
 }
@@ -169,6 +182,8 @@ function AppDetail({ app }: { app: Application }) {
   };
   const dateOf = (key: string) => app.milestones.find((m) => m.key === key)?.date ?? '';
   const predicted = new Map(p?.next.map((n) => [n.key, n]) ?? []);
+  // The first step without a date, once the application is under way: what to watch for next.
+  const nextKey = app.submitted ? (MILESTONES[app.kind] ?? MILESTONES.other).find((k) => !dateOf(k)) : undefined;
 
   // Histogram of community completion times
   const finals = similar.map((r) => r.days[final]).filter((x): x is number => typeof x === 'number');
@@ -188,40 +203,48 @@ function AppDetail({ app }: { app: Application }) {
     if (!confirm(t('sec.shareGithubConfirm'))) return;
     void openExternal(url);
   };
+  // Deleting is instant; Undo puts the application (and its document checklist) back.
   const remove = () => {
-    if (!confirm(t('tl.confirmDelete'))) return;
+    let saved: { app: Application; index: number; checklist?: unknown } | null = null;
     update((d) => {
+      const index = d.applications.findIndex((a) => a.id === app.id);
+      if (index < 0) return d;
       const checklist = { ...(d.documents?.checklist ?? {}) };
+      saved = { app: d.applications[index], index, checklist: checklist[app.id] };
       delete checklist[app.id];
       return { ...d, applications: d.applications.filter((a) => a.id !== app.id), documents: d.documents ? { ...d.documents, checklist } : d.documents };
     });
     go('timeline');
+    toast(t('ux.appDeleted'), {
+      label: t('ux.undo'),
+      run: () =>
+        update((d) => {
+          const s0 = saved as { app: Application; index: number; checklist?: unknown } | null;
+          if (!s0 || d.applications.some((a) => a.id === s0.app.id)) return d;
+          const applications = [...d.applications];
+          applications.splice(Math.min(s0.index, applications.length), 0, s0.app);
+          const documents = d.documents && s0.checklist !== undefined ? { ...d.documents, checklist: { ...d.documents.checklist, [s0.app.id]: s0.checklist } } : d.documents;
+          return { ...d, applications, documents: documents as typeof d.documents };
+        }),
+    });
   };
   const q = `${app.province ? PNP_NAMES[app.province] + ' ' : ''}${SEARCH_TERMS[app.kind] ?? SEARCH_TERMS.other} ${app.submitted ? new Date(app.submitted + 'T00:00:00Z').toLocaleString('en', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''}`.trim();
 
   return (
     <>
       <button className="btn ghost sm" style={{ marginTop: 4, paddingInlineStart: 0 }} onClick={() => go('timeline')}><Icon name="back" size={18} /> {t('nav.timeline')}</button>
-      <section className="card">
-        <Field label={t('tl.kind')}>
-          <ProgramSelect value={app.kind} onChange={(kind) => set({ kind })} />
-        </Field>
-        {prog.status && <Status kind="warn">{t(`prog.status.${prog.status}`)}</Status>}
-        <p className="tiny">
-          {t(`prog.desc.${app.kind}`)} <button className="btn ghost sm" onClick={() => openExternal(prog.url)}><Icon name="external" size={14} /> IRCC</button>
-        </p>
-        <Field label={t('tl.label')}>
-          <input className="input" value={app.label ?? ''} placeholder={t(`app.kind.${app.kind}`)} onChange={(e) => set({ label: e.target.value })} />
-        </Field>
-        <ProgramDetails app={app} set={set} />
-        <div className="grid2">
-          <Field label={t('tl.office')}>
-            <input className="input" value={app.office ?? ''} placeholder={t('tl.officePh')} onChange={(e) => set({ office: e.target.value })} />
-          </Field>
-          <Field label={t('tl.expected')} hint={t('tl.expectedHint')}>
-            <input className="input" type="number" min={1} inputMode="numeric" value={app.expectedDays ?? ''} onChange={(e) => set({ expectedDays: e.target.value ? Number(e.target.value) : null })} />
-          </Field>
+      <section className="card app-summary" aria-labelledby="app-sum-h">
+        <h2 id="app-sum-h" style={{ margin: 0 }}>{app.label || t(`app.kind.${app.kind}`)}</h2>
+        <div className="small muted">
+          {app.label ? `${t(`app.kind.${app.kind}`)} · ` : ''}
+          {app.submitted ? t('tl.submittedOn', { date: fmtDate(app.submitted, lang) }) : t('tl.notSubmitted')}
         </div>
+        {(prog.status || app.archived) && (
+          <div className="row wrap" style={{ gap: 6, marginTop: 8 }}>
+            {prog.status && <Status kind="warn">{t(`prog.status.${prog.status}`)}</Status>}
+            {app.archived && <Status kind="info">{t('tl.archived')}</Status>}
+          </div>
+        )}
       </section>
 
       {p && (
@@ -230,7 +253,7 @@ function AppDetail({ app }: { app: Application }) {
           <div className="row spread">
             <div>
               <div className="label">{t(`ms.${final}`)}</div>
-              <div style={{ fontSize: 22, fontWeight: 700 }}>{fmtDate(p.p50, lang)}</div>
+              <div className="hero-date">{fmtDate(p.p50, lang)}</div>
               {p.p25 && p.p75 && <div className="small muted">{t('tl.range', { a: fmtDate(p.p25, lang), b: fmtDate(p.p75, lang) })}</div>}
             </div>
             <div style={{ textAlign: 'end' }}>
@@ -259,7 +282,7 @@ function AppDetail({ app }: { app: Application }) {
             const date = dateOf(key);
             const pr = predicted.get(key);
             return (
-              <div key={key} className={`ms${date ? ' done' : pr ? ' pred' : ''}`}>
+              <div key={key} className={`ms${date ? ' done' : pr ? ' pred' : ''}${key === nextKey ? ' next' : ''}`} aria-current={key === nextKey ? 'step' : undefined}>
                 <span className="dot" />
                 <div>
                   <div style={{ fontWeight: date ? 600 : 400 }}>{t(`ms.${key}`)}</div>
@@ -308,6 +331,31 @@ function AppDetail({ app }: { app: Application }) {
         <button className="btn sm" disabled={!app.submitted} onClick={share}><Icon name="external" size={16} /> {t('tl.shareBtn')}</button>
       </section>
 
+      <section className="card" aria-labelledby="app-details-h">
+        <details className="disclose app-details" open={!app.submitted}>
+          <summary><h2 id="app-details-h" style={{ margin: 0 }}><Icon name="settings" /> {t('ux.appDetails')}</h2></summary>
+          <Field label={t('tl.kind')}>
+            <ProgramSelect value={app.kind} onChange={(kind) => set({ kind })} />
+          </Field>
+          {prog.status && <Status kind="warn">{t(`prog.status.${prog.status}`)}</Status>}
+          <p className="tiny">
+            {t(`prog.desc.${app.kind}`)} <button className="btn ghost sm" onClick={() => openExternal(prog.url)}><Icon name="external" size={14} /> IRCC</button>
+          </p>
+          <Field label={t('tl.label')}>
+            <input className="input" value={app.label ?? ''} placeholder={t(`app.kind.${app.kind}`)} onChange={(e) => set({ label: e.target.value })} />
+          </Field>
+          <ProgramDetails app={app} set={set} />
+          <div className="grid2">
+            <Field label={t('tl.office')}>
+              <input className="input" value={app.office ?? ''} placeholder={t('tl.officePh')} onChange={(e) => set({ office: e.target.value })} />
+            </Field>
+            <Field label={t('tl.expected')} hint={t('tl.expectedHint')}>
+              <input className="input" type="number" min={1} inputMode="numeric" value={app.expectedDays ?? ''} onChange={(e) => set({ expectedDays: e.target.value ? Number(e.target.value) : null })} />
+            </Field>
+          </div>
+        </details>
+      </section>
+
       {pasting && (
         <PasteTimelineSheet
           kindHint={app.kind}
@@ -322,7 +370,7 @@ function AppDetail({ app }: { app: Application }) {
           }}
         />
       )}
-      <div className="row" style={{ justifyContent: 'space-between' }}>
+      <div className="row" style={{ justifyContent: 'space-between', marginTop: 12 }}>
         <button className="btn sm" onClick={() => { set({ archived: !app.archived }); toast(t(app.archived ? 'tl.unarchived' : 'tl.archived')); }}>{t(app.archived ? 'tl.unarchive' : 'tl.archive')}</button>
         <button className="btn sm danger" onClick={remove}><Icon name="trash" size={16} /> {t('common.delete')}</button>
       </div>

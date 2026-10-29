@@ -27,13 +27,13 @@ Routing is hash-based (`#/timeline/<id>`) so the browser and Android back button
 |---|---|---|
 | Onboarding | 3 steps: value & privacy → status (PR date, card expiry, pre-PR periods) → trips (CSV import) | restore-from-backup shortcut |
 | Home | Today at a glance | abroad banner with *I’m back*, critical alerts, citizenship ring (hero), residency bar, PR-card status, quick-action row, other alerts (2 + *Show more*), household, application progress, 53-week heat strip, upcoming reminders |
-| Calendar | “Hot-spot” calendar | year view (12 mini months) / month view, tap-a-day details, legend, per-year table |
+| Calendar | “Hot-spot” calendar | in-card toolbar (Year/Month, arrows, *Today*), swipe to page, year view (12 mini months, tap a month to open it) / month view, selected-day detail with *Add/Edit trip*, legend, per-year table |
 | Trips | Log and fix travel | add/edit sheet with live *impact on citizenship date*, *leaving today*, overlap warnings, CSV import/export |
-| Timeline | Track applications | milestone templates per stream, prediction card (median + p25–p75), community histogram with “you are here”, search-online links, anonymous sharing |
+| Timeline | Track applications | list (archived folded); detail: summary → prediction (median + p25–p75) → milestones with the next step highlighted → finish curve → community histogram, search links, anonymous sharing → folded *Application details* → archive / delete with undo |
 | Maple | Assistant | chat, suggestion chips, action buttons (*Log this trip*, *Open calendar*) |
 | Eligibility | Am I eligible for PR? | CRS estimate and breakdown, recent draws compared with your score, CEC/FSW/FST checks with reasons |
 | Community | Other people’s data | IRCC vs community processing times (median, IQR), full IRCC list, how sharing works |
-| Settings | Profile & data | status periods, tax years, language, theme, counting rule, safety margin, reminders, backup/restore/wipe, data source |
+| Settings | Profile & data | sticky section index; status periods, tax years; preferences (language, theme, counting rule, safety margin); reminders (switches); household; security & privacy screen; data (export, *Advanced* data source); sharing; *Danger zone* (wipe); about |
 
 ## Visual design
 

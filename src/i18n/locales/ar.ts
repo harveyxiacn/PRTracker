@@ -1336,6 +1336,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'صيغة CSV',
   'ux.quickActions': 'إجراءات سريعة',
   'ux.alerts': 'أمور تستحق التحقق',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'اليوم',
+  'ux.openMonth': 'فتح {month}',
+  'ux.archivedGroup': 'المؤرشفة ({n})',
+  'ux.appDeleted': 'تم حذف الطلب',
+  'ux.appDetails': 'تفاصيل الطلب',
+  'ux.sections': 'أقسام الإعدادات',
+  'ux.advanced': 'متقدم',
+  'ux.danger': 'منطقة الخطر',
+  'ux.dangerHint': 'يحذف كل شخص ورحلة وطلب وتاريخ مستند على هذا الجهاز. صدّر نسخة احتياطية أولاً: لا يمكن التراجع عن هذا.',
 };
 
 const mod: LocaleModule = {

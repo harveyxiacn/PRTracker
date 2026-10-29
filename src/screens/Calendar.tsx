@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactElement } from 'react';
 import { Icon } from '../components/Icon';
-import { Segmented } from '../components/ui';
+import { Segmented, useSwipe } from '../components/ui';
 import { addDays, daysInYear, toDay, weekdayMon0, type ISODate } from '../domain/dates';
 import type { DayKind, PresenceModel } from '../domain/presence';
 import type { Trip } from '../domain/types';
 import { fmtDate, fmtNum, languageInfo } from '../i18n';
 import { useApp } from '../store/AppContext';
+import { TripEditor, useTripEditor } from './Trips';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -91,7 +92,31 @@ export function CalendarScreen() {
   const [view, setView] = useState<'year' | 'month'>('year');
   const [month, setMonth] = useState(Number(insights.today.slice(5, 7)));
   const [sel, setSel] = useState<ISODate | null>(null);
+  // Direction of the last page change, so the new month/year slides in from the side it came from.
+  const [dir, setDir] = useState<-1 | 0 | 1>(0);
+  const editor = useTripEditor();
   const model = insights.model;
+  const thisMonth = Number(insights.today.slice(5, 7));
+  const atToday = year === thisYear && (view === 'year' || month === thisMonth);
+  const page = (d: -1 | 1) => {
+    setDir(d);
+    if (view === 'year') setYear(year + d);
+    else if (month + d === 0) (setMonth(12), setYear(year - 1));
+    else if (month + d === 13) (setMonth(1), setYear(year + 1));
+    else setMonth(month + d);
+  };
+  const goToday = () => {
+    setDir(0);
+    setYear(thisYear);
+    setMonth(thisMonth);
+    setSel(insights.today);
+  };
+  const openMonth = (m: number) => {
+    setDir(0);
+    setMonth(m);
+    setView('month');
+  };
+  const swipe = useSwipe(page);
   const minYear = Number(model.firstDay.slice(0, 4));
 
   const stats = useMemo(() => {
@@ -129,7 +154,13 @@ export function CalendarScreen() {
     }
     return (
       <div className={`month${big ? ' month-big' : ''}`} key={`${y}-${m}`}>
-        {!big && <h4>{monthName(m, 'short')}</h4>}
+        {!big && (
+          <h4>
+            <button type="button" className="month-link" aria-label={t('ux.openMonth', { month: `${monthName(m)} ${y}` })} onClick={() => openMonth(m)}>
+              {monthName(m, 'short')}
+            </button>
+          </h4>
+        )}
         <div className="mgrid">
           {big && dows.map((d, i) => <span key={i} className="dow">{d}</span>)}
           {cells}
@@ -143,33 +174,45 @@ export function CalendarScreen() {
 
   return (
     <>
-      <div className="row spread" style={{ marginTop: 8 }}>
-        <Segmented label={t('cal.view')} value={view} onChange={setView} options={[{ value: 'year', label: t('cal.year') }, { value: 'month', label: t('cal.month') }]} />
-      </div>
-      <section className="card">
+      <section className="card cal-card" aria-labelledby="cal-title">
+        <div className="row spread cal-toolbar">
+          <Segmented label={t('cal.view')} value={view} onChange={(v) => { setDir(0); setView(v); }} options={[{ value: 'year', label: t('cal.year') }, { value: 'month', label: t('cal.month') }]} />
+          {!atToday && <button type="button" className="btn sm" onClick={goToday}>{t('ux.today')}</button>}
+        </div>
         <div className="row spread">
-          <button className="icon-btn" aria-label={t('common.previous')} onClick={() => (view === 'year' ? setYear(year - 1) : month === 1 ? (setMonth(12), setYear(year - 1)) : setMonth(month - 1))}>
+          <button className="icon-btn" aria-label={t('common.previous')} onClick={() => page(-1)}>
             <Icon name="left" />
           </button>
-          <h2 style={{ margin: 0 }}>{view === 'year' ? year : `${monthName(month)} ${year}`}</h2>
-          <button className="icon-btn" aria-label={t('common.next')} onClick={() => (view === 'year' ? setYear(year + 1) : month === 12 ? (setMonth(1), setYear(year + 1)) : setMonth(month + 1))}>
+          <h2 id="cal-title" style={{ margin: 0 }} aria-live="polite">{view === 'year' ? year : `${monthName(month)} ${year}`}</h2>
+          <button className="icon-btn" aria-label={t('common.next')} onClick={() => page(1)}>
             <Icon name="right" />
           </button>
         </div>
-        {view === 'year' ? (
-          <div className="months">{Array.from({ length: 12 }, (_, i) => renderMonth(year, i + 1, false))}</div>
-        ) : (
-          renderMonth(year, month, true)
-        )}
-        <div className="small" style={{ minHeight: 40, marginTop: 12 }} aria-live="polite">
+        {/* Swipe sideways to page; the arrows above do the same for everyone else. */}
+        <div className={`cal-page${dir ? (dir > 0 ? ' from-next' : ' from-prev') : ''}`} key={view === 'year' ? `y${year}` : `m${year}-${month}`} {...swipe}>
+          {view === 'year' ? (
+            <div className="months">{Array.from({ length: 12 }, (_, i) => renderMonth(year, i + 1, false))}</div>
+          ) : (
+            renderMonth(year, month, true)
+          )}
+        </div>
+        <div className="day-detail" aria-live="polite">
           {sel ? (
             <>
-              <b>{fmtDate(sel, lang, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</b> · {t(`cal.kind.${model.dayKind(sel)}`)}
-              {selTrip && <> · {t('cal.trip', { place: selTrip.destination || t('trips.abroad'), dep: fmtDate(selTrip.departure, lang), ret: selTrip.return ? fmtDate(selTrip.return, lang) : t('trips.ongoing') })}</>}
-              {model.dayStatus(sel) === 'tr' && <> · {t('cal.halfCredit')}</>}
+              <i className={`swatch cell ${cellClass(model, sel)}`} aria-hidden="true" />
+              <div className="grow small">
+                <b>{fmtDate(sel, lang, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</b> · {t(`cal.kind.${model.dayKind(sel)}`)}
+                {selTrip && <> · {t('cal.trip', { place: selTrip.destination || t('trips.abroad'), dep: fmtDate(selTrip.departure, lang), ret: selTrip.return ? fmtDate(selTrip.return, lang) : t('trips.ongoing') })}</>}
+                {model.dayStatus(sel) === 'tr' && <> · {t('cal.halfCredit')}</>}
+              </div>
+              {selTrip ? (
+                <button type="button" className="btn sm" onClick={() => editor.edit(selTrip)}>{t('trips.edit')}</button>
+              ) : (
+                <button type="button" className="btn sm" onClick={() => editor.create({ departure: sel })}><Icon name="plus" size={16} /> {t('trips.add')}</button>
+              )}
             </>
           ) : (
-            <span className="muted">{t('cal.tapHint')}</span>
+            <span className="muted small">{t('cal.tapHint')}</span>
           )}
         </div>
         <Legend />
@@ -192,6 +235,7 @@ export function CalendarScreen() {
         </table>
         <p className="tiny">{t(data.settings.boundaryDaysPresent ? 'cal.ruleBoundary' : 'cal.ruleStrict')}</p>
       </section>
+      <TripEditor state={editor} />
     </>
   );
 }

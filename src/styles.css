@@ -516,8 +516,87 @@ body:has(.composer) .toast-region { bottom: calc(var(--tabbar-h) + 80px + env(sa
 }
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 
+/* ---------- v0.9 screens pass: Calendar, Timeline, Settings ---------- */
+
+/* Calendar: toolbar inside the card, swipeable page that slides in from the side it came from. */
+.cal-toolbar { margin-bottom: 8px; }
+.cal-toolbar .segmented { flex: none; min-width: 168px; }
+.cal-page { touch-action: pan-y; }
+.cal-page.from-next { animation: page-from-next var(--dur-in) var(--ease-out); }
+.cal-page.from-prev { animation: page-from-prev var(--dur-in) var(--ease-out); }
+@keyframes page-from-next { from { opacity: 0; transform: translateX(24px); } }
+@keyframes page-from-prev { from { opacity: 0; transform: translateX(-24px); } }
+.month-link {
+  border: 0; background: none; padding: 2px 4px; margin: -2px -4px; border-radius: 6px; cursor: pointer;
+  font: inherit; color: inherit; min-height: 24px;
+}
+@media (hover: hover) { .month-link:hover { background: var(--surface-2); color: var(--text); } }
+.day-detail {
+  display: flex; align-items: center; gap: 10px; min-height: 56px; margin-top: 12px; padding: 8px 8px 8px 12px;
+  border-radius: 12px; background: var(--surface-2);
+}
+.day-detail .swatch { width: 18px; height: 18px; min-width: 18px; border-radius: 5px; cursor: default; }
+.day-detail .btn { flex: none; }
+
+/* Timeline */
+.app-card { padding: 0; }
+.app-card-btn {
+  all: unset; box-sizing: border-box; display: block; width: 100%; padding: 16px; border-radius: var(--radius); cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+.app-card-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.app-card-btn:active { transform: scale(0.985); }
+.archived-group > summary { margin: 4px 0; }
+.app-summary h2 { font-size: 20px; }
+.app-details > summary { display: flex; color: var(--text); font-size: 16px; }
+.app-details > summary h2 { font-size: 16px; display: inline-flex; align-items: center; gap: 8px; }
+.ms.next .dot { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); animation: next-pulse 1.6s var(--ease-out) 3; }
+.ms.next > div:first-of-type { font-weight: 600; }
+@keyframes next-pulse { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 6%, transparent); } }
+
+/* Settings: section index, switches, danger zone */
+.section-index {
+  position: sticky; top: calc(env(safe-area-inset-top) + 64px); z-index: 5;
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  margin: 0 -16px; padding: 6px 16px 8px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(12px);
+}
+.section-index::-webkit-scrollbar { display: none; }
+.section-index .chip { flex: none; white-space: nowrap; }
+.anchor { scroll-margin-top: calc(env(safe-area-inset-top) + 120px); }
+.anchor h2:focus { outline: none; }
+.chip svg { vertical-align: -2px; }
+.toggle { justify-content: space-between; gap: 12px; min-height: 48px; }
+.toggle input[role='switch'] {
+  appearance: none; -webkit-appearance: none; flex: none; position: relative; margin: 0; cursor: pointer;
+  width: 46px; height: 28px; border-radius: 999px; background: var(--d-none); border: 1px solid var(--border);
+  transition: background-color var(--dur-in) var(--ease-out);
+}
+.toggle input[role='switch']::before {
+  content: ''; position: absolute; top: 2px; inset-inline-start: 2px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transition: transform var(--dur-in) var(--ease-out);
+}
+.toggle input[role='switch']:checked { background: var(--good); border-color: var(--good); }
+.toggle input[role='switch']:checked::before { transform: translateX(18px); }
+[dir='rtl'] .toggle input[role='switch']:checked::before { transform: translateX(-18px); }
+.toggle input[role='switch']:disabled { opacity: 0.5; cursor: not-allowed; }
+.toggle input[role='switch']:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.toggle-group { margin: 2px 0 10px; padding-inline-start: 12px; border-inline-start: 2px solid var(--border); }
+.danger-zone { border-color: color-mix(in srgb, var(--critical) 35%, var(--border)); }
+.danger-zone h2 { color: var(--critical-text); }
+
+@media (forced-colors: active) {
+  .toggle input[role='switch'] { border: 1px solid ButtonText; }
+  .toggle input[role='switch']:checked { background: Highlight; }
+  .toggle input[role='switch']::before { background: ButtonText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cal-page.from-next, .cal-page.from-prev { animation: fade-in 120ms linear both !important; }
+  .ms.next .dot { animation: none !important; }
+}
+
 @media (pointer: coarse) {
   .disclose > summary, .toast-action { min-height: 44px; }
+  .month-link { min-height: 32px; }
   .demo-strip .btn.sm { min-height: 44px; }
 }
 

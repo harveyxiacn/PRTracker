@@ -1359,6 +1359,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'Формат CSV',
   'ux.quickActions': 'Швидкі дії',
   'ux.alerts': 'Що перевірити',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'Сьогодні',
+  'ux.openMonth': 'Відкрити {month}',
+  'ux.archivedGroup': 'В архіві ({n})',
+  'ux.appDeleted': 'Заяву видалено',
+  'ux.appDetails': 'Дані заяви',
+  'ux.sections': 'Розділи налаштувань',
+  'ux.advanced': 'Додатково',
+  'ux.danger': 'Небезпечна зона',
+  'ux.dangerHint': 'Видаляє всіх людей, поїздки, заяви та дати документів на цьому пристрої. Спершу експортуйте резервну копію: це не можна скасувати.',
 };
 
 const mod: LocaleModule = {

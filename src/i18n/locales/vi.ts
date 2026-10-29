@@ -1330,6 +1330,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'Định dạng CSV',
   'ux.quickActions': 'Thao tác nhanh',
   'ux.alerts': 'Mục cần kiểm tra',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'Hôm nay',
+  'ux.openMonth': 'Mở {month}',
+  'ux.archivedGroup': 'Đã lưu trữ ({n})',
+  'ux.appDeleted': 'Đã xóa hồ sơ',
+  'ux.appDetails': 'Chi tiết hồ sơ',
+  'ux.sections': 'Các mục cài đặt',
+  'ux.advanced': 'Nâng cao',
+  'ux.danger': 'Vùng nguy hiểm',
+  'ux.dangerHint': 'Xóa mọi người, chuyến đi, hồ sơ và ngày giấy tờ trên thiết bị này. Hãy xuất bản sao lưu trước: không thể hoàn tác.',
 };
 
 const mod: LocaleModule = {

@@ -1346,6 +1346,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV फ़ॉर्मैट',
   'ux.quickActions': 'त्वरित क्रियाएँ',
   'ux.alerts': 'जाँचने योग्य बातें',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'आज',
+  'ux.openMonth': '{month} खोलें',
+  'ux.archivedGroup': 'आर्काइव किए गए ({n})',
+  'ux.appDeleted': 'आवेदन हटा दिया गया',
+  'ux.appDetails': 'आवेदन का विवरण',
+  'ux.sections': 'सेटिंग्स के अनुभाग',
+  'ux.advanced': 'उन्नत',
+  'ux.danger': 'खतरनाक क्षेत्र',
+  'ux.dangerHint': 'इस डिवाइस के सभी व्यक्ति, ट्रिप, आवेदन और दस्तावेज़ की तारीखें हट जाएँगी। पहले बैकअप एक्सपोर्ट करें: इसे वापस नहीं किया जा सकता।',
 };
 
 const mod: LocaleModule = {

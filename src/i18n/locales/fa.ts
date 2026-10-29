@@ -1336,6 +1336,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'قالب CSV',
   'ux.quickActions': 'اقدام‌های سریع',
   'ux.alerts': 'موارد برای بررسی',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'امروز',
+  'ux.openMonth': 'باز کردن {month}',
+  'ux.archivedGroup': 'بایگانی‌شده‌ها ({n})',
+  'ux.appDeleted': 'پرونده حذف شد',
+  'ux.appDetails': 'جزئیات پرونده',
+  'ux.sections': 'بخش‌های تنظیمات',
+  'ux.advanced': 'پیشرفته',
+  'ux.danger': 'منطقه خطر',
+  'ux.dangerHint': 'همهٔ افراد، سفرها، پرونده‌ها و تاریخ‌های مدارک این دستگاه حذف می‌شود. ابتدا یک نسخهٔ پشتیبان خروجی بگیرید: این کار قابل بازگشت نیست.',
 };
 
 const mod: LocaleModule = {

@@ -1340,6 +1340,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'Formato CSV',
   'ux.quickActions': 'Acciones rápidas',
   'ux.alerts': 'Cosas por revisar',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'Hoy',
+  'ux.openMonth': 'Abrir {month}',
+  'ux.archivedGroup': 'Archivados ({n})',
+  'ux.appDeleted': 'Trámite eliminado',
+  'ux.appDetails': 'Detalles del trámite',
+  'ux.sections': 'Secciones de ajustes',
+  'ux.advanced': 'Avanzado',
+  'ux.danger': 'Zona de peligro',
+  'ux.dangerHint': 'Elimina todas las personas, viajes, trámites y fechas de documentos de este dispositivo. Exporta antes una copia de seguridad: no se puede deshacer.',
 };
 
 const mod: LocaleModule = {

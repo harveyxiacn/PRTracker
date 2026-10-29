@@ -8,4 +8,14 @@ export const uxEn: Record<string, string> = {
   'ux.csvFormat': 'CSV format',
   'ux.quickActions': 'Quick actions',
   'ux.alerts': 'Things to check',
+  // v0.9 screens pass: Calendar, Timeline, Settings
+  'ux.today': 'Today',
+  'ux.openMonth': 'Open {month}',
+  'ux.archivedGroup': 'Archived ({n})',
+  'ux.appDeleted': 'Application deleted',
+  'ux.appDetails': 'Application details',
+  'ux.sections': 'Settings sections',
+  'ux.advanced': 'Advanced',
+  'ux.danger': 'Danger zone',
+  'ux.dangerHint': 'Deletes every person, trip, application and document date on this device. Export a backup first: this cannot be undone.',
 };

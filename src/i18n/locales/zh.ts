@@ -1335,6 +1335,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV 格式',
   'ux.quickActions': '快捷操作',
   'ux.alerts': '需要检查的事项',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': '今天',
+  'ux.openMonth': '打开{month}',
+  'ux.archivedGroup': '已归档（{n}）',
+  'ux.appDeleted': '申请已删除',
+  'ux.appDetails': '申请详情',
+  'ux.sections': '设置分区',
+  'ux.advanced': '高级',
+  'ux.danger': '危险区域',
+  'ux.dangerHint': '将删除此设备上的所有人员、行程、申请和证件日期。请先导出备份：此操作无法撤销。',
 };
 
 // Most Chinese assistant keywords are built into the engine (engine.ts, parse.ts, kb.ts);

@@ -154,6 +154,46 @@ export function Sheet({ title, onClose, children, footer }: { title: string; onC
   );
 }
 
+/** On/off setting: a native checkbox (keyboard, forms, labels) drawn and announced as a switch. */
+export function Toggle({ checked, onChange, label, disabled }: { checked: boolean; onChange: (v: boolean) => void; label: ReactNode; disabled?: boolean }) {
+  return (
+    <label className="check toggle">
+      <span className="grow">{label}</span>
+      <input type="checkbox" role="switch" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
+    </label>
+  );
+}
+
+/**
+ * Horizontal swipe on an element, for paging (calendar months). Vertical scrolling is left to the
+ * browser (`touch-action: pan-y` on the element) and the visible arrow buttons stay the equivalent.
+ * Calls back with -1 (swipe towards the start: previous) or +1 (next); mirrored in RTL.
+ */
+export function useSwipe(onSwipe: (dir: -1 | 1) => void) {
+  const start = useRef<{ id: number; x: number; y: number } | null>(null);
+  const cb = useRef(onSwipe);
+  cb.current = onSwipe;
+  return {
+    onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
+      if (e.pointerType === 'mouse') return; // mice use the buttons; dragging would fight text selection
+      start.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    },
+    onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
+      const s0 = start.current;
+      start.current = null;
+      if (!s0 || s0.id !== e.pointerId) return;
+      const dx = e.clientX - s0.x;
+      const dy = e.clientY - s0.y;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const rtl = getComputedStyle(e.currentTarget).direction === 'rtl';
+      cb.current((dx < 0) !== rtl ? 1 : -1);
+    },
+    onPointerCancel: () => {
+      start.current = null;
+    },
+  };
+}
+
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="field">

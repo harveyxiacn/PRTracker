@@ -68,8 +68,14 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
 - ✅ Moving everything to a new phone: the encrypted backup (since v0.3)
 - 💡 QR-code transfer between devices
 
+## ✅ v0.9 — Review fixes & UI/UX pass (2026-10-29)
+- ✅ Pre-launch RCIC review: 270-day PR card window, strict-mode return date, wording that doesn't read as a guarantee, residency exceptions, program status updates; all 18 languages re-translated
+- ✅ Home leads with the answer; alerts collapsed; quick actions under the numbers
+- ✅ Undo instead of confirm (trips, applications); sheets that slide, drag down to close and keep Save reachable
+- ✅ Calendar with in-card toolbar, swipe paging, *Today*, day actions; Timeline detail answer-first; Settings with a section index, switches and a danger zone
+- ✅ Motion system with a reduced-motion variant; first-load JS 135.5 kB
+
 ## 🚧 v1.0 — Store launch
-- ✅ UI/UX pass (2026-10-29): Home hierarchy, undo instead of confirm, draggable sheets with sticky actions, motion system with a reduced-motion variant
 - ✅ Launch kit: privacy policy page, store listing text, data-safety answers, iOS privacy manifest (docs/STORE.md)
 - ✅ Backup compatibility tests for every earlier backup format
 - ⛔ Google Play and App Store releases with release signing (need the owner's Play Console and Apple Developer accounts)

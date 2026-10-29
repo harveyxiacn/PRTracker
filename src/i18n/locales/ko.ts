@@ -1330,6 +1330,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV 형식',
   'ux.quickActions': '빠른 작업',
   'ux.alerts': '확인할 사항',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': '오늘',
+  'ux.openMonth': '{month} 열기',
+  'ux.archivedGroup': '보관됨 ({n})',
+  'ux.appDeleted': '신청을 삭제했습니다',
+  'ux.appDetails': '신청 상세 정보',
+  'ux.sections': '설정 섹션',
+  'ux.advanced': '고급',
+  'ux.danger': '위험 구역',
+  'ux.dangerHint': '이 기기의 모든 사람, 여행, 신청, 문서 날짜가 삭제됩니다. 먼저 백업을 내보내세요. 되돌릴 수 없습니다.',
 };
 
 const mod: LocaleModule = {

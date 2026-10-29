@@ -1335,6 +1335,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV 格式',
   'ux.quickActions': '快速操作',
   'ux.alerts': '需要檢查的事項',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': '今天',
+  'ux.openMonth': '開啟{month}',
+  'ux.archivedGroup': '已封存（{n}）',
+  'ux.appDeleted': '申請已刪除',
+  'ux.appDetails': '申請詳情',
+  'ux.sections': '設定分區',
+  'ux.advanced': '進階',
+  'ux.danger': '危險區域',
+  'ux.dangerHint': '將刪除此裝置上所有人員、行程、申請和證件日期。請先匯出備份：此操作無法復原。',
 };
 
 // The engine's built-in Chinese keywords are Simplified, so this lexicon carries the

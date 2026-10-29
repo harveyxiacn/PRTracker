@@ -44,6 +44,10 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] Open *Add trip*, drag the sheet's handle down a little → it springs back; drag further or flick → it closes. The form itself still scrolls.
 - [ ] With the keyboard open in a sheet, *Save* stays visible above it.
 - [ ] Turn on the system's *Reduce motion* → sheets and screens no longer slide (they fade), everything still works.
+- [ ] Calendar: swipe left/right on the months → next/previous month or year; vertical scrolling still works; *Today* comes back to this month. Tap a day → *Add trip* opens with that departure date; on a trip day → *Edit trip*.
+- [ ] Timeline: open an application → prediction and milestones first; the next step is highlighted; *Application details* unfolds the fields. Delete → *Undo* brings it back.
+- [ ] Settings: tap a chip in the index → that section scrolls under the top bar; switches toggle with a tap and with the keyboard (Space).
+- [ ] With a PIN set, kill and reopen the app → the lock screen appears (briefly blank first), nothing behind it is visible.
 
 **Reminders**
 - [ ] Settings → *Allow notifications* → permission prompt → “N reminders scheduled”.
