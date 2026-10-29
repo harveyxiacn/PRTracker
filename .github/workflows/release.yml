@@ -38,7 +38,11 @@ jobs:
         run: echo "enabled=$HAS_KEY" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm test
+      # In-app updates (VITE_OTA) only in a release-signed build: a debug test build can never
+      # update itself, because each one is signed with a different throw-away key.
       - run: npm run build
+        env:
+          VITE_OTA: ${{ steps.signing.outputs.enabled == 'true' && '1' || '' }}
       - run: npx cap sync android
       - name: Decode signing key
         if: steps.signing.outputs.enabled == 'true'

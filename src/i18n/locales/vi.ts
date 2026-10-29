@@ -1341,6 +1341,31 @@ const strings: Record<string, string> = {
   'ux.advanced': 'Nâng cao',
   'ux.danger': 'Vùng nguy hiểm',
   'ux.dangerHint': 'Xóa mọi người, chuyến đi, hồ sơ và ngày giấy tờ trên thiết bị này. Hãy xuất bản sao lưu trước: không thể hoàn tác.',
+
+  // v0.10: in-app updates
+  'upd.title': 'Cập nhật ứng dụng',
+  'upd.current': 'Phiên bản đã cài: {v}',
+  'upd.check': 'Kiểm tra cập nhật',
+  'upd.checking': 'Đang kiểm tra…',
+  'upd.latest': 'Bạn đang dùng phiên bản mới nhất.',
+  'upd.available': 'Đã có phiên bản {v}',
+  'upd.size': 'Dung lượng tải {mb} MB',
+  'upd.whatsNew': 'Có gì mới',
+  'upd.install': 'Tải xuống và cài đặt',
+  'upd.downloading': 'Đang tải xuống… {pct}%',
+  'upd.downloadingLabel': 'Đang tải bản cập nhật',
+  'upd.ready': 'Trình cài đặt của Android sẽ mở ra: nhấn Cập nhật để hoàn tất. Dữ liệu của bạn vẫn nằm trên điện thoại này.',
+  'upd.needPermission': 'Android sẽ hỏi một lần để cho phép PR Tracker cài đặt ứng dụng. Hãy bật tùy chọn đó, quay lại và nhấn Cài đặt.',
+  'upd.installAgain': 'Cài đặt',
+  'upd.retry': 'Thử lại',
+  'upd.auto': 'Tự động kiểm tra (tối đa một lần mỗi ngày)',
+  'upd.privacy': 'Việc kiểm tra chỉ hỏi GitHub về bản phát hành công khai mới nhất. Không có thông tin nào về bạn hay dữ liệu của bạn được gửi đi. Mỗi bản tải xuống đều được đối chiếu với checksum của GitHub và phải được ký bằng cùng khóa với ứng dụng này.',
+  'upd.errNetwork': 'Không kết nối được với GitHub. Hãy kiểm tra kết nối rồi thử lại.',
+  'upd.errChecksum': 'Bản tải xuống bị hỏng (checksum không khớp) và đã bị xóa. Hãy thử lại.',
+  'upd.errSignature': 'Bản tải xuống không được ký bằng khóa của PR Tracker nên chưa được cài đặt.',
+  'upd.errTestBuild': 'Bản này là bản thử nghiệm dùng khóa ký khác nên không thể tự cập nhật. Hãy xuất bản sao lưu, gỡ cài đặt, cài phiên bản mới từ GitHub một lần, rồi khôi phục bản sao lưu.',
+  'upd.toast': 'Đã có PR Tracker {v}',
+  'upd.view': 'Xem',
 };
 
 const mod: LocaleModule = {

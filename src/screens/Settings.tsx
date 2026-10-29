@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Segmented, Toggle, prefersReducedMotion } from '../components/ui';
 import { DEFAULT_DATA_URL, emptyData, type Settings } from '../domain/types';
@@ -11,6 +11,8 @@ import { SecuritySection } from './Security';
 import { PeopleSection } from './People';
 import { ShareSection } from './Share';
 import { privacyScreenSupported, setPrivacyScreen } from '../native/privacy';
+import { otaSupported } from '../native/updates';
+import { UpdateCard } from './Updates';
 
 const VERSION = __APP_VERSION__;
 
@@ -48,7 +50,13 @@ function SectionIndex() {
 }
 
 export function SettingsScreen() {
-  const { data, update, replaceAll, t, insights, demo, resyncNotifications } = useApp();
+  const { data, update, replaceAll, t, insights, demo, resyncNotifications, param } = useApp();
+  // Opened from the "update available" toast: bring the update card into view.
+  useEffect(() => {
+    if (param !== 'update') return;
+    const id = requestAnimationFrame(() => document.getElementById('set-update')?.scrollIntoView({ block: 'start' }));
+    return () => cancelAnimationFrame(id);
+  }, [param]);
   const s = data.settings;
   const p = data.profile;
   const setS = (patch: Partial<Settings>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
@@ -178,6 +186,8 @@ export function SettingsScreen() {
           <Icon name="trash" size={16} /> {t('set.wipe')}
         </button>
       </section>
+
+      {otaSupported() && <UpdateCard />}
 
       <section className="card anchor" id="set-about">
         <h2><Icon name="info" /> {t('set.about')}</h2>

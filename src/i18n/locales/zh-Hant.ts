@@ -1346,6 +1346,31 @@ const strings: Record<string, string> = {
   'ux.advanced': '進階',
   'ux.danger': '危險區域',
   'ux.dangerHint': '將刪除此裝置上所有人員、行程、申請和證件日期。請先匯出備份：此操作無法復原。',
+
+  // v0.10: in-app updates
+  'upd.title': '應用程式更新',
+  'upd.current': '已安裝版本：{v}',
+  'upd.check': '檢查更新',
+  'upd.checking': '正在檢查…',
+  'upd.latest': '您已是最新版本。',
+  'upd.available': '版本 {v} 可用',
+  'upd.size': '下載大小 {mb} MB',
+  'upd.whatsNew': '新功能',
+  'upd.install': '下載並安裝',
+  'upd.downloading': '正在下載… {pct}%',
+  'upd.downloadingLabel': '正在下載更新',
+  'upd.ready': '將開啟 Android 安裝程式：點按「更新」即可完成。您的資料仍保留在這支手機上。',
+  'upd.needPermission': 'Android 會詢問一次，是否允許 PR Tracker 安裝應用程式。請開啟該權限，返回後點按「安裝」。',
+  'upd.installAgain': '安裝',
+  'upd.retry': '重試',
+  'upd.auto': '自動檢查（每天最多一次）',
+  'upd.privacy': '檢查時只會向 GitHub 詢問最新的公開版本，不會傳送任何關於您或您資料的資訊。每次下載都會與 GitHub 的核對碼比對，並且必須使用與本應用程式相同的金鑰簽署。',
+  'upd.errNetwork': '無法連線到 GitHub。請檢查網路連線後重試。',
+  'upd.errChecksum': '下載檔案已損毀（核對碼不符），已被刪除。請重試。',
+  'upd.errSignature': '下載檔案未使用 PR Tracker 的金鑰簽署，因此未安裝。',
+  'upd.errTestBuild': '此副本是使用不同簽署金鑰的測試版本，無法自行更新。請匯出備份，解除安裝，從 GitHub 安裝一次新版本，然後還原備份。',
+  'upd.toast': 'PR Tracker {v} 可用',
+  'upd.view': '檢視',
 };
 
 // The engine's built-in Chinese keywords are Simplified, so this lexicon carries the

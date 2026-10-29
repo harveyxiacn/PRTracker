@@ -11,6 +11,7 @@ import { formsEn } from './parts/forms';
 import { cbsaEn } from './parts/cbsa';
 import { community2En } from './parts/community2';
 import { uxEn } from './parts/ux';
+import { updatesEn } from './parts/updates';
 
 export const en: Record<string, string> = {
   'app.name': 'PR Tracker',
@@ -733,4 +734,5 @@ export const en: Record<string, string> = {
   ...cbsaEn,
   ...community2En,
   ...uxEn,
+  ...updatesEn,
 };

@@ -12,6 +12,11 @@ owner's accounts. Status: **prepared, waiting for accounts.**
 | Listing | Paste the texts below; upload screenshots | Same |
 | Review | Content rating questionnaire, Data safety form (answers below) | App Privacy "nutrition label" (answers below), export compliance: uses only standard encryption (HTTPS, WebCrypto) → exempt |
 
+**Store builds must not self-update.** Google Play forbids apps that update themselves outside
+Play, and `REQUEST_INSTALL_PACKAGES` needs a declared core use. For a Play (or any store) build:
+remove `REQUEST_INSTALL_PACKAGES` from `android/app/src/main/AndroidManifest.xml` and build the web
+app **without** `VITE_OTA` (the *App updates* card and the daily check then don't exist).
+
 ## 2. Listing texts
 **App name:** PR Tracker — Canada PR & Citizenship Days
 **Short description (80):** Count days for Canadian citizenship & PR. Private: your data stays on your phone.

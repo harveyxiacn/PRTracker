@@ -4,6 +4,14 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-29
+
+### Added
+- **In-app updates (Android, GitHub build):** *Settings → App updates* checks GitHub for a newer release (automatically at most once a day, or on demand), shows what's new and the size, downloads the APK with a progress bar and opens the Android installer. The download must come from this repository's releases, match GitHub's SHA-256 and be signed with the same key as the installed app; otherwise it is deleted and not offered for install. Not included in store builds (docs/STORE.md).
+
+### Fixed
+- **Releases can be installed over the previous version.** Releases were signed with a different throw-away debug key each time, so Android refused to install a new version over the old one ("App not installed"). Releases are now signed with one permanent release key. Moving from a test build (0.9.0 and earlier) to this first release-signed build needs **one** uninstall: export a backup first and restore it after installing. From then on, updates install in place and keep your data.
+
 ## [0.9.0] - 2026-10-29
 
 Fixes from the pre-launch RCIC reviews of the immigration rules and content (2026-10-16), and a

@@ -1346,6 +1346,31 @@ const strings: Record<string, string> = {
   'ux.advanced': '高级',
   'ux.danger': '危险区域',
   'ux.dangerHint': '将删除此设备上的所有人员、行程、申请和证件日期。请先导出备份：此操作无法撤销。',
+
+  // v0.10: in-app updates
+  'upd.title': '应用更新',
+  'upd.current': '已安装版本：{v}',
+  'upd.check': '检查更新',
+  'upd.checking': '正在检查…',
+  'upd.latest': '您已是最新版本。',
+  'upd.available': '版本 {v} 可用',
+  'upd.size': '下载大小 {mb} MB',
+  'upd.whatsNew': '新功能',
+  'upd.install': '下载并安装',
+  'upd.downloading': '正在下载… {pct}%',
+  'upd.downloadingLabel': '正在下载更新',
+  'upd.ready': '将打开 Android 安装程序：点按“更新”即可完成。您的数据仍保留在这部手机上。',
+  'upd.needPermission': 'Android 会询问一次，是否允许 PR Tracker 安装应用。请开启该权限，返回后点按“安装”。',
+  'upd.installAgain': '安装',
+  'upd.retry': '重试',
+  'upd.auto': '自动检查（每天最多一次）',
+  'upd.privacy': '检查时只会向 GitHub 询问最新的公开版本，不会发送任何关于您或您数据的信息。每次下载都会与 GitHub 的校验和比对，并且必须使用与本应用相同的密钥签名。',
+  'upd.errNetwork': '无法连接到 GitHub。请检查网络连接后重试。',
+  'upd.errChecksum': '下载文件已损坏（校验和不匹配），已被删除。请重试。',
+  'upd.errSignature': '下载文件未使用 PR Tracker 的密钥签名，因此未安装。',
+  'upd.errTestBuild': '此副本是使用不同签名密钥的测试版本，无法自行更新。请导出备份，卸载它，从 GitHub 安装一次新版本，然后恢复备份。',
+  'upd.toast': 'PR Tracker {v} 可用',
+  'upd.view': '查看',
 };
 
 // Most Chinese assistant keywords are built into the engine (engine.ts, parse.ts, kb.ts);

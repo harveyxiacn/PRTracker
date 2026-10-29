@@ -1351,6 +1351,31 @@ const strings: Record<string, string> = {
   'ux.advanced': 'Avanzado',
   'ux.danger': 'Zona de peligro',
   'ux.dangerHint': 'Elimina todas las personas, viajes, trámites y fechas de documentos de este dispositivo. Exporta antes una copia de seguridad: no se puede deshacer.',
+
+  // v0.10: in-app updates
+  'upd.title': 'Actualizaciones de la app',
+  'upd.current': 'Versión instalada: {v}',
+  'upd.check': 'Buscar actualizaciones',
+  'upd.checking': 'Buscando…',
+  'upd.latest': 'Tienes la versión más reciente.',
+  'upd.available': 'La versión {v} está disponible',
+  'upd.size': 'Descarga de {mb} MB',
+  'upd.whatsNew': 'Novedades',
+  'upd.install': 'Descargar e instalar',
+  'upd.downloading': 'Descargando… {pct} %',
+  'upd.downloadingLabel': 'Descargando la actualización',
+  'upd.ready': 'Se abre el instalador de Android: toca Actualizar para terminar. Tus datos se quedan en este teléfono.',
+  'upd.needPermission': 'Android pide una sola vez permiso para que PR Tracker instale apps. Actívalo, vuelve y toca Instalar.',
+  'upd.installAgain': 'Instalar',
+  'upd.retry': 'Reintentar',
+  'upd.auto': 'Buscar automáticamente (como máximo una vez al día)',
+  'upd.privacy': 'La búsqueda le pide a GitHub la última versión pública. No se envía nada sobre ti ni sobre tus datos. Cada descarga se compara con la suma de verificación de GitHub y debe estar firmada con la misma clave que esta app.',
+  'upd.errNetwork': 'No se pudo conectar con GitHub. Revisa tu conexión e inténtalo de nuevo.',
+  'upd.errChecksum': 'La descarga estaba dañada (la suma de verificación no coincide) y se eliminó. Inténtalo de nuevo.',
+  'upd.errSignature': 'La descarga no está firmada con la clave de PR Tracker, así que no se instaló.',
+  'upd.errTestBuild': 'Esta copia es una compilación de prueba con otra clave de firma, por lo que no puede actualizarse sola. Exporta un respaldo, desinstálala, instala una vez la nueva versión desde GitHub y luego restaura el respaldo.',
+  'upd.toast': 'PR Tracker {v} está disponible',
+  'upd.view': 'Ver',
 };
 
 const mod: LocaleModule = {

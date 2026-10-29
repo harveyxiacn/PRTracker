@@ -47,6 +47,8 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] Calendar: swipe left/right on the months → next/previous month or year; vertical scrolling still works; *Today* comes back to this month. Tap a day → *Add trip* opens with that departure date; on a trip day → *Edit trip*.
 - [ ] Timeline: open an application → prediction and milestones first; the next step is highlighted; *Application details* unfolds the fields. Delete → *Undo* brings it back.
 - [ ] Settings: tap a chip in the index → that section scrolls under the top bar; switches toggle with a tap and with the keyboard (Space).
+- [ ] In-app update (needs two release-signed versions): on the older one, Settings → *App updates* → *Check for updates* → *Download and install* → progress → Android asks to allow installs from PR Tracker (first time) → *Install* → Android installer *Update* → the app restarts on the new version with all data still there.
+- [ ] *Check automatically* on: a day after the last check, opening the app shows "PR Tracker x.y.z is available" with *View*.
 - [ ] With a PIN set, kill and reopen the app → the lock screen appears (briefly blank first), nothing behind it is visible.
 
 **Reminders**

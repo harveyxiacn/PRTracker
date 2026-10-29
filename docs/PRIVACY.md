@@ -31,6 +31,8 @@ exception is a timeline you choose to share with the community (see below).
 |---|---|---|
 | `GET <dataUrl>/ircc.json`, `draws.json`, `community.json` | app start / *Refresh* | Nothing personal; no cookies, `credentials: omit`, no referrer |
 | `GET <dataUrl>/ircc-history.json` | opening processing-time trends / curves | Same: nothing personal |
+| `GET api.github.com/repos/harveyxiacn/PRTracker/releases/latest` (Android GitHub build only) | at most once a day with *Check automatically* on (default), or when you tap *Check for updates* | Nothing personal: a plain request for public release metadata. GitHub sees the request (IP address) like any website |
+| Downloading an update (Android GitHub build only) | only when you tap *Download and install* | Nothing personal; the APK comes from GitHub's release storage |
 | Opening Reddit/Google/IRCC/GitHub links | only when you tap them | the generic search text shown (stream + month) |
 | Sharing a timeline | only when you tap *Review & share* and confirm | opens a GitHub "new issue" page in your browser with the anonymised record (program, month, day counts) **in the page address**. GitHub receives that record as soon as the page opens, linked to your GitHub account if you are signed in. It becomes public only if you submit the issue. |
 

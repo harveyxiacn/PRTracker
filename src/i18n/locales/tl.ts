@@ -1341,6 +1341,31 @@ const strings: Record<string, string> = {
   'ux.advanced': 'Advanced',
   'ux.danger': 'Danger zone',
   'ux.dangerHint': 'Buburahin ang lahat ng tao, biyahe, application at petsa ng dokumento sa device na ito. Mag-export muna ng backup: hindi na ito mababawi.',
+
+  // v0.10: in-app updates
+  'upd.title': 'Mga update ng app',
+  'upd.current': 'Naka-install na bersyon: {v}',
+  'upd.check': 'Tingnan kung may update',
+  'upd.checking': 'Sinusuri…',
+  'upd.latest': 'Nasa iyo na ang pinakabagong bersyon.',
+  'upd.available': 'Available na ang bersyon {v}',
+  'upd.size': '{mb} MB na download',
+  'upd.whatsNew': 'Ano’ng bago',
+  'upd.install': 'I-download at i-install',
+  'upd.downloading': 'Dina-download… {pct}%',
+  'upd.downloadingLabel': 'Dina-download ang update',
+  'upd.ready': 'Magbubukas ang installer ng Android: i-tap ang I-update para tapusin. Mananatili sa teleponong ito ang iyong data.',
+  'upd.needPermission': 'Minsan lang magtatanong ang Android kung papayagan ang PR Tracker na mag-install ng mga app. I-on ito, bumalik, at i-tap ang I-install.',
+  'upd.installAgain': 'I-install',
+  'upd.retry': 'Subukan ulit',
+  'upd.auto': 'Awtomatikong suriin (hanggang isang beses lang sa isang araw)',
+  'upd.privacy': 'Ang pagsusuri ay nagtatanong sa GitHub ng pinakabagong pampublikong release. Walang ipinapadalang anuman tungkol sa iyo o sa iyong data. Bawat download ay itinutugma sa checksum ng GitHub at dapat naka-sign gamit ang parehong key ng app na ito.',
+  'upd.errNetwork': 'Hindi maabot ang GitHub. Tingnan ang iyong koneksyon at subukan ulit.',
+  'upd.errChecksum': 'Sira ang download (hindi tugma ang checksum) kaya na-delete ito. Subukan ulit.',
+  'upd.errSignature': 'Hindi naka-sign ang download gamit ang key ng PR Tracker, kaya hindi ito na-install.',
+  'upd.errTestBuild': 'Test build ang kopyang ito na may ibang signing key, kaya hindi ito makakapag-update nang mag-isa. Mag-export ng backup, i-uninstall ito, mag-install ng bagong bersyon mula sa GitHub nang isang beses, saka i-restore ang backup.',
+  'upd.toast': 'Available na ang PR Tracker {v}',
+  'upd.view': 'Tingnan',
 };
 
 const mod: LocaleModule = {
