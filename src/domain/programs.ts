@@ -75,17 +75,17 @@ export const PROGRAMS: Program[] = [
   { id: 'qc_skilled', category: 'quebec', template: 'quebec', fallbackDays: 365, url: IRCC + 'immigrate-canada/quebec-skilled-workers.html' },
   { id: 'qc_peq', category: 'quebec', template: 'quebec', fallbackDays: 365, status: 'changing', url: IRCC + 'immigrate-canada/quebec-skilled-workers.html' },
   // Pilots and other economic programs
-  { id: 'aip', category: 'pilots', template: 'endorsed', fallbackDays: 183, url: IRCC + 'immigrate-canada/atlantic-immigration.html' },
+  { id: 'aip', category: 'pilots', template: 'endorsed', fallbackDays: 183, status: 'changing', url: IRCC + 'immigrate-canada/atlantic-immigration.html' },
   { id: 'rcip', category: 'pilots', template: 'endorsed', fallbackDays: 365, url: IRCC + 'immigrate-canada/rural-franco-pilots.html' },
   { id: 'fcip', category: 'pilots', template: 'endorsed', fallbackDays: 365, url: IRCC + 'immigrate-canada/rural-franco-pilots.html' },
-  { id: 'caregiver', category: 'pilots', template: 'job_offer', fallbackDays: 365, status: 'paused', url: IRCC + 'immigrate-canada/caregivers.html' },
-  { id: 'startup', category: 'pilots', template: 'startup', fallbackDays: 1000, status: 'paused', url: IRCC + 'immigrate-canada/start-visa.html' },
+  { id: 'caregiver', category: 'pilots', template: 'job_offer', fallbackDays: 365, status: 'closed', url: IRCC + 'immigrate-canada/caregivers.html' },
+  { id: 'startup', category: 'pilots', template: 'startup', fallbackDays: 1000, status: 'closed', url: IRCC + 'immigrate-canada/start-visa.html' },
   // Family
   { id: 'spousal_out', category: 'family', template: 'family', fallbackDays: 365, url: IRCC + 'immigrate-canada/family-sponsorship/spouse-partner-children.html' },
   { id: 'spousal_in', category: 'family', template: 'family_inland', fallbackDays: 365, url: IRCC + 'immigrate-canada/family-sponsorship/spouse-partner-children.html' },
   { id: 'spousal', category: 'family', template: 'family', fallbackDays: 365, url: IRCC + 'immigrate-canada/family-sponsorship/spouse-partner-children.html' },
   { id: 'child', category: 'family', template: 'family', fallbackDays: 365, countrySeries: 'child_dependent', url: IRCC + 'immigrate-canada/family-sponsorship/spouse-partner-children.html' },
-  { id: 'pgp', category: 'family', template: 'pgp', fallbackDays: 730, url: IRCC + 'immigrate-canada/family-sponsorship/sponsor-parents-grandparents.html' },
+  { id: 'pgp', category: 'family', template: 'pgp', fallbackDays: 730, status: 'paused', url: IRCC + 'immigrate-canada/family-sponsorship/sponsor-parents-grandparents.html' },
   // Humanitarian
   { id: 'protected', category: 'humanitarian', template: 'protected', fallbackDays: 730, url: IRCC + 'immigrate-canada/protected-persons/eligibility.html' },
   { id: 'hc', category: 'humanitarian', template: 'hc', fallbackDays: 730, url: IRCC + 'immigrate-canada/humanitarian-compassionate-grounds.html' },

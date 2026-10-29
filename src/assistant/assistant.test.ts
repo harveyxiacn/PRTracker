@@ -143,6 +143,21 @@ describe('Maple v2', () => {
     expect(r.source).toMatch(/^https:\/\//);
     expect(answer('Does time abroad with my citizen spouse count?', data(), t, undefined, TODAY).intent).toBe('faq');
   });
+  it('adds the exclusions note and the disclaimer to rule/date answers, not to FAQs (RCIC review v1)', () => {
+    const cit = answer('When can I apply for citizenship?', data(), t, undefined, TODAY).text;
+    expect(cit).toContain(en['common.citExclusions']);
+    expect(cit).toContain(en['common.disclaimer']);
+    for (const q of ['How long can I stay outside Canada?', 'When should I renew my PR card?', 'What if I travel for 2 months?', 'what are the rules?'])
+      expect(answer(q, data(), t, undefined, TODAY).text).toContain(en['common.disclaimer']);
+    const faq = answer('Can I apply for citizenship with an expired PR card?', data(), t, undefined, TODAY);
+    expect(faq.text).toBe(en['kb.expired_card_cit']);
+  });
+  it('opens the PR card renewal window 270 days before expiry', () => {
+    // Card expires 2029-01-01: 270 days earlier is 2028-04-06 (9 calendar months would be 2028-04-01).
+    const r = answer('When should I renew my PR card?', data(), t, undefined, TODAY);
+    expect(r.intent).toBe('pr_card');
+    expect(r.text).toContain('from 2028-04-06');
+  });
   it('understands non-ASCII digits', () => {
     expect(answer('What if I travel for ٣ months?', d2(), t, undefined, TODAY).text).toContain('91 days');
   });

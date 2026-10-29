@@ -3,12 +3,14 @@ import { Icon } from '../components/Icon';
 import { pickTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { csvToTrips } from '../store/csv';
-import { importJson } from '../store/storage';
+import { useBackupRestore } from './BackupRestore';
 import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
 
 export function Onboarding() {
-  const { data, update, replaceAll, t, toast } = useApp();
+  const { data, update, t, toast } = useApp();
   const [step, setStep] = useState(0);
+  // Plain or encrypted backups; nothing to overwrite yet, so no "replace?" question.
+  const restore = useBackupRestore({ confirmReplace: false });
   const finish = () => update((d) => ({ ...d, onboarded: true }));
   const steps = 3;
 
@@ -33,20 +35,10 @@ export function Onboarding() {
           </ul>
           <div className="tip info"><Icon name="shield" /><div>{t('onb.privacy')}</div></div>
           <button className="btn primary block" style={{ marginTop: 16 }} onClick={() => setStep(1)}>{t('onb.start')}</button>
-          <button
-            className="btn ghost block"
-            onClick={async () => {
-              const text = await pickTextFile('.json,application/json');
-              if (!text) return;
-              try {
-                replaceAll({ ...importJson(text), onboarded: true });
-              } catch {
-                toast(t('set.importFailed'));
-              }
-            }}
-          >
+          <button className="btn ghost block" onClick={restore.start}>
             {t('onb.restore')}
           </button>
+          {restore.sheet}
           <button className="btn ghost block" onClick={() => (window.location.href = `${window.location.pathname}?demo=1&lang=${encodeURIComponent(data.settings.language)}`)}>
             {t('onb.tryDemo')}
           </button>

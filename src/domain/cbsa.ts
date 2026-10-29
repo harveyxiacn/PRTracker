@@ -118,10 +118,15 @@ function extractPlace(text: string): string | undefined {
   const lower = text.toLowerCase();
   for (const p of KNOWN_PORTS) if (lower.includes(p.toLowerCase())) return p;
   const rest = text.replace(new RegExp(EXIT_RE.source, 'gi'), ' ').replace(new RegExp(ENTRY_RE.source, 'gi'), ' ').replace(/\b(air|land|marine|rail|highway mode)\b/gi, ' ');
-  const named = /([a-zà-ÿ][\w'.-]*(?:\s+[a-zà-ÿ][\w'.-]*){0,3}\s+(?:int'?l|international|airport|bridge|crossing|tunnel|ferry)(?:\s+airport)?)\b/i.exec(rest);
+  // Word lengths are bounded so a very long token can't make this quadratic.
+  const named = /([a-zà-ÿ][\w'.-]{0,40}(?:\s+[a-zà-ÿ][\w'.-]{0,40}){0,3}\s+(?:int'?l|international|airport|bridge|crossing|tunnel|ferry)(?:\s+airport)?)\b/i.exec(rest);
   if (named) return clean(named[1]);
   return undefined;
 }
+
+/** Input caps for parseCbsaText (64 KB in total, 500 characters per line). */
+export const MAX_CBSA_CHARS = 64 * 1024;
+export const MAX_CBSA_LINE = 500;
 
 function clean(s: string): string {
   return s.replace(/\s+/g, ' ').trim().slice(0, 40);
@@ -142,8 +147,9 @@ function classify(text: string): 'entry' | 'exit' | undefined {
 export function parseCbsaText(text: string): CbsaEvent[] {
   const out = new Map<string, CbsaEvent>();
   let section: 'entry' | 'exit' | undefined = undefined;
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.replace(/\s+$/, '');
+  // Bounded work on any paste: a real report line is well under 500 characters.
+  for (const raw of text.slice(0, MAX_CBSA_CHARS).split(/\r?\n/)) {
+    const line = raw.slice(0, MAX_CBSA_LINE).replace(/\s+$/, '');
     const trimmed = line.trim();
     if (!trimmed) continue;
     const hits = findDates(line);

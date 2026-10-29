@@ -184,6 +184,8 @@ function AppDetail({ app }: { app: Application }) {
     if (!rec) return;
     const body = JSON.stringify(rec, null, 2);
     const url = `${REPO}/issues/new?labels=timeline&template=timeline.yml&title=${encodeURIComponent(`Timeline: ${rec.kind} ${rec.submittedMonth}`)}&record=${encodeURIComponent(body)}`;
+    // The record travels in the URL, so GitHub receives it when the page opens, not only on submit.
+    if (!confirm(t('sec.shareGithubConfirm'))) return;
     void openExternal(url);
   };
   const remove = () => {

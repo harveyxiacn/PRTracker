@@ -138,3 +138,14 @@ describe('reconcile', () => {
     expect(reconcile([], trips)).toEqual({ matched: [], unmatchedEntries: [], tripsWithoutEntry: [], proposals: [] });
   });
 });
+
+describe('adversarial input (ReDoS)', () => {
+  const cases = ['a'.repeat(65_536), `2023-03-01 ${'a '.repeat(32_000)}`, `2023-03-01 port: ${'port: '.repeat(10_000)}`, `2023-03-01 ${'x'.repeat(30_000)} airport`];
+  for (const [i, text] of cases.entries()) {
+    it(`parses adversarial paste #${i + 1} in under 200 ms`, () => {
+      const t0 = performance.now();
+      parseCbsaText(text);
+      expect(performance.now() - t0).toBeLessThan(200);
+    });
+  }
+});

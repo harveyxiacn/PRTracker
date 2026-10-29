@@ -12,6 +12,7 @@ import { DEFAULT_PERSON_NAME, SELF_ID, householdReminders } from '../domain/peop
 import { diffDays } from '../domain/dates';
 import { fmtDate } from '../i18n';
 import { loadData, saveData } from './storage';
+import { removeCachedExports } from '../platform';
 
 export type Route =
   | 'home' | 'calendar' | 'trips' | 'timeline' | 'assistant'
@@ -29,11 +30,17 @@ interface Ctx {
   route: Route;
   go: (r: Route, param?: string) => void;
   param?: string;
-  toast: (msg: string) => void;
+  /** Short confirmation above the tab bar; with an action (e.g. Undo) it stays longer. */
+  toast: (msg: string, action?: ToastAction) => void;
   /** Showing sample data (nothing is saved). */
   demo: boolean;
   /** Reschedule all OS reminders (all household members); no-op in demo. Returns how many. */
   resyncNotifications: () => Promise<number>;
+}
+
+export interface ToastAction {
+  label: string;
+  run: () => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -54,7 +61,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData | null>(null);
   const [open, setOpen] = useState<OpenData>({ origin: 'none' });
   const [{ route, param }, setRoute] = useState(routeFromHash);
-  const [toastMsg, setToast] = useState<string | null>(null);
+  const [toastMsg, setToast] = useState<{ id: number; msg: string; action?: ToastAction; leaving?: boolean } | null>(null);
+  const toastTimers = useRef<number[]>([]);
   const [today, setToday] = useState(todayISO());
   const saveTimer = useRef<number | undefined>(undefined);
   const pending = useRef<AppData | null>(null);
@@ -77,6 +85,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!d.onboarded && !d.trips.length) d.settings.language = detectLang();
         setData(d);
       });
+      // Exports are deleted after sharing; this catches any left by a share that never returned.
+      void removeCachedExports();
     }
     const onHash = () => setRoute(routeFromHash());
     window.addEventListener('hashchange', onHash);
@@ -173,7 +183,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [data?.settings.theme, loadedLang]);
 
   // Reschedule local notifications when anything that affects them changes.
-  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.household ?? null) + JSON.stringify(data?.settings.notifications) + loadedLang : '';
+  // The lock state is part of it: with a PIN set, notifications switch to generic text.
+  const reminderSig = insights ? JSON.stringify(insights.reminders.map((r) => [r.id, r.date])) + JSON.stringify(data?.household ?? null) + JSON.stringify(data?.settings.notifications) + loadedLang + (data?.lock ? ':locked' : '') : '';
   /** The single place that schedules OS notifications: every household member, never in demo mode. */
   const resyncNotifications = useCallback(async (): Promise<number> => {
     if (!data || !insights || demoMode.current) return 0;
@@ -182,7 +193,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const nameOf = (n: unknown) => (n === DEFAULT_PERSON_NAME ? t('ppl.me') : String(n));
     const tt: typeof t = (k, v) => (k === 'ppl.remTitle' && v ? t(k, { name: nameOf(v.name), title: t(String(v.personTitle), v) }) : t(k, v));
     const all = [...insights.reminders, ...others.map((r) => ({ ...r, title: 'ppl.remTitle', vars: { ...r.vars, personTitle: r.title } }))];
-    return syncNotifications(all, data.settings, tt);
+    // Notifications show on the lock screen: with an app lock set they say nothing specific.
+    return syncNotifications(all, data.settings, tt, !!data.lock);
   }, [data, insights, t]);
   useEffect(() => {
     if (!data || !insights || !data.onboarded || demoMode.current) return;
@@ -214,30 +226,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [insights, t, data?.lock, data?.privacyScreen, data?.household?.activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the native screenshot block in sync with the saved setting (e.g. after a restore).
+  // A PIN turns it on too, so the recent-apps thumbnail never shows what the lock hides.
   useEffect(() => {
-    if (data && !demoMode.current) void setPrivacyScreen(!!data.privacyScreen);
-  }, [data?.privacyScreen, !!data]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (data && !demoMode.current) void setPrivacyScreen(!!data.privacyScreen || !!data.lock);
+  }, [data?.privacyScreen, !!data?.lock, !!data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const go = useCallback((r: Route, p?: string) => {
     window.location.hash = `/${r}${p ? '/' + encodeURIComponent(p) : ''}`;
     window.scrollTo({ top: 0 });
   }, []);
 
-  const toast = useCallback((msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast(null), 2600);
+  // One toast at a time: a new one replaces the current one and restarts the clock (the old
+  // timers used to hide the new message early). It fades out before it is removed.
+  const toast = useCallback((msg: string, action?: ToastAction) => {
+    toastTimers.current.forEach((h) => window.clearTimeout(h));
+    const id = Date.now();
+    setToast({ id, msg, action });
+    // Long enough to read a sentence; an Undo offer stays a little longer.
+    const stay = action ? 6000 : 4000;
+    toastTimers.current = [
+      window.setTimeout(() => setToast((cur) => (cur?.id === id ? { ...cur, leaving: true } : cur)), stay),
+      window.setTimeout(() => setToast((cur) => (cur?.id === id ? null : cur)), stay + 160),
+    ];
   }, []);
+  const dismissToast = () => {
+    toastTimers.current.forEach((h) => window.clearTimeout(h));
+    setToast(null);
+  };
 
   if (!data || !insights) return <div className="empty-state" style={{ paddingTop: 120 }}>…</div>;
 
   return (
     <AppCtx.Provider value={{ data, update, replaceAll, insights, t, lang, open, refreshOpen, route, go, param, toast, demo: demoMode.current, resyncNotifications }}>
       {children}
-      {toastMsg && (
-        <div role="status" aria-live="polite" style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom))', zIndex: 60, display: 'flex', justifyContent: 'center' }}>
-          <div style={{ background: 'var(--text)', color: 'var(--bg)', padding: '10px 16px', borderRadius: 12, fontSize: 14, maxWidth: 480 }}>{toastMsg}</div>
-        </div>
-      )}
+      {/* The live region stays mounted so screen readers announce each new message. */}
+      <div className="toast-region" role="status" aria-live="polite">
+        {toastMsg && (
+          <div key={toastMsg.id} className={`toast${toastMsg.leaving ? ' leaving' : ''}`}>
+            <span className="grow">{toastMsg.msg}</span>
+            {toastMsg.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={() => {
+                  toastMsg.action!.run();
+                  dismissToast();
+                }}
+              >
+                {toastMsg.action.label}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </AppCtx.Provider>
   );
 }

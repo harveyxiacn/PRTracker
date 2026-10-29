@@ -92,7 +92,7 @@ earliest eligibility date is linear over ≤ 2.5k candidate days. Everything rec
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | push to main, PRs | typecheck, unit tests, web build, **bundle budget**, **Android debug APK** artifact |
-| `release.yml` | tag `v*` | tests, build, signed APK/AAB if secrets exist, debug APK, web zip → GitHub Release |
+| `release.yml` | tag `v*` | tests, build, signed APK/AAB if secrets exist (otherwise a debuggable test APK), web zip → GitHub Release |
 | `pages.yml` | push to main | deploys the PWA and `/data` to GitHub Pages |
 | `data.yml` | daily cron | mirrors IRCC processing times and EE draws, rebuilds community data, commits if changed |
 | `community-intake.yml` | issue labeled `timeline-approved` | validates and appends the record, closes the issue; on rejection comments the reason and removes the label |

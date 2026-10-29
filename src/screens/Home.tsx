@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { proactiveTips } from '../assistant/tips';
 import { Icon } from '../components/Icon';
 import { Ring, Status } from '../components/ui';
@@ -6,6 +6,7 @@ import { diffDays } from '../domain/dates';
 import { CITIZENSHIP_REQUIRED, RESIDENCY_REQUIRED } from '../domain/presence';
 import { predict } from '../domain/timeline';
 import { fmtDate, fmtNum } from '../i18n';
+import { openExternal } from '../platform';
 import { useApp } from '../store/AppContext';
 import { MiniYear } from './Calendar';
 import { TripEditor, useTripEditor } from './Trips';
@@ -13,11 +14,18 @@ import { HouseholdCard } from './People';
 import { crossChecks } from '../domain/crossChecks';
 
 // Loaded after first paint: it fetches trend data and is not needed for the core counts.
+// IRPA s.28: days abroad that count as days in Canada (spouse/parent, Canadian employer).
+const IRPA_S28_URL = 'https://laws-lois.justice.gc.ca/eng/acts/i-2.5/section-28.html';
+
+/** Alerts shown before "Show more": the most severe come first. */
+const VISIBLE_TIPS = 2;
+
 const ProcessingAlertsCard = lazy(() => import('./Curves').then((m) => ({ default: m.ProcessingAlertsCard })));
 
 export function Home() {
   const { data, insights, t, lang, go, open } = useApp();
   const editor = useTripEditor();
+  const [showAll, setShowAll] = useState(false);
   const checks = crossChecks(data, insights);
   const rank = { critical: 0, warn: 1, info: 2 } as const;
   const tips = [...checks, ...proactiveTips(data, insights)]
@@ -28,10 +36,32 @@ export function Home() {
   const card = insights.prCard;
   const trip = insights.ongoingTrip;
   const apps = data.applications.filter((a) => !a.archived && a.submitted);
+  // Critical alerts sit above the numbers; the rest wait in a short, expandable stack.
+  const urgent = tips.filter((x) => x.severity === 'critical');
+  const rest = tips.filter((x) => x.severity !== 'critical');
+  const renderTip = (tip: (typeof tips)[number]) => (
+    <div key={tip.key} className={`tip ${tip.severity}`} role={tip.severity === 'critical' ? 'alert' : undefined}>
+      <Icon name={tip.severity === 'info' ? 'info' : 'alert'} />
+      <div className="grow">
+        {t(tip.key, Object.fromEntries(Object.entries(tip.vars ?? {}).map(([k, v]) => [k, /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? fmtDate(String(v), lang) : v])))}
+        {(tip.key === 'tip.setPr' || tip.key === 'tip.setCard' || tip.key === 'tip.tax') && (
+          <>
+            {' '}
+            <button className="btn ghost sm" onClick={() => go('settings')}>{t('common.update')}</button>
+          </>
+        )}
+        {tip.key === 'tip.tripIssues' && (
+          <>
+            {' '}
+            <button className="btn ghost sm" onClick={() => go('trips')}>{t('common.review')}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <>
-      <HouseholdCard />
       {trip && (
         <div className="card" style={{ borderColor: 'var(--d-out)' }}>
           <div className="row">
@@ -50,33 +80,11 @@ export function Home() {
         </div>
       )}
 
-      <Suspense fallback={null}>
-        <ProcessingAlertsCard />
-      </Suspense>
 
-      {tips.map((tip) => (
-        <div key={tip.key} className={`tip ${tip.severity}`} role={tip.severity === 'critical' ? 'alert' : undefined}>
-          <Icon name={tip.severity === 'info' ? 'info' : 'alert'} />
-          <div className="grow">
-            {t(tip.key, Object.fromEntries(Object.entries(tip.vars ?? {}).map(([k, v]) => [k, /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? fmtDate(String(v), lang) : v])))}
-            {(tip.key === 'tip.setPr' || tip.key === 'tip.setCard' || tip.key === 'tip.tax') && (
-              <>
-                {' '}
-                <button className="btn ghost sm" onClick={() => go('settings')}>{t('common.update')}</button>
-              </>
-            )}
-            {tip.key === 'tip.tripIssues' && (
-              <>
-                {' '}
-                <button className="btn ghost sm" onClick={() => go('trips')}>{t('common.review')}</button>
-              </>
-            )}
-          </div>
-        </div>
-      ))}
+      {urgent.map(renderTip)}
 
       {c && (
-        <section className="card" aria-labelledby="cit-h">
+        <section className="card hero-card" aria-labelledby="cit-h">
           <h2 id="cit-h"><Icon name="flag" /> {t('home.citizenship')}</h2>
           <div className="row">
             <Ring value={c.credited} max={CITIZENSHIP_REQUIRED} label={t('home.citRing', { n: c.credited, req: CITIZENSHIP_REQUIRED })}>
@@ -89,7 +97,7 @@ export function Home() {
               ) : c.eligibleDate ? (
                 <>
                   <div className="label">{t('home.citEarliest')}</div>
-                  <div style={{ fontSize: 22, fontWeight: 700 }}>{fmtDate(c.eligibleDate, lang)}</div>
+                  <div className="hero-date">{fmtDate(c.eligibleDate, lang)}</div>
                   <div className="small muted">{t('home.citDaysLeft', { days: fmtNum(c.daysUntilEligible ?? 0, lang), need: c.remaining })}</div>
                 </>
               ) : (
@@ -99,6 +107,10 @@ export function Home() {
               {c.safeDate && !c.eligible && <div className="tiny">{t('home.citSafe', { date: fmtDate(c.safeDate, lang), buffer: data.settings.citizenshipBuffer })}</div>}
             </div>
           </div>
+          <details className="disclose">
+            <summary>{t('ux.howCounted')}</summary>
+            <p className="tiny">{t('common.citExclusions')}</p>
+          </details>
         </section>
       )}
 
@@ -131,6 +143,15 @@ export function Home() {
               {r.regainDate && <> {t('home.resRegain', { date: fmtDate(r.regainDate, lang) })}</>}
             </div>
           )}
+          <details className="disclose">
+            <summary>{t('ux.howCounted')}</summary>
+            <p className="tiny">
+              {t('home.resCredits')}{' '}
+              <button className="btn ghost sm" style={{ padding: 0, minHeight: 0 }} onClick={() => openExternal(IRPA_S28_URL)}>
+                <Icon name="external" size={14} /> {t('home.resCreditsLink')}
+              </button>
+            </p>
+          </details>
         </section>
       )}
 
@@ -140,7 +161,7 @@ export function Home() {
           <div className="row spread">
             <div>
               <div className="label">{t('home.cardExpires')}</div>
-              <div style={{ fontSize: 20, fontWeight: 700 }}>{fmtDate(card.expiry, lang)}</div>
+              <div className="hero-date sm">{fmtDate(card.expiry, lang)}</div>
             </div>
             {card.state === 'ok' && <Status kind="good">{t('home.cardDays', { days: fmtNum(card.daysUntilExpiry, lang) })}</Status>}
             {card.state === 'renew_now' && <Status kind="warn">{t('home.cardRenewNow')}</Status>}
@@ -154,23 +175,34 @@ export function Home() {
         </section>
       )}
 
-      {data.profile.prDate && (
-        <section className="card">
-          <div className="row spread">
-            <h2 style={{ margin: 0 }}><Icon name="card" /> {t('form.title')}</h2>
-            <button className="btn ghost sm" onClick={() => go('forms')}>{t('common.open')} <Icon name="chevron" size={16} /></button>
-          </div>
-          <p className="small muted" style={{ margin: '6px 0 0' }}>{t('form.intro')}</p>
+
+      <nav className="quick" aria-label={t('ux.quickActions')}>
+        <button className="quick-btn primary" onClick={() => editor.create()}><span className="quick-ic"><Icon name="plus" /></span>{t('home.logTrip')}</button>
+        <button className="quick-btn" onClick={() => go('assistant')}><span className="quick-ic"><Icon name="sparkle" /></span>{t('home.askMaple')}</button>
+        {data.profile.prDate && <button className="quick-btn" onClick={() => go('forms')}><span className="quick-ic"><Icon name="card" /></span>{t('form.title')}</button>}
+        <button className="quick-btn" onClick={() => go('eligibility')}><span className="quick-ic"><Icon name="target" /></span>{t('nav.eligibility')}</button>
+        <button className="quick-btn" onClick={() => go('documents')}><span className="quick-ic"><Icon name="card" /></span>{t('nav.documents')}</button>
+        <button className="quick-btn" onClick={() => go('history')}><span className="quick-ic"><Icon name="home2" /></span>{t('nav.history')}</button>
+        <button className="quick-btn" onClick={() => go('community')}><span className="quick-ic"><Icon name="users" /></span>{t('nav.community')}</button>
+      </nav>
+
+      {rest.length > 0 && (
+        <section aria-label={t('ux.alerts')} className="alerts">
+          {(showAll ? rest : rest.slice(0, VISIBLE_TIPS)).map(renderTip)}
+          {rest.length > VISIBLE_TIPS && (
+            <button className="btn ghost sm more-toggle" aria-expanded={showAll} onClick={() => setShowAll(!showAll)}>
+              {showAll ? t('ux.showLess') : t('ux.showMore', { n: rest.length - VISIBLE_TIPS })}
+              <Icon name="chevron" size={16} />
+            </button>
+          )}
         </section>
       )}
 
-      <section className="card">
-        <div className="row spread">
-          <h2 style={{ margin: 0 }}><Icon name="calendar" /> {t('home.thisYear')}</h2>
-          <button className="btn ghost sm" onClick={() => go('calendar')}>{t('common.open')} <Icon name="chevron" size={16} /></button>
-        </div>
-        <MiniYear year={Number(insights.today.slice(0, 4))} />
-      </section>
+      <Suspense fallback={null}>
+        <ProcessingAlertsCard />
+      </Suspense>
+
+      <HouseholdCard />
 
       {apps.length > 0 && (
         <section className="card">
@@ -181,7 +213,7 @@ export function Home() {
           {apps.map((a) => {
             const p = predict(a, insights.today, open.ircc ?? {}, open.community?.records ?? []);
             return (
-              <button key={a.id} className="btn block" style={{ justifyContent: 'flex-start', marginTop: 10, height: 'auto', padding: 12, flexDirection: 'column', alignItems: 'stretch', fontWeight: 400 }} onClick={() => go('timeline', a.id)}>
+              <button key={a.id} className="app-row" onClick={() => go('timeline', a.id)}>
                 <div className="row spread"><b>{a.label || t(`app.kind.${a.kind}`)}</b><span className="small muted">{p ? `${p.percent}%` : ''}</span></div>
                 {p && (
                   <>
@@ -194,6 +226,15 @@ export function Home() {
           })}
         </section>
       )}
+
+      <section className="card">
+        <div className="row spread">
+          <h2 style={{ margin: 0 }}><Icon name="calendar" /> {t('home.thisYear')}</h2>
+          <button className="btn ghost sm" onClick={() => go('calendar')}>{t('common.open')} <Icon name="chevron" size={16} /></button>
+        </div>
+        <MiniYear year={Number(insights.today.slice(0, 4))} />
+      </section>
+
 
       {insights.reminders.length > 0 && (
         <section className="card">
@@ -211,14 +252,6 @@ export function Home() {
         </section>
       )}
 
-      <div className="grid2" style={{ marginTop: 12 }}>
-        <button className="btn" onClick={() => editor.create()}><Icon name="plus" /> {t('home.logTrip')}</button>
-        <button className="btn" onClick={() => go('assistant')}><Icon name="sparkle" /> {t('home.askMaple')}</button>
-        <button className="btn" onClick={() => go('eligibility')}><Icon name="target" /> {t('nav.eligibility')}</button>
-        <button className="btn" onClick={() => go('community')}><Icon name="users" /> {t('nav.community')}</button>
-        <button className="btn" onClick={() => go('documents')}><Icon name="card" /> {t('nav.documents')}</button>
-        <button className="btn" onClick={() => go('history')}><Icon name="home2" /> {t('nav.history')}</button>
-      </div>
       <p className="tiny" style={{ textAlign: 'center', marginTop: 20 }}>{t('common.disclaimer')}</p>
       <TripEditor state={editor} />
     </>

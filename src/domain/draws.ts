@@ -28,8 +28,12 @@ export function drawCategory(name: string): DrawCategory {
   return RULES.find(([, re]) => re.test(name))?.[0] ?? 'other';
 }
 
-/** Categories where eligibility depends on occupation; the user ticks them. */
-export const OCCUPATION_CATEGORIES: DrawCategory[] = ['healthcare', 'stem', 'trades', 'education', 'transport', 'agriculture', 'physicians', 'research', 'senior_managers', 'military'];
+/**
+ * Categories where eligibility depends on occupation; the user ticks them. Current 2026
+ * categories (IRCC category-based selection page, 2026-06-22). 'agriculture' is a past category:
+ * still recognised in old draws (label "past category") but no longer offered as a choice.
+ */
+export const OCCUPATION_CATEGORIES: DrawCategory[] = ['healthcare', 'stem', 'trades', 'education', 'transport', 'physicians', 'research', 'senior_managers', 'military'];
 
 export interface CategoryStanding {
   category: DrawCategory;

@@ -64,6 +64,14 @@ const has = (q: string, ...words: (string | RegExp)[]) =>
 
 const TRAVEL = [/\b(travel|trip|leave|go abroad|go back|visit|vacation|holiday|away|outside canada|fly)\b/, '出国', '旅行', '回国', '离开', '出境', '度假', '旅游', '出去'];
 
+/**
+ * Answers that state eligibility dates, counts or rules end with the planning-only disclaimer
+ * (RCIC review v1 M4). Chit-chat, FAQ and glossary answers don't.
+ */
+function withDisclaimer(lines: string[], ctx: Pick<Ctx, 't'>): string {
+  return [...lines, ctx.t('common.disclaimer')].join('\n');
+}
+
 function needPr(ctx: Ctx): AssistantReply | null {
   if (ctx.data.profile.prDate) return null;
   return {
@@ -278,7 +286,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       });
       const together = applyTogetherDate(people);
       if (together) lines.push(together <= ctx.today ? ctx.t('ppl.applyTogetherNow') : ctx.t('ppl.applyTogether', { date: together }));
-      return { intent: 'household', text: lines.join('\n') };
+      return { intent: 'household', text: withDisclaimer(lines, ctx) };
     },
   },
   {
@@ -318,7 +326,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
         b.creditedAtTarget < CITIZENSHIP_REQUIRED
           ? [ctx.t('as.planTooSoon', { target, credited: b.creditedAtTarget, earliest: b.earliest ?? '—' })]
           : [ctx.t('as.planBudget', { target, days: b.budget, credited: b.creditedAtTarget }), ctx.t('as.planBudgetSafe', { days: Math.max(0, b.budget - buffer), buffer })];
-      return { intent: 'plan_target', text: lines.join('\n'), memory: { intent: 'plan_target', target } };
+      return { intent: 'plan_target', text: withDisclaimer(lines, ctx), memory: { intent: 'plan_target', target } };
     },
   },
   {
@@ -338,7 +346,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       }
       lines.push(p.residencyOkNow ? ctx.t('as.whatifResOk') : ctx.t('as.planBestResBad'));
       if (p.cardExpiresDuring) lines.push(ctx.t('as.whatifCard', { date: ctx.data.profile.prCardExpiry! }));
-      return { intent: 'plan_best', text: lines.join('\n'), memory: { intent: 'plan_best', dur } };
+      return { intent: 'plan_best', text: withDisclaimer(lines, ctx), memory: { intent: 'plan_best', dur } };
     },
   },
   {
@@ -355,13 +363,17 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       const e = explainCitizenship(ctx.insights.model, ctx.data.trips, asOf);
       return {
         intent: 'explain',
-        text: [
-          ctx.t('as.explainHead', { date: e.asOf, from: e.windowStart, to: e.windowEnd }),
-          ctx.t('as.explainPr', { days: e.prDays }),
-          ctx.t('as.explainPrePr', { days: e.prePrDays, credit: e.prePrCredit }),
-          ctx.t('as.explainTrips', { n: e.tripsInWindow, days: e.daysAwayInWindow }),
-          ctx.t('as.explainTotal', { credited: e.credited, required: CITIZENSHIP_REQUIRED }),
-        ].join('\n'),
+        text: withDisclaimer(
+          [
+            ctx.t('as.explainHead', { date: e.asOf, from: e.windowStart, to: e.windowEnd }),
+            ctx.t('as.explainPr', { days: e.prDays }),
+            ctx.t('as.explainPrePr', { days: e.prePrDays, credit: e.prePrCredit }),
+            ctx.t('as.explainTrips', { n: e.tripsInWindow, days: e.daysAwayInWindow }),
+            ctx.t('as.explainTotal', { credited: e.credited, required: CITIZENSHIP_REQUIRED }),
+            ctx.t('common.citExclusions'),
+          ],
+          ctx,
+        ),
       };
     },
   },
@@ -377,7 +389,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       if (r.compliant && r.mustReturnBy)
         lines.push(ctx.t(ctx.insights.ongoingTrip ? 'as.resReturnBy' : 'as.resMaxAway', { days: r.maxAbsence, date: r.mustReturnBy }));
       if (!r.compliant && r.regainDate) lines.push(ctx.t('as.resRegain', { date: r.regainDate }));
-      return { intent: 'residency', text: lines.join('\n') };
+      return { intent: 'residency', text: withDisclaimer(lines, ctx) };
     },
   },
   {
@@ -473,7 +485,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       if (card && card.expiry >= dep && card.expiry <= ret) lines.push(ctx.t('as.whatifCard', { date: card.expiry }));
       return {
         intent: 'whatif',
-        text: lines.join('\n'),
+        text: withDisclaimer(lines, ctx),
         actions: [{ kind: 'addTrip', departure: dep, return: ret, label: ctx.t('as.act.savePlanned') }],
         memory: { intent: 'whatif', dep, ret, dur: away },
       };
@@ -488,7 +500,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       const key = c.state === 'expired' ? 'as.cardExpired' : c.state === 'renew_now' ? 'as.cardRenewNow' : 'as.cardOk';
       return {
         intent: 'pr_card',
-        text: [ctx.t(key, { date: c.expiry, days: Math.abs(c.daysUntilExpiry), opens: c.renewalOpens, until: c.daysUntilRenewal }), ctx.t('as.cardDocs')].join('\n'),
+        text: withDisclaimer([ctx.t(key, { date: c.expiry, days: Math.abs(c.daysUntilExpiry), opens: c.renewalOpens, until: c.daysUntilRenewal }), ctx.t('as.cardDocs')], ctx),
       };
     },
   },
@@ -506,8 +518,9 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
       else lines.push(ctx.t('as.citFar', { credited: c.credited }));
       if (c.prePrDays > 0) lines.push(ctx.t('as.citPrePr', { days: c.prePrDays, credit: Math.floor(c.prePrCredit) }));
       if (c.safeDate && !c.eligible) lines.push(ctx.t('as.citSafe', { date: c.safeDate, buffer: ctx.data.settings.citizenshipBuffer }));
-      lines.push(ctx.t('as.citOther'));
-      return { intent: 'citizenship', text: lines.join('\n'), actions: [{ kind: 'navigate', to: 'calendar', label: ctx.t('as.act.calendar') }] };
+      // Days are the only thing counted: say what isn't counted and what else is required.
+      lines.push(ctx.t('common.citExclusions'));
+      return { intent: 'citizenship', text: withDisclaimer(lines, ctx), actions: [{ kind: 'navigate', to: 'calendar', label: ctx.t('as.act.calendar') }] };
     },
   },
   {
@@ -539,7 +552,7 @@ const handlers: { id: IntentId; match: (q: string) => boolean; run: Handler }[] 
   {
     id: 'rules',
     match: (q) => has(q, /\brules?\b|half.?day|\bcount(ed|ing|s)?\b|departure day|\btax(es)?\b|language test|how (is|are).*(calculated|counted)/, '规则', '怎么算', '半天', '报税', '语言', '计算'),
-    run: (_q, ctx) => ({ intent: 'rules', text: ctx.t('as.rules') }),
+    run: (_q, ctx) => ({ intent: 'rules', text: withDisclaimer([ctx.t('as.rules')], ctx) }),
   },
   {
     id: 'privacy',

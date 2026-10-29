@@ -58,13 +58,13 @@ export const documentsEn: Record<string, string> = {
 
   'doc.hint.permit': 'Apply to extend before your permit expires to keep maintained status while IRCC decides.',
   'doc.hint.police': 'Police certificates have no fixed IRCC validity, but IRCC may ask for a new one if it is old.',
-  'doc.hint.biometrics': 'Biometrics stay valid for 10 years for visitor, study and work applications. PR applications need biometrics again each time.',
+  'doc.hint.biometrics': 'Biometrics stay valid for 10 years for visitor, study and work applications. Most PR applicants must give biometrics again each time they apply.',
 
   'doc.rules.title': 'Validity rules',
   'doc.rules.language': 'For Express Entry and PR applications, language test results must be less than 2 years old.',
   'doc.rules.eca': 'An ECA is valid for 5 years from the issue date.',
   'doc.rules.medical': 'An immigration medical exam is generally valid for 12 months.',
-  'doc.rules.biometrics': 'Biometrics are valid for 10 years for temporary residence; PR applicants give them every time.',
+  'doc.rules.biometrics': 'Biometrics are valid for 10 years for temporary residence; most PR applicants give them every time they apply.',
 
   'doc.chk.title': 'Application checklists',
   'doc.chk.app': 'Application',

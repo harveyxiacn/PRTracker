@@ -84,3 +84,18 @@ delete `community/reddit.jsonl` and `community/reddit-seen.txt` and run
   and deleted from `community/reddit.jsonl`.
 - **No training, resale or redistribution** of Reddit content: the repository only contains
   the anonymised records described above.
+
+## Residual risk: poisoned timelines
+
+Accepted for now (security review v0.8, L2). Anyone can write public posts, so someone could
+post many fake timelines to skew the "similar applications" histograms and predicted dates.
+What limits the damage:
+
+- Only numbers reach the dataset: program and office/province/country from fixed lists, a
+  month, and integer day counts ≤ 3650 (`validate` in `scripts/build-community.mjs`). No text,
+  links or markup can get into the app, so a fake post can't inject content or personal data.
+- The parser caps its input (64 KB) and uses bounded patterns, so a huge post can't stall the job.
+- The pipeline is inactive until the owner adds the Reddit API secrets.
+
+Before enabling it, consider: opening a pull request instead of pushing to `main`, capping
+records per run, and labelling Reddit-sourced data in the app.

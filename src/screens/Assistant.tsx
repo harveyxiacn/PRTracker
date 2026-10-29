@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { answer, suggestions, type AssistantAction, type Memory } from '../assistant/engine';
 import { Icon } from '../components/Icon';
+import { prefersReducedMotion } from '../components/ui';
 import { uid } from '../domain/types';
 import { fmtDate } from '../i18n';
 import { openExternal } from '../platform';
@@ -20,6 +21,8 @@ export function AssistantScreen() {
   const [memory, setMemory] = useState<Memory>({});
   const [msgs, setMsgs] = useState<Msg[]>(() => (data.chat ?? []).map((m) => ({ ...m })));
   const endRef = useRef<HTMLDivElement>(null);
+  // Messages restored from storage appear at once; only ones added on this visit animate in.
+  const restored = useRef(msgs.length);
 
   // Dates in replies are ISO; show them in the user's locale.
   const tt = (key: string, vars?: Record<string, string | number>) =>
@@ -43,7 +46,7 @@ export function AssistantScreen() {
   }, [t, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    endRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'end' });
   }, [msgs]);
 
   const persist = (list: Msg[]) => update((d) => ({ ...d, chat: list.slice(-100).map(({ role, text, at }) => ({ role, text, at })) }));
@@ -92,7 +95,7 @@ export function AssistantScreen() {
       <div className="chat" aria-live="polite" style={{ paddingBottom: 120 }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ display: 'contents' }}>
-            <div className={`msg ${m.role}`}>
+            <div className={`msg ${m.role}${i >= restored.current ? ' enter' : ''}`}>
               {m.text}
               {m.source && (
                 <div style={{ marginTop: 6 }}>

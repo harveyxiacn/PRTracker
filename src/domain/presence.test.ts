@@ -101,8 +101,8 @@ describe('citizenship', () => {
 });
 
 /** Brute force: is a PR compliant on every day from `from` to `to` with these trips? */
-function compliantThrough(p: Profile, trips: Trip[], today: string, from: string, to: string): boolean {
-  const m = new PresenceModel({ profile: p, trips, today });
+function compliantThrough(p: Profile, trips: Trip[], today: string, from: string, to: string, boundaryDaysPresent = true): boolean {
+  const m = new PresenceModel({ profile: p, trips, today, boundaryDaysPresent });
   for (let d = toDay(from); d <= toDay(to); d++) {
     const iso = addDays('1970-01-01', d);
     if (!m.residencyAt(iso)!.compliant) return false;
@@ -160,6 +160,60 @@ describe('residency while abroad', () => {
     const end = addDays(r.mustReturnBy!, 400);
     expect(compliantThrough(p, [...before, { id: 'o', departure: dep, return: r.mustReturnBy! }], today, today, end)).toBe(true);
     expect(compliantThrough(p, [...before, { id: 'o', departure: dep, return: addDays(r.mustReturnBy!, 1) }], today, today, end)).toBe(false);
+    expect(r.maxAbsence).toBe(toDay(r.mustReturnBy!) - toDay(today));
+  });
+});
+
+describe('residency in strict mode (departure and return days count as outside)', () => {
+  it('long-time PR, no trips: returning on mustReturnBy stays compliant, a day later does not', () => {
+    // RCIC review v1 M2: strict mode used to report one day too late (2029-10-17 here).
+    const p = profile({ prDate: '2020-01-01' });
+    const today = '2026-10-16';
+    const r = new PresenceModel({ profile: p, trips: [], today, boundaryDaysPresent: false }).residencyAt()!;
+    expect(r.compliant).toBe(true);
+    expect(r.mustReturnBy).toBe('2029-10-16');
+    const leave = addDays(today, 1);
+    const end = addDays(r.mustReturnBy!, 400);
+    expect(compliantThrough(p, [{ id: 'y', departure: leave, return: r.mustReturnBy! }], today, leave, end, false)).toBe(true);
+    expect(compliantThrough(p, [{ id: 'y', departure: leave, return: addDays(r.mustReturnBy!, 1) }], today, leave, end, false)).toBe(false);
+    // Strict mode: leave and return days are both outside Canada.
+    expect(r.maxAbsence).toBe(toDay(r.mustReturnBy!) - toDay(leave) + 1);
+  });
+
+  it('long-time PR with an earlier trip', () => {
+    const p = profile({ prDate: '2015-01-01' });
+    const trips: Trip[] = [{ id: 'x', departure: '2023-01-01', return: '2023-12-31' }];
+    const today = '2026-10-16';
+    const r = new PresenceModel({ profile: p, trips, today, boundaryDaysPresent: false }).residencyAt()!;
+    expect(r.compliant).toBe(true);
+    const leave = addDays(today, 1);
+    const end = addDays(r.mustReturnBy!, 400);
+    expect(compliantThrough(p, [...trips, { id: 'y', departure: leave, return: r.mustReturnBy! }], today, leave, end, false)).toBe(true);
+    expect(compliantThrough(p, [...trips, { id: 'y', departure: leave, return: addDays(r.mustReturnBy!, 1) }], today, leave, end, false)).toBe(false);
+  });
+
+  it('new PR: last safe return day before the 5th anniversary', () => {
+    const p = profile({ prDate: '2025-01-01' });
+    const today = '2025-01-10';
+    const r = new PresenceModel({ profile: p, trips: [], today, boundaryDaysPresent: false }).residencyAt()!;
+    expect(r.compliant).toBe(true);
+    const leave = addDays(today, 1);
+    const end = '2030-03-01';
+    expect(compliantThrough(p, [{ id: 'y', departure: leave, return: r.mustReturnBy! }], today, leave, end, false)).toBe(true);
+    expect(compliantThrough(p, [{ id: 'y', departure: leave, return: addDays(r.mustReturnBy!, 1) }], today, leave, end, false)).toBe(false);
+  });
+
+  it('abroad now: mustReturnBy is the last safe return day', () => {
+    const p = profile({ prDate: '2015-01-01' });
+    const before: Trip[] = [{ id: 'x', departure: '2022-06-01', return: '2024-01-01' }];
+    const dep = '2026-09-01';
+    const today = '2026-10-16';
+    const m = new PresenceModel({ profile: p, trips: [...before, { id: 'o', departure: dep }], today, boundaryDaysPresent: false });
+    const r = m.residencyAt(undefined, { abroadNow: true })!;
+    expect(r.compliant).toBe(true);
+    const end = addDays(r.mustReturnBy!, 400);
+    expect(compliantThrough(p, [...before, { id: 'o', departure: dep, return: r.mustReturnBy! }], today, today, end, false)).toBe(true);
+    expect(compliantThrough(p, [...before, { id: 'o', departure: dep, return: addDays(r.mustReturnBy!, 1) }], today, today, end, false)).toBe(false);
     expect(r.maxAbsence).toBe(toDay(r.mustReturnBy!) - toDay(today));
   });
 });

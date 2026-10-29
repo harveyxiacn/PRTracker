@@ -10,7 +10,7 @@ It runs on **Android, iOS and the web** in **19 languages**, and **your data nev
 |---|---|
 | 🧮 **Citizenship countdown** | 1,095-day physical-presence rule, ½-day credit for time before PR (capped at 365), projected eligibility date with a safety margin |
 | 🛡️ **PR residency obligation** | 730 days in every 5-year window; “how long can I stay away?” and “must return by” dates |
-| 🪪 **PR card** | Renewal window (9 months before expiry) and expiry reminders |
+| 🪪 **PR card** | Renewal window (270 days before expiry, per IRCC) and expiry reminders |
 | 🗓️ **Hot-spot calendar** | Year and month heat maps of every day in and outside Canada, plus per-year totals |
 | ✈️ **Trips** | Log past, ongoing and planned trips (back-dating supported), CSV import/export, overlap checks |
 | ⏱️ **Application timelines** | 30+ programs, each with its own steps: Express Entry, PNP for each province (expression of interest → nomination → federal), Quebec (Arrima → CSQ), AIP, rural/francophone pilots, caregivers, Start-up Visa, spousal (inland/outland), child, parents & grandparents, protected persons, H&C, study/work/visitor permits, PGWP, PRTD, PR card, citizenship. Predictions use IRCC’s published times (per country for permits) plus anonymised community timelines |

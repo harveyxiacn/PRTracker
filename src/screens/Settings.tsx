@@ -3,10 +3,10 @@ import { Icon } from '../components/Icon';
 import { Field, Segmented } from '../components/ui';
 import { DEFAULT_DATA_URL, emptyData, type Settings } from '../domain/types';
 import { requestPermission } from '../notify/notifications';
-import { isNative, openExternal, pickTextFile, saveTextFile } from '../platform';
+import { isNative, openExternal, saveTextFile } from '../platform';
 import { useApp } from '../store/AppContext';
 import { LanguageSelect, ProfileFields } from '../components/ProfileFields';
-import { exportJson, importJson, wipeData } from '../store/storage';
+import { exportJson, isSafeDataUrl, wipeData } from '../store/storage';
 import { SecuritySection } from './Security';
 import { PeopleSection } from './People';
 import { ShareSection } from './Share';
@@ -17,7 +17,7 @@ const VERSION = __APP_VERSION__;
 
 
 export function SettingsScreen() {
-  const { data, update, replaceAll, t, insights, toast, demo, resyncNotifications } = useApp();
+  const { data, update, replaceAll, t, insights, demo, resyncNotifications } = useApp();
   const s = data.settings;
   const p = data.profile;
   const setS = (patch: Partial<Settings>) => update((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
@@ -26,6 +26,8 @@ export function SettingsScreen() {
   const [urlDraft, setUrlDraft] = useState(s.dataUrl);
   const commitUrl = () => {
     const v = urlDraft.trim();
+    // Only https mirrors (startup would otherwise reset an unsafe value to the default anyway).
+    if (!isSafeDataUrl(v)) return setUrlDraft(s.dataUrl);
     if (v !== s.dataUrl) setS({ dataUrl: v });
   };
   const thisYear = Number(insights.today.slice(0, 4));
@@ -102,25 +104,7 @@ export function SettingsScreen() {
         <p className="small muted">{t('set.dataHint')}</p>
         <div className="row wrap">
           <button className="btn sm" onClick={() => saveTextFile(`pr-tracker-backup-${insights.today}.json`, exportJson(data))}><Icon name="download" size={16} /> {t('set.export')}</button>
-          <button
-            disabled={demo}
-           
-            className="btn sm"
-            onClick={async () => {
-              const text = await pickTextFile('.json,application/json');
-              if (!text) return;
-              try {
-                const d = importJson(text);
-                if (!confirm(t('set.importConfirm', { trips: d.trips.length }))) return;
-                replaceAll({ ...d, onboarded: true, lock: data.lock ?? null });
-                toast(t('set.imported'));
-              } catch {
-                toast(t('set.importFailed'));
-              }
-            }}
-          >
-            <Icon name="upload" size={16} /> {t('set.import')}
-          </button>
+          {/* Restoring lives in "Security & calendar" → Import backup, the one flow that reads plain and encrypted files. */}
           <button
             disabled={demo}
            
@@ -144,10 +128,11 @@ export function SettingsScreen() {
         <section className="card">
           <h2><Icon name="shield" /> {t('nat.privacyScreen')}</h2>
           <label className="check">
-            <input type="checkbox" disabled={demo} checked={!!data.privacyScreen} onChange={(e) => { const v = e.target.checked; update((d) => ({ ...d, privacyScreen: v })); void setPrivacyScreen(v); }} />
+            <input type="checkbox" disabled={demo} checked={!!data.privacyScreen} onChange={(e) => { const v = e.target.checked; update((d) => ({ ...d, privacyScreen: v })); void setPrivacyScreen(v || !!data.lock); }} />
             {t('nat.privacyScreen')}
           </label>
           <p className="tiny">{t('nat.privacyScreenHint')}</p>
+          {data.lock && <p className="tiny">{t('sec.privacyWithPin')}</p>}
           <p className="tiny">{t('nat.widgetHint')}</p>
         </section>
       )}

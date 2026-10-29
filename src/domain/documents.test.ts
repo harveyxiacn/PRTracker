@@ -42,6 +42,10 @@ describe('documentStatus', () => {
     expect(documentStatus(item({ kind: 'trv', expires: '2026-12-16' }), today)).toBe('soon');
     expect(documentStatus(item({ kind: 'trv', expires: '2026-12-17' }), today)).toBe('ok');
   });
+  it('PR card: soon when the IRCC renewal window opens (expiry − 270 days)', () => {
+    expect(documentStatus(item({ kind: 'pr_card_copy', expires: '2027-07-13' }), today)).toBe('soon');
+    expect(documentStatus(item({ kind: 'pr_card_copy', expires: '2027-07-14' }), today)).toBe('ok');
+  });
   it('tests: 3 months on the computed expiry', () => {
     // language test taken 2025-01-16 -> expires 2027-01-16 -> soon from 2026-10-16
     expect(documentStatus(item({ kind: 'language_test', issued: '2025-01-16' }), today)).toBe('soon');

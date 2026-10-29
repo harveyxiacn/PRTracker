@@ -4,10 +4,10 @@
 
 | Suite | Covers |
 |---|---|
-| `src/domain/presence.test.ts` | day counting, boundary days, ongoing/planned trips, citizenship credit & half-day cap, eligibility date, residency obligation (brute-force verified must-return dates, new PR vs 5+ years, while abroad, regain date), trip validation |
-| `src/domain/insights.test.ts` | PR card 9-month window and states, reminder generation, citizenship projection |
+| `src/domain/presence.test.ts` | day counting, boundary days, ongoing/planned trips, citizenship credit & half-day cap, eligibility date, residency obligation (brute-force verified must-return dates in default and strict mode, new PR vs 5+ years, while abroad, regain date), trip validation |
+| `src/domain/insights.test.ts` | PR card 270-day window and states, reminder generation, citizenship projection |
 | `src/domain/crs.test.ts` | CRS tables (single and with spouse), transferability, French/PNP/sibling, IELTS→CLB, CEC/FSW checks, FSW grid |
-| `src/assistant/assistant.test.ts` | date/duration parsing (EN/中文), intents, what-if impact, log return |
+| `src/assistant/assistant.test.ts` | date/duration parsing (EN/中文), intents, what-if impact, log return, disclaimer and citizenship exclusions on rule/date answers, 270-day PR card window |
 | `src/store/csv.test.ts` | CSV round-trip, error rows, data migration |
 | `src/i18n/i18n.test.ts` | key parity and placeholders for all 18 locales, every referenced key exists |
 | `src/domain/forms.test.ts` | absences cut to the 5-year window (both counting rules, ongoing trips), report totals equal `PresenceModel`, pre-PR cap and overlaps, PR card renewal window |
@@ -19,6 +19,11 @@
 | `scripts/check-bundle.mjs` (ci.yml) | first-load JS ≤ 140 kB gzip, other chunks ≤ 120 kB |
 
 Run: `npm test`. Typecheck: `npm run typecheck`.
+
+Visual and end-to-end suite locally: `npm run build`, then `npm run test:visual` (starts its own
+preview on port 4173). If that port is taken, set `PW_PORT`, or point `PW_BASE_URL` at a preview you
+started yourself. On Windows, `powershell -File scripts/visual-local.ps1 [playwright args]` does that for
+you (port `PW_PORT`, default 4391) and stops only the server it started. Screenshots land in `screenshots/`.
 
 ## On-phone checklist (manual)
 
@@ -35,6 +40,10 @@ Use made-up data. Before you start, install the APK (see RELEASING.md) or open t
 - [ ] *Leaving today* → Home shows the abroad banner; tap *I’m back* → trip closes.
 - [ ] Overlapping trips show a warning on Trips and a tip on Home.
 - [ ] Export CSV, delete a trip, import the CSV → trip comes back (duplicates skipped).
+- [ ] Delete a trip → no dialog; tap *Undo* in the toast → the trip is back in its place.
+- [ ] Open *Add trip*, drag the sheet's handle down a little → it springs back; drag further or flick → it closes. The form itself still scrolls.
+- [ ] With the keyboard open in a sheet, *Save* stays visible above it.
+- [ ] Turn on the system's *Reduce motion* → sheets and screens no longer slide (they fade), everything still works.
 
 **Reminders**
 - [ ] Settings → *Allow notifications* → permission prompt → “N reminders scheduled”.

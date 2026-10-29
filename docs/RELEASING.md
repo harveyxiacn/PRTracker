@@ -12,9 +12,14 @@ SemVer in `package.json` → used by the web build (`__APP_VERSION__`) and by An
 2. Bump `"version"` in `package.json`, then commit.
 3. `git tag vX.Y.Z && git push origin main --tags`
 4. The **Release** workflow builds and attaches:
-   - `pr-tracker-vX.Y.Z-debug.apk`: always; installable for testing
-   - `pr-tracker-vX.Y.Z.apk` / `.aab`: release-signed, only if signing secrets are set
+   - `pr-tracker-vX.Y.Z.apk` / `.aab`: release-signed, when the signing secrets are set
+   - `pr-tracker-vX.Y.Z-test-build-debug.apk`: only when the signing secrets are **not** set.
+     A debuggable test build (debug key, `adb run-as` can read its data, WebView debugging on),
+     not for general use; the release notes say so.
    - `pr-tracker-vX.Y.Z-web.zip`: static web build
+
+   The keystore secrets are only passed to the "Decode signing key" and Gradle steps, never to
+   `npm ci`, tests or the web build, and the decoded keystore is deleted after the build.
 
 ## Android signing (optional, needed for Play Store and stable upgrades)
 

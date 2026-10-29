@@ -89,7 +89,8 @@ const KIND_PATTERNS: [string, RegExp][] = [
   ['caregiver', /\b(caregiver|home care)\b/i],
   ['startup', /\b(start-?up visa|suv)\b/i],
   ['pnp_base', /\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp|pei ?pnp|nl ?pnp|provincial nominee)\b[^\n]{0,30}\b(base|non-?ee|paper)\b|\b(base|non-?ee|paper)\b[^\n]{0,20}\b(pnp|stream)\b/i],
-  ['pnp_ee', /\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp|pei ?pnp|nl ?pnp)\b.*(?<!non-)\b(ee|express entry|enhanced)\b|(?<!non-)\b(ee|express entry|enhanced)\b.*\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp)\b/i],
+  // Bounded gap ([^\n]{0,120}, not .*): an unbounded one is quadratic on long lines full of "pnp".
+  ['pnp_ee', /\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp|pei ?pnp|nl ?pnp)\b[^\n]{0,120}(?<!non-)\b(ee|express entry|enhanced)\b|(?<!non-)\b(ee|express entry|enhanced)\b[^\n]{0,120}\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp)\b/i],
   ['pnp_base', /\b(pnp|oinp|aaip|bc ?pnp|sinp|mpnp|nsnp|nbpnp|pei ?pnp|nl ?pnp|provincial nominee)\b|省提名/i],
   ['ee_fst', /\bfst\b|federal skilled trades/i],
   ['ee_fsw', /\bfsw\b|federal skilled worker/i],
@@ -182,6 +183,7 @@ export function extractDate(fragment: string, order: NumericOrder = 'unknown'): 
  * the milestones found (e.g. temporary permits when there is an eCOPR).
  */
 export function guessKind(text: string, exclude: Set<string> = new Set()): { kind?: string; province?: string; uncertain?: boolean } {
+  text = capInput(text);
   let kind: string | undefined;
   let uncertain = false;
   const firstMatch = (src: string) => {
@@ -232,7 +234,12 @@ export function guessCountry(text: string): string | undefined {
   return best;
 }
 
+/** Longest text parsed (64 KB): a pasted timeline or Reddit post is far shorter. */
+export const MAX_PASTE_CHARS = 64 * 1024;
+const capInput = (text: string) => (text.length > MAX_PASTE_CHARS ? text.slice(0, MAX_PASTE_CHARS) : text);
+
 export function parseTimelineText(text: string, today: ISODate, kindHint?: string): ParsedTimeline {
+  text = capInput(text);
   if (kindHint) return parseWith(text, today, kindHint, guessKind(text).province, false);
   // Pass 1 without a program, to see which milestones are present.
   const loose = parseWith(text, today, undefined, undefined, false);

@@ -13,6 +13,12 @@ import type { Profile, Trip } from './types';
 export const CITIZENSHIP_REQUIRED = 1095;
 export const CITIZENSHIP_PRE_PR_CAP = 365;
 export const RESIDENCY_REQUIRED = 730;
+/**
+ * PR card renewal window: IRCC returns a renewal application if the card is still valid for
+ * more than 270 days (Guide 5445 / IMM 5444: "nine (9) months (270 days)"). The window opens on
+ * expiry − 270 days. Used by insights, forms, documents and Maple.
+ */
+export const PR_CARD_RENEWAL_DAYS = 270;
 
 export type DayStatus = 'none' | 'tr' | 'pr';
 
@@ -284,10 +290,14 @@ export class PresenceModel {
         }
       }
       if (fail > 0) {
-        // Absent through fail-2 is fine; being back on fail-1 keeps you compliant.
-        const ret = fail - 1;
+        // Compliance on day d depends on presence up to d-1. Default mode: the return day counts
+        // as present, so being back on fail-1 keeps you compliant. Strict mode: the return day is
+        // itself absent, so you must be back one day earlier (fail-2).
+        const ret = this.boundaryPresent ? fail - 1 : fail - 2;
         mustReturnBy = fromDay(ret);
-        maxAbsence = Math.max(0, opts.abroadNow ? ret - t : this.boundaryPresent ? ret - leave - 1 : ret - leave);
+        // Abroad now: days left until the return date. Leaving tomorrow: days outside Canada,
+        // (leave, ret) exclusive by default and [leave, ret] inclusive in strict mode.
+        maxAbsence = Math.max(0, opts.abroadNow ? ret - t : this.boundaryPresent ? ret - leave - 1 : ret - leave + 1);
       }
     }
 

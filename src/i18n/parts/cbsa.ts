@@ -11,7 +11,7 @@ export const cbsaEn: Record<string, string> = {
   'cbsa.intro': 'The Canada Border Services Agency (CBSA) keeps a record of your entries to Canada, and of some exits. Paste it here to check your trips.',
   'cbsa.how': 'How to get your report',
   'cbsa.howBody': 'Ask CBSA for your Travel History Report through the Government of Canada’s online access to information and privacy (ATIP) request service. It’s free under the Privacy Act. Give your date of birth and ask for both your entries and your exits. It can take up to 30 days.',
-  'cbsa.ircc': 'Applying for citizenship or a PR card? IRCC can get this report itself. CBSA says requesting it separately for that purpose can slow things down.',
+  'cbsa.ircc': 'Applying for citizenship or a PR card? You usually don’t need this report: IRCC can get it for you (for a PR card, if you consent in Section 7 of the form).',
   'cbsa.limits': 'Exit records only exist for land crossings into the US (from 2013 for some travellers, from July 2019 for everyone) and commercial flights (from June 2020). Older trips may show only the entry. Records are kept for 15 years.',
   'cbsa.link': 'Open the CBSA page',
   'cbsa.text': 'Report text',
@@ -48,6 +48,6 @@ export const cbsaEn: Record<string, string> = {
   'xc.prCardTrip': 'Your PR card expires on {date}, before you come back from your trip ({departure} → {return}). Renew it before you leave, or you’ll need a PR travel document (PRTD) to fly back.',
   'xc.medicalOld': 'Your immigration medical exam is more than 12 months old (it was valid until {date}). IRCC may ask you to take a new one.',
   'xc.permitPr': 'Your permit expires on {date} (in {days} days) while your PR application is in progress. Apply to extend it before then to keep maintained status, or check if you can get a bridging open work permit (BOWP).',
-  'xc.citNoApp': 'You meet the physical presence requirement for citizenship. Add a citizenship application here to track it once you apply.',
+  'xc.citNoApp': 'You may meet the physical presence requirement for citizenship (estimate). Check the other requirements, then add a citizenship application here to track it once you apply.',
   'xc.taxYears': 'You’ve recorded {n} filed tax years for {from}–{to}. For citizenship you must have filed taxes for 3 of the 5 years before you apply, if you were required to.',
 };

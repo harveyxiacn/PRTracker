@@ -28,11 +28,20 @@ export async function openExternal(url: string) {
   else window.open(url, '_blank', 'noopener,noreferrer');
 }
 
+/** Every file the app writes for sharing starts with this, so leftovers can be found and removed. */
+export const EXPORT_PREFIX = 'pr-tracker-';
+
 /** Save a text file: share sheet on native, download on web. */
 export async function saveTextFile(name: string, text: string, mime = 'application/json') {
   if (isNative()) {
-    const res = await Filesystem.writeFile({ path: name, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 });
-    await external(() => Share.share({ title: name, url: res.uri, dialogTitle: name }));
+    const path = name.startsWith(EXPORT_PREFIX) ? name : EXPORT_PREFIX + name;
+    const res = await Filesystem.writeFile({ path, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 });
+    try {
+      await external(() => Share.share({ title: name, url: res.uri, dialogTitle: name }));
+    } finally {
+      // The receiving app has its copy once the share sheet closes; a backup must not stay in the cache.
+      await Filesystem.deleteFile({ path, directory: Directory.Cache }).catch(() => undefined);
+    }
     return;
   }
   const blob = new Blob([text], { type: mime });
@@ -62,4 +71,17 @@ function pickTextFileInner(accept: string): Promise<string | null> {
     };
     input.click();
   });
+}
+
+/** Delete export files left in the native cache (e.g. if the app was killed while sharing). */
+export async function removeCachedExports(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    const { files } = await Filesystem.readdir({ path: '', directory: Directory.Cache });
+    for (const f of files) {
+      if (f.type === 'file' && f.name.startsWith(EXPORT_PREFIX)) await Filesystem.deleteFile({ path: f.name, directory: Directory.Cache }).catch(() => undefined);
+    }
+  } catch {
+    /* cache unreadable or empty */
+  }
 }

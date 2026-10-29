@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type Keyboard
 import { Icon } from '../components/Icon';
 import { Field, Sheet, Status } from '../components/ui';
 import { emptyData } from '../domain/types';
-import { external, pickTextFile, saveTextFile } from '../platform';
+import { external, saveTextFile } from '../platform';
 import { authenticateBiometric, biometricInfo, type BiometricInfo } from '../security/biometric';
-import { decryptText, encryptText, isEncryptedBackup } from '../security/crypto';
+import { encryptText } from '../security/crypto';
 import { buildIcs, remindersToEvents, tripsToEvents } from '../security/ics';
 import { hashPin, isValidPin, verifyPin } from '../security/pin';
 import { useApp } from '../store/AppContext';
-import { exportJson, importJson, wipeData } from '../store/storage';
+import { exportJson, wipeData } from '../store/storage';
+import { useBackupRestore } from './BackupRestore';
 
 const MIN_PASS = 8;
 
@@ -79,42 +80,6 @@ function ExportSheet({ onClose }: { onClose: () => void }) {
         <div aria-live="polite" style={{ minHeight: 24 }}>{mismatch && <Status kind="warn">{t('sec.mismatch')}</Status>}</div>
         <button className="btn primary block" type="submit" disabled={!ok} style={{ marginTop: 12 }}>
           <Icon name="download" size={16} /> {busy ? t('sec.encrypting') : t('sec.exportEnc')}
-        </button>
-      </form>
-    </Sheet>
-  );
-}
-
-function DecryptSheet({ text, onClose, onPlain }: { text: string; onClose: () => void; onPlain: (json: string) => void }) {
-  const { t } = useApp();
-  const [pass, setPass] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!pass || busy) return;
-    setBusy(true);
-    setErr('');
-    try {
-      const json = await decryptText(text, pass);
-      onPlain(json);
-    } catch (x) {
-      setErr(x instanceof Error && x.message === 'bad-passphrase' ? t('sec.wrongPass') : t('sec.badFile'));
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Sheet title={t('sec.importTitle')} onClose={onClose}>
-      <form onSubmit={submit}>
-        <p className="small muted">{t('sec.importHint')}</p>
-        <Field label={t('sec.passphrase')}>
-          <input className="input" type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} />
-        </Field>
-        <div aria-live="polite" style={{ minHeight: 24 }}>{err && <Status kind="critical">{err}</Status>}</div>
-        <button className="btn primary block" type="submit" disabled={!pass || busy} style={{ marginTop: 12 }}>
-          <Icon name="upload" size={16} /> {busy ? t('sec.decrypting') : t('sec.decrypt')}
         </button>
       </form>
     </Sheet>
@@ -198,7 +163,7 @@ function PinSheet({ mode, onClose }: { mode: 'set' | 'change' | 'remove'; onClos
 
 /** Settings card: encrypted backup, app lock and calendar export. */
 export function SecuritySection() {
-  const { data, update, replaceAll, t, insights, toast } = useApp();
+  const { data, update, t, insights, toast } = useApp();
   const [exporting, setExporting] = useState(false);
   const [bio, setBio] = useState<BiometricInfo | null>(null);
 
@@ -216,27 +181,8 @@ export function SecuritySection() {
     update((d) => (d.lock ? { ...d, lock: { ...d.lock, biometric: on } } : d));
     toast(t(on ? 'bio.enabled' : 'bio.disabled'));
   };
-  const [encText, setEncText] = useState<string | null>(null);
   const [pinMode, setPinMode] = useState<'set' | 'change' | 'remove' | null>(null);
-
-  const applyImport = (json: string) => {
-    try {
-      const d = importJson(json);
-      if (!confirm(t('sec.importConfirm', { trips: d.trips.length }))) return;
-      // Keep this device's lock: restoring a backup must not silently change or drop the PIN.
-      replaceAll({ ...d, onboarded: true, lock: data.lock ?? null });
-      toast(t('sec.imported'));
-    } catch {
-      toast(t('sec.badFile'));
-    }
-  };
-
-  const startImport = async () => {
-    const text = await pickTextFile('.json,application/json');
-    if (!text) return;
-    if (isEncryptedBackup(text)) setEncText(text);
-    else applyImport(text);
-  };
+  const restore = useBackupRestore();
 
   const exportIcs = async (kind: 'reminders' | 'trips') => {
     const events = kind === 'reminders' ? remindersToEvents(insights.reminders, t) : tripsToEvents(data.trips, insights.today, t);
@@ -254,7 +200,7 @@ export function SecuritySection() {
       <p className="tiny">{t('sec.backupHint')}</p>
       <div className="row wrap">
         <button className="btn sm" onClick={() => setExporting(true)}><Icon name="download" size={16} /> {t('sec.exportEnc')}</button>
-        <button className="btn sm" onClick={startImport}><Icon name="upload" size={16} /> {t('sec.importAny')}</button>
+        <button className="btn sm" onClick={restore.start}><Icon name="upload" size={16} /> {t('sec.importAny')}</button>
       </div>
 
       <h3>{t('sec.lock')}</h3>
@@ -288,16 +234,7 @@ export function SecuritySection() {
       <p className="tiny">{t('sec.calendarHint')}</p>
 
       {exporting && <ExportSheet onClose={() => setExporting(false)} />}
-      {encText && (
-        <DecryptSheet
-          text={encText}
-          onClose={() => setEncText(null)}
-          onPlain={(json) => {
-            setEncText(null);
-            applyImport(json);
-          }}
-        />
-      )}
+      {restore.sheet}
       {pinMode && <PinSheet mode={pinMode} onClose={() => setPinMode(null)} />}
     </section>
   );

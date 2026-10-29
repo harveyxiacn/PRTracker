@@ -20,22 +20,26 @@
 <p class="muted">Effective 2026-10-16 · Applies to the Android app, the iOS app and the web app at harveyxiacn.github.io/PRTracker.</p>
 
 <h2>Summary</h2>
-<p>PR Tracker has no accounts, no servers that receive your data, no analytics, no advertising and no tracking. Everything you enter stays on your device.</p>
+<p>PR Tracker has no accounts, no servers that receive your data, no analytics, no advertising and no tracking. Everything you enter stays on your device, unless you choose to share an anonymised timeline (see below).</p>
 
 <h2>Data you enter</h2>
 <p>Your PR and status dates, trips, applications, documents metadata (type and dates — never document numbers), personal history, household members' names you choose, and assistant chats are stored only on your device (Android SharedPreferences, iOS UserDefaults, or your browser's IndexedDB). We cannot see, access or recover this data.</p>
 <ul>
   <li>Android cloud backup and device-to-device transfer of app data are disabled. Move your data with the app's own backup file, which you can encrypt with a passphrase.</li>
   <li>On iOS, app data is included in your device's own encrypted backups if you enable them.</li>
-  <li>“Delete all data” in Settings removes everything from the device, including scheduled reminders.</li>
+  <li>Files you export (backups, CSV, calendar, reports) are kept in the app's private cache only while the share sheet is open, then deleted.</li>
+  <li>“Delete all data” in Settings removes everything the app stored on the device, including scheduled reminders and leftover export files. On the web it clears only PR Tracker's own browser database.</li>
+  <li>Data is not encrypted on the device; it is protected by the operating system's app sandbox and your device lock. The optional app PIN is a screen lock that stops others opening the app on your unlocked phone; it does not encrypt your data.</li>
+  <li>While an app PIN is set, reminder notifications on the lock screen say only “You have a reminder”, and the app is hidden in the recent-apps / app-switcher preview. Without a PIN, notifications include details such as days remaining and household members' names.</li>
+  <li>The web app is served from harveyxiacn.github.io, a domain shared with the developer's other GitHub Pages sites. Browsers separate stored data by domain, so for the most sensitive use we recommend the Android or iOS app.</li>
 </ul>
 
 <h2>Network requests</h2>
 <table>
   <tr><th>Request</th><th>What is sent</th></tr>
-  <tr><td>Download public data (IRCC processing times, Express Entry draws, anonymised community timelines) from this project's GitHub Pages</td><td>Nothing about you. No cookies or identifiers. GitHub may log IP addresses as any web host does.</td></tr>
+  <tr><td>Download public data (IRCC processing times and their history, Express Entry draws, anonymised community timelines) from this project's GitHub Pages, or from another https address if you change the data source in Settings</td><td>Nothing about you. No cookies or identifiers. The host (GitHub, or the server you chose) may log IP addresses as any web host does. Restoring a backup never changes the data source.</td></tr>
   <tr><td>Links you tap (IRCC pages, Reddit/Google/CanadaVisa searches, GitHub)</td><td>Opened in your browser; searches contain only the program and month shown.</td></tr>
-  <tr><td>Sharing your timeline (optional)</td><td>Opens a GitHub issue draft with an anonymised record you review and post yourself (program, month, day counts).</td></tr>
+  <tr><td>Sharing your timeline (optional, asks first)</td><td>Opens a GitHub “new issue” page in your browser with an anonymised record (program, month, day counts) in the page address. GitHub receives the record as soon as the page opens, linked to your GitHub account if you are signed in; it is published only if you submit the issue.</td></tr>
 </table>
 
 <h2>Permissions</h2>

@@ -4,6 +4,7 @@
 // Implementation owner: history agent. Keep every exported name and signature below.
 import { addDays, addMonths, addYears, diffDays, isISODate, maxDate, minDate, type ISODate } from './dates';
 import { countryName } from './countries';
+import { csvCell } from './csvCell';
 
 export type ActivityKind = 'work' | 'self_employed' | 'study' | 'unemployed' | 'homemaker' | 'retired' | 'travel' | 'other';
 
@@ -181,10 +182,6 @@ export function historyRows(data: HistoryData, w: HistoryWindow, list: 'addresse
     ym(a.from), a.to ? ym(a.to) : 'Present', ACTIVITY_LABEL_EN[a.kind] ?? a.kind, a.title ?? '', a.organization ?? '', a.city ?? '', country(a.country), a.note ?? '',
   ]);
   return [['From', 'To', 'Activity', 'Title/Program', 'Employer/School', 'City', 'Country', 'Note'], ...rows];
-}
-
-function csvCell(v: string): string {
-  return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
 /** CSV (UTF-8) of entries inside the window, newest first, in the column order IRCC forms use. */

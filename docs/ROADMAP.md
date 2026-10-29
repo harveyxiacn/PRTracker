@@ -10,7 +10,7 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
 
 ## ✅ v0.1 — Core tracker (2026-10-16)
 - Citizenship physical presence (1,095 days, ½-day pre-PR credit up to 365) and earliest/safe dates
-- PR residency obligation (730 days), "must return by", regain date; PR card renewal window (9 months)
+- PR residency obligation (730 days), "must return by", regain date; PR card renewal window (expiry − 270 days)
 - Trips (past, ongoing, planned), hot-spot calendar, application timelines with predictions
 - CRS estimator + CEC/FSW/FST checks; Maple on-device assistant (EN/中文); local reminders
 - Android APK via CI, PWA on GitHub Pages, daily IRCC data mirror, community timeline intake
@@ -53,7 +53,7 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
 - ✅ Citizenship **absences from Canada** list for any application date, CSV export
 - ✅ Printable physical-presence report to compare with IRCC's calculator
 - ✅ **CBSA travel-history import** (paste the report text) with matching to logged trips
-- ✅ PR card renewal check: residency obligation on the signing date, 9-month window, document links
+- ✅ PR card renewal check: residency obligation on the signing date, 270-day window, document links
 - ✅ Smart cross-checks: language test / passport / PR card / medical / permit expiring at the wrong time
 - 🗓️ Photo specifications helper for PR card and citizenship photos
 
@@ -69,6 +69,7 @@ Legend: ✅ released · 🚧 in progress · 🗓️ planned · 💡 exploring
 - 💡 QR-code transfer between devices
 
 ## 🚧 v1.0 — Store launch
+- ✅ UI/UX pass (2026-10-29): Home hierarchy, undo instead of confirm, draggable sheets with sticky actions, motion system with a reduced-motion variant
 - ✅ Launch kit: privacy policy page, store listing text, data-safety answers, iOS privacy manifest (docs/STORE.md)
 - ✅ Backup compatibility tests for every earlier backup format
 - ⛔ Google Play and App Store releases with release signing (need the owner's Play Console and Apple Developer accounts)
