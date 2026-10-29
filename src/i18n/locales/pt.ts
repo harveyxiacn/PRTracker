@@ -1351,6 +1351,31 @@ const strings: Record<string, string> = {
   'ux.advanced': 'Avançado',
   'ux.danger': 'Zona de perigo',
   'ux.dangerHint': 'Exclui todas as pessoas, viagens, processos e datas de documentos deste dispositivo. Exporte um backup antes: não é possível desfazer.',
+
+  // v0.10: in-app updates
+  'upd.title': 'Atualizações do app',
+  'upd.current': 'Versão instalada: {v}',
+  'upd.check': 'Verificar atualizações',
+  'upd.checking': 'Verificando…',
+  'upd.latest': 'Você está com a versão mais recente.',
+  'upd.available': 'A versão {v} está disponível',
+  'upd.size': 'Download de {mb} MB',
+  'upd.whatsNew': 'Novidades',
+  'upd.install': 'Baixar e instalar',
+  'upd.downloading': 'Baixando… {pct}%',
+  'upd.downloadingLabel': 'Baixando a atualização',
+  'upd.ready': 'O instalador do Android será aberto: toque em Atualizar para concluir. Seus dados continuam neste telefone.',
+  'upd.needPermission': 'O Android pede uma única vez para permitir que o PR Tracker instale apps. Ative a opção, volte e toque em Instalar.',
+  'upd.installAgain': 'Instalar',
+  'upd.retry': 'Tentar novamente',
+  'upd.auto': 'Verificar automaticamente (no máximo uma vez por dia)',
+  'upd.privacy': 'A verificação pergunta ao GitHub qual é a versão pública mais recente. Nada sobre você ou seus dados é enviado. Cada download é conferido com o checksum do GitHub e precisa estar assinado com a mesma chave deste app.',
+  'upd.errNetwork': 'Não foi possível acessar o GitHub. Verifique sua conexão e tente novamente.',
+  'upd.errChecksum': 'O download estava corrompido (checksum não confere) e foi excluído. Tente novamente.',
+  'upd.errSignature': 'O download não está assinado com a chave do PR Tracker, então não foi instalado.',
+  'upd.errTestBuild': 'Esta cópia é uma versão de teste com outra chave de assinatura, por isso não consegue se atualizar sozinha. Exporte um backup, desinstale, instale a nova versão do GitHub uma vez e depois restaure o backup.',
+  'upd.toast': 'O PR Tracker {v} está disponível',
+  'upd.view': 'Ver',
 };
 
 const mod: LocaleModule = {

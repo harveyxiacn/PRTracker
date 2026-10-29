@@ -9,6 +9,8 @@ coverage/
 *.keystore
 *.jks
 keystore.properties
+# Release signing key and its passwords (keep a backup outside the repo)
+signing/
 android/app/release/
 # Capacitor generated web assets are rebuilt by `cap sync`
 android/app/src/main/assets/public/

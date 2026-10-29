@@ -48,4 +48,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- In-app updates of the GitHub build (AppUpdaterPlugin). Remove for a Play Store build:
+         store builds must update through the store (see docs/STORE.md). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 </manifest>

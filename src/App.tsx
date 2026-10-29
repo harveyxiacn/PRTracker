@@ -38,7 +38,7 @@ const TABS: { route: Route; icon: string; key: string }[] = [
 const RELOCK_AFTER_MS = 30_000;
 
 export function App() {
-  const { data, route, go, t, demo } = useApp();
+  const { data, route, go, t, demo, toast } = useApp();
   const [locked, setLocked] = useState(() => !!data.lock);
   // While backgrounded with a lock set, render nothing so the OS app-switcher snapshot is blank.
   // (The native side covers the snapshot too: FLAG_SECURE on Android, a cover view on iOS.)
@@ -82,6 +82,28 @@ export function App() {
       void sub.then((h) => h?.remove());
     };
   }, [!!data.lock]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // In-app updates (Android GitHub build): look for a new release at most once a day and offer it
+  // in a toast. The module is loaded only here, after startup.
+  useEffect(() => {
+    if (!data.onboarded || demo) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void import('./native/updates').then(async (u) => {
+        if (!u.otaSupported()) return;
+        const prefs = u.loadUpdatePrefs();
+        if (!prefs.auto || Date.now() - prefs.lastCheck < u.AUTO_CHECK_MS) return;
+        u.saveUpdatePrefs({ ...prefs, lastCheck: Date.now() });
+        const rel = await u.fetchLatestRelease().catch(() => null);
+        if (cancelled || !rel?.apk || !u.isNewer(rel.version, __APP_VERSION__)) return;
+        toast(t('upd.toast', { v: rel.version }), { label: t('upd.view'), run: () => go('settings', 'update') });
+      });
+    }, 4000);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [data.onboarded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The lock screen replaces the app (not an overlay) so nothing behind it is reachable.
   // While the lock screen's code loads, show a blank screen: nothing behind the lock is ever drawn.

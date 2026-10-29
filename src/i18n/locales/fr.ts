@@ -1351,6 +1351,31 @@ const strings: Record<string, string> = {
   'ux.advanced': 'Avancé',
   'ux.danger': 'Zone de danger',
   'ux.dangerHint': 'Supprime toutes les personnes, tous les voyages, demandes et dates de documents de cet appareil. Exportez d’abord une sauvegarde : cette action est irréversible.',
+
+  // v0.10: in-app updates
+  'upd.title': 'Mises à jour de l’appli',
+  'upd.current': 'Version installée : {v}',
+  'upd.check': 'Rechercher des mises à jour',
+  'upd.checking': 'Recherche…',
+  'upd.latest': 'Vous avez la dernière version.',
+  'upd.available': 'La version {v} est disponible',
+  'upd.size': 'Téléchargement de {mb} Mo',
+  'upd.whatsNew': 'Nouveautés',
+  'upd.install': 'Télécharger et installer',
+  'upd.downloading': 'Téléchargement… {pct} %',
+  'upd.downloadingLabel': 'Téléchargement de la mise à jour',
+  'upd.ready': 'Le programme d’installation d’Android s’ouvre : touchez Mettre à jour pour terminer. Vos données restent sur ce téléphone.',
+  'upd.needPermission': 'Android demande une seule fois d’autoriser PR Tracker à installer des applis. Activez l’option, revenez et touchez Installer.',
+  'upd.installAgain': 'Installer',
+  'upd.retry': 'Réessayer',
+  'upd.auto': 'Vérifier automatiquement (au plus une fois par jour)',
+  'upd.privacy': 'La vérification demande à GitHub la dernière version publique. Rien sur vous ni sur vos données n’est envoyé. Chaque téléchargement est comparé à la somme de contrôle de GitHub et doit être signé avec la même clé que cette appli.',
+  'upd.errNetwork': 'Impossible de joindre GitHub. Vérifiez votre connexion et réessayez.',
+  'upd.errChecksum': 'Le téléchargement était endommagé (somme de contrôle incorrecte) et a été supprimé. Réessayez.',
+  'upd.errSignature': 'Le téléchargement n’est pas signé avec la clé de PR Tracker; il n’a donc pas été installé.',
+  'upd.errTestBuild': 'Cette copie est une version de test avec une autre clé de signature; elle ne peut donc pas se mettre à jour toute seule. Exportez une sauvegarde, désinstallez-la, installez une fois la nouvelle version depuis GitHub, puis restaurez la sauvegarde.',
+  'upd.toast': 'PR Tracker {v} est disponible',
+  'upd.view': 'Voir',
 };
 
 const mod: LocaleModule = {

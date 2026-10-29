@@ -1341,6 +1341,31 @@ const strings: Record<string, string> = {
   'ux.advanced': '고급',
   'ux.danger': '위험 구역',
   'ux.dangerHint': '이 기기의 모든 사람, 여행, 신청, 문서 날짜가 삭제됩니다. 먼저 백업을 내보내세요. 되돌릴 수 없습니다.',
+
+  // v0.10: in-app updates
+  'upd.title': '앱 업데이트',
+  'upd.current': '설치된 버전: {v}',
+  'upd.check': '업데이트 확인',
+  'upd.checking': '확인하는 중…',
+  'upd.latest': '최신 버전을 사용하고 있어요.',
+  'upd.available': '{v} 버전을 사용할 수 있어요',
+  'upd.size': '다운로드 {mb}MB',
+  'upd.whatsNew': '새로운 기능',
+  'upd.install': '다운로드 및 설치',
+  'upd.downloading': '다운로드 중… {pct}%',
+  'upd.downloadingLabel': '업데이트 다운로드 중',
+  'upd.ready': 'Android 설치 화면이 열려요. 업데이트를 눌러 마무리하세요. 데이터는 이 휴대전화에 그대로 남아요.',
+  'upd.needPermission': 'Android가 PR Tracker의 앱 설치를 허용할지 한 번 물어봐요. 허용을 켜고 돌아와서 설치를 누르세요.',
+  'upd.installAgain': '설치',
+  'upd.retry': '다시 시도',
+  'upd.auto': '자동으로 확인 (하루 최대 1회)',
+  'upd.privacy': '확인할 때는 GitHub에 최신 공개 릴리스만 문의해요. 사용자나 데이터에 관한 정보는 전혀 전송되지 않아요. 다운로드한 파일은 모두 GitHub의 체크섬과 대조하며, 이 앱과 같은 키로 서명되어 있어야 해요.',
+  'upd.errNetwork': 'GitHub에 연결할 수 없어요. 연결 상태를 확인하고 다시 시도하세요.',
+  'upd.errChecksum': '다운로드한 파일이 손상되어(체크섬 불일치) 삭제했어요. 다시 시도하세요.',
+  'upd.errSignature': '다운로드한 파일이 PR Tracker의 키로 서명되지 않아 설치하지 않았어요.',
+  'upd.errTestBuild': '이 앱은 서명 키가 다른 테스트 빌드라서 스스로 업데이트할 수 없어요. 백업을 내보내고, 앱을 삭제한 다음, GitHub에서 새 버전을 한 번 설치하고, 백업을 복원하세요.',
+  'upd.toast': 'PR Tracker {v}을(를) 사용할 수 있어요',
+  'upd.view': '보기',
 };
 
 const mod: LocaleModule = {
