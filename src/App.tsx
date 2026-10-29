@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { App as CapApp } from '@capacitor/app';
-import { LockScreen } from './screens/Security';
 import { inExternalActivity } from './platform';
 import { PersonSwitcher } from './screens/People';
 import { Icon } from './components/Icon';
@@ -24,6 +23,8 @@ const HistoryScreen = named(() => import('./screens/History'), 'HistoryScreen');
 const FormsScreen = named(() => import('./screens/Forms'), 'FormsScreen');
 // Shown once per install, so it (and the profile form) stays out of the first-load bundle.
 const Onboarding = named(() => import('./screens/Onboarding'), 'Onboarding');
+// Only needed when a PIN is set; pulls in PIN hashing, biometrics and backup code.
+const LockScreen = lazy(() => import('./screens/Security').then((m) => ({ default: m.LockScreen })));
 
 const TABS: { route: Route; icon: string; key: string }[] = [
   { route: 'home', icon: 'home', key: 'nav.home' },
@@ -83,7 +84,13 @@ export function App() {
   }, [!!data.lock]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The lock screen replaces the app (not an overlay) so nothing behind it is reachable.
-  if (locked && data.lock) return <LockScreen onUnlock={() => setLocked(false)} />;
+  // While the lock screen's code loads, show a blank screen: nothing behind the lock is ever drawn.
+  if (locked && data.lock)
+    return (
+      <Suspense fallback={<div className="app" aria-busy="true" style={{ background: 'var(--bg)' }} />}>
+        <LockScreen onUnlock={() => setLocked(false)} />
+      </Suspense>
+    );
   if (obscured && data.lock) return <div className="app" aria-hidden="true" style={{ background: 'var(--bg)' }} />;
   if (!data.onboarded) return <Suspense fallback={<div className="onb"><ScreenSkeleton /></div>}><Onboarding /></Suspense>;
 

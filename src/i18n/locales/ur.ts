@@ -1346,6 +1346,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV فارمیٹ',
   'ux.quickActions': 'فوری اقدامات',
   'ux.alerts': 'جانچنے کی باتیں',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'آج',
+  'ux.openMonth': '{month} کھولیں',
+  'ux.archivedGroup': 'آرکائیو شدہ ({n})',
+  'ux.appDeleted': 'درخواست حذف ہو گئی',
+  'ux.appDetails': 'درخواست کی تفصیلات',
+  'ux.sections': 'سیٹنگز کے حصے',
+  'ux.advanced': 'ایڈوانسڈ',
+  'ux.danger': 'خطرناک زون',
+  'ux.dangerHint': 'اس ڈیوائس پر موجود تمام افراد، سفر، درخواستیں اور دستاویز کی تاریخیں حذف ہو جائیں گی۔ پہلے بیک اپ ایکسپورٹ کریں: یہ عمل واپس نہیں ہو سکتا۔',
 };
 
 const mod: LocaleModule = {

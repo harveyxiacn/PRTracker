@@ -1362,6 +1362,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV ফরম্যাট',
   'ux.quickActions': 'দ্রুত কাজ',
   'ux.alerts': 'যাচাই করার বিষয়',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'আজ',
+  'ux.openMonth': '{month} খুলুন',
+  'ux.archivedGroup': 'আর্কাইভ করা ({n})',
+  'ux.appDeleted': 'আবেদন মুছে ফেলা হয়েছে',
+  'ux.appDetails': 'আবেদনের বিবরণ',
+  'ux.sections': 'সেটিংসের বিভাগ',
+  'ux.advanced': 'উন্নত',
+  'ux.danger': 'বিপজ্জনক অংশ',
+  'ux.dangerHint': 'এই ডিভাইসের সব ব্যক্তি, ভ্রমণ, আবেদন ও নথির তারিখ মুছে যাবে। আগে ব্যাকআপ এক্সপোর্ট করুন: এটি ফেরানো যাবে না।',
 };
 
 const mod: LocaleModule = {

@@ -4,8 +4,10 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-29
+
 Fixes from the pre-launch RCIC reviews of the immigration rules and content (2026-10-16), and a
-UI/UX pass on hierarchy, interaction and motion (2026-10-29).
+UI/UX pass on hierarchy, interaction and motion across Home, Trips, Calendar, Timeline and Settings (2026-10-29).
 
 ### Added
 - **Undo instead of "Are you sure?"** Deleting a trip happens at once and the toast offers *Undo* (6 s), which puts the saved trip back.
@@ -13,6 +15,9 @@ UI/UX pass on hierarchy, interaction and motion (2026-10-29).
 - **Motion system:** shared easing and duration tokens. Sheets slide in and out (dialogs on wide screens scale and fade), the backdrop fades, screens fade in on arrival, the citizenship ring sweeps and progress bars grow on first show, Maple's new messages rise in, toasts slide in and fade out, and everything tappable has press feedback. Hover tints only apply to devices that can hover.
 - **Reduced motion** now keeps the feedback and drops only the travel: things cross-fade instead of sliding, sheets close at once and the tab pill and bars just appear. Before, every animation and transition was removed.
 - Tapping the active tab again scrolls back to the top. Lazily loaded screens show card-shaped placeholders instead of "…".
+- **Calendar:** the Year/Month switch, arrows and a *Today* button sit in the calendar card; swipe sideways to change month or year (the arrows stay); the new page slides in from the side it came from. Tap a month name in the year view to open it. The selected day has a colour swatch and an *Add trip* (from that day) or *Edit trip* button.
+- **Timeline:** an application opens on its summary, prediction and milestones; the next step to watch for is highlighted; the editable fields are in a folded *Application details* card once submitted. Deleting an application is instant with *Undo* (its document checklist comes back too). Archived applications are folded into *Archived (n)*.
+- **Settings:** a sticky index of the sections at the top; on/off settings are switches; *Delete all data* moved into its own *Danger zone*; the data-source address is under *Advanced*. Household and security sit with the other preferences, sharing next to your data.
 - `scripts/visual-local.ps1` runs the Playwright suite on Windows against its own preview server; `PW_PORT` / `PW_BASE_URL` let the suite use another port or an already running server.
 
 ### Changed
@@ -21,13 +26,14 @@ UI/UX pass on hierarchy, interaction and motion (2026-10-29).
 - **Trips:** planned trips use an outlined icon, rows show a chevron, and CSV import/export and the CBSA import are one card (the CSV column help is folded).
 - **Chrome:** the demo banner is a slim strip, the top bar gets a hairline and shadow once content scrolls under it, the tab bar is translucent and marks the active tab with a pill behind the icon.
 - Toasts stay 4 s (was 2.6 s) so a sentence can be read.
-- Onboarding loads on demand (it is shown once), which keeps the first-load JS within the 140 kB budget (139.8 kB) after the new interaction code.
+- Onboarding and the lock screen load on demand (shown once / only with a PIN), so first-load JS went down to 135.5 kB gzip (budget 140 kB) even with the new interaction code. While the lock screen loads, the screen stays blank, so nothing behind the lock is drawn.
 
 ### Fixed
 - A second toast was hidden early by the first toast's timer.
 
 ### Fixed
 - **PR card renewal window is now expiry − 270 days**, not 9 calendar months (273–276 days), which could tell you to apply up to 6 days before IRCC accepts a renewal (Guide 5445 / IMM 5444). One constant (`PR_CARD_RENEWAL_DAYS`) drives Home, reminders, the Application helper, Documents and Maple.
+- New end-to-end tests: undo after deleting a trip or an application, and the PIN lock after a reload.
 - End-to-end tests read the app's own IndexedDB store (`pr-tracker`/`kv`, used since the storage change) and expect the reviewed wording; the two restore tests that were marked as known bugs now pass and assert the fixed behaviour.
 - **Strict mode "must return by" was one day too late.** With departure and return days counted as outside, the return day itself is an absence, so the last safe return day is one day earlier. Default mode was already correct. Brute-force tests now cover strict mode too.
 

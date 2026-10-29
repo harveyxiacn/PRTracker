@@ -1359,6 +1359,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'Формат CSV',
   'ux.quickActions': 'Быстрые действия',
   'ux.alerts': 'Что проверить',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'Сегодня',
+  'ux.openMonth': 'Открыть {month}',
+  'ux.archivedGroup': 'В архиве ({n})',
+  'ux.appDeleted': 'Заявка удалена',
+  'ux.appDetails': 'Данные заявки',
+  'ux.sections': 'Разделы настроек',
+  'ux.advanced': 'Дополнительно',
+  'ux.danger': 'Опасная зона',
+  'ux.dangerHint': 'Удаляет всех людей, поездки, заявки и даты документов на этом устройстве. Сначала экспортируйте резервную копию: это нельзя отменить.',
 };
 
 const mod: LocaleModule = {

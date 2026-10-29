@@ -1399,6 +1399,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV வடிவம்',
   'ux.quickActions': 'விரைவுச் செயல்கள்',
   'ux.alerts': 'சரிபார்க்க வேண்டியவை',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'இன்று',
+  'ux.openMonth': '{month} திற',
+  'ux.archivedGroup': 'காப்பகப்படுத்தியவை ({n})',
+  'ux.appDeleted': 'விண்ணப்பம் நீக்கப்பட்டது',
+  'ux.appDetails': 'விண்ணப்ப விவரங்கள்',
+  'ux.sections': 'அமைப்புகளின் பிரிவுகள்',
+  'ux.advanced': 'மேம்பட்டவை',
+  'ux.danger': 'ஆபத்துப் பகுதி',
+  'ux.dangerHint': 'இந்தச் சாதனத்தில் உள்ள அனைத்து நபர்கள், பயணங்கள், விண்ணப்பங்கள், ஆவணத் தேதிகளை நீக்கும். முதலில் காப்புப்பிரதியை ஏற்றுமதி செய்யுங்கள்: இதைத் திரும்பப் பெற முடியாது.',
 };
 
 const mod: LocaleModule = {

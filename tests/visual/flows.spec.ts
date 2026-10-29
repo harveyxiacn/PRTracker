@@ -99,7 +99,7 @@ function fmt(page: Page, iso: string): Promise<string> {
  * The app's saved data, read straight from the app's own IndexedDB store ('pr-tracker' / 'kv', since v0.8). Never creates the
  * database: if it doesn't exist yet the upgrade is aborted, so the app's own schema still applies.
  */
-function stored(page: Page): Promise<{ onboarded?: boolean; trips?: unknown[]; settings?: { language?: string } } | null> {
+function stored(page: Page): Promise<{ onboarded?: boolean; trips?: unknown[]; settings?: { language?: string }; lock?: unknown } | null> {
   return page.evaluate(
     () =>
       new Promise((resolve) => {
@@ -224,6 +224,44 @@ test('adding a past trip updates Trips and Home by the hand-computed amount and 
   await expect(tripsSummary(page)).toContainText('19 days');
 });
 
+// ---------- 4c. PIN lock (the lock screen is loaded on demand) ----------
+
+test('a PIN lock shows the lock screen after a reload and the keypad unlocks it', async ({ page }) => {
+  await start(page);
+  await onboard(page, { prDate: PR_DATE });
+  await openSettings(page);
+  await page.getByRole('button', { name: 'Set PIN' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Set PIN' });
+  await sheet.getByLabel('New PIN (4–8 digits)').fill('2468');
+  await sheet.getByLabel('Repeat new PIN').fill('2468');
+  await sheet.getByRole('button', { name: /save/i }).click();
+  await expect(page.getByText('PIN saved')).toBeVisible();
+  await expect.poll(async () => !!(await stored(page))?.lock).toBe(true);
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'PR Tracker is locked' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
+  for (const d of '2468') await page.getByRole('button', { name: `Digit ${d}`, exact: true }).click();
+  await page.getByRole('button', { name: 'Unlock', exact: true }).click();
+  await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
+});
+
+// ---------- 4b. delete an application → Undo restores it ----------
+
+test('deleting an application needs no confirm dialog and Undo puts it back', async ({ page }) => {
+  await start(page);
+  await onboard(page, { prDate: PR_DATE });
+  await tab(page, 'Timeline');
+  await page.getByRole('button', { name: 'Track an application' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Track an application' });
+  await sheet.getByLabel('Name', { exact: true }).fill('My CEC');
+  await sheet.getByRole('button', { name: 'Create' }).click();
+  await page.locator('main').getByRole('button', { name: 'Delete' }).click();
+  await expect(page.locator('main').getByRole('button', { name: /My CEC/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.locator('main').getByRole('button', { name: /My CEC/ })).toBeVisible();
+});
+
 // ---------- 2b. delete a trip → Undo restores it ----------
 
 test('deleting a trip needs no confirm dialog and Undo puts it back', async ({ page }) => {
@@ -296,7 +334,9 @@ test('tracking an Express Entry application with milestones shows progress and a
   await sheet.getByRole('button', { name: 'Create' }).click();
   await expect(sheet).toBeHidden();
 
-  // Detail screen.
+  // Detail screen: summary first; the editable details are folded once the application is submitted.
+  await expect(page.getByRole('region', { name: 'My CEC' })).toContainText(`Submitted ${await fmt(page, '2026-06-01')}`);
+  await page.getByText('Application details').click();
   await expect(page.getByLabel('Name', { exact: true })).toHaveValue('My CEC');
   await page.getByLabel('Acknowledgement of receipt (AOR)').fill('2026-06-03');
   await page.getByLabel('Biometrics done', { exact: true }).fill('2026-06-20');

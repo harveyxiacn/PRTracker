@@ -1330,6 +1330,17 @@ const strings: Record<string, string> = {
   'ux.csvFormat': 'CSV format',
   'ux.quickActions': 'Mga mabilisang aksyon',
   'ux.alerts': 'Mga dapat suriin',
+
+  // v0.9: Calendar, Timeline and Settings
+  'ux.today': 'Ngayon',
+  'ux.openMonth': 'Buksan ang {month}',
+  'ux.archivedGroup': 'Naka-archive ({n})',
+  'ux.appDeleted': 'Nabura ang application',
+  'ux.appDetails': 'Mga detalye ng application',
+  'ux.sections': 'Mga seksyon ng settings',
+  'ux.advanced': 'Advanced',
+  'ux.danger': 'Danger zone',
+  'ux.dangerHint': 'Buburahin ang lahat ng tao, biyahe, application at petsa ng dokumento sa device na ito. Mag-export muna ng backup: hindi na ito mababawi.',
 };
 
 const mod: LocaleModule = {
