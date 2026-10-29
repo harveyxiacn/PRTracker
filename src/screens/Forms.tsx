@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { Field, Status } from '../components/ui';
-import { addMonths, addYears, isISODate, type ISODate } from '../domain/dates';
-import { CARD_RENEWAL_MONTHS, absencesToCsv, cardRenewalCheck, presenceReport, type AbsenceRow, type PresenceReport } from '../domain/forms';
+import { addYears, isISODate, type ISODate } from '../domain/dates';
+import { absencesToCsv, cardRenewalOpens, cardRenewalCheck, presenceReport, type AbsenceRow, type PresenceReport } from '../domain/forms';
 import { emptyHistory, historySummary } from '../domain/history';
 import { DEFAULT_PERSON_NAME, listPeople } from '../domain/people';
 import { fmtDate, fmtNum, type Lang } from '../i18n';
@@ -77,7 +77,7 @@ function PrintReport({ report, name, generated, boundary, onClose }: { report: P
     const body = ref.current?.cloneNode(true) as HTMLElement | undefined;
     if (!body) return;
     body.querySelectorAll('.no-print').forEach((x) => x.remove());
-    const html = `<!doctype html><html lang="${lang}" dir="${document.documentElement.dir || 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${t('form.print.title')}</title><style>body{margin:16px;font-family:system-ui,sans-serif}${PRINT_CSS}</style></head><body>${body.outerHTML}</body></html>`;
+    const html = `<!doctype html><html lang="${lang.replace(/[^A-Za-z0-9-]/g, '')}" dir="${document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${t('form.print.title')}</title><style>body{margin:16px;font-family:system-ui,sans-serif}${PRINT_CSS}</style></head><body>${body.outerHTML}</body></html>`;
     void saveTextFile(`pr-tracker-presence-report-${report.applicationDate}.html`, html, 'text/html');
   };
   return (
@@ -145,7 +145,8 @@ function PrintReport({ report, name, generated, boundary, onClose }: { report: P
         </tbody>
       </table>
 
-      <p style={{ marginTop: 12 }}>{t('form.print.dates', { rule: t(boundary ? 'form.print.ruleBoundary' : 'form.print.ruleStrict') })}</p>
+      <p style={{ marginTop: 12 }}>{t('common.citExclusions')}</p>
+      <p style={{ marginTop: 8 }}>{t('form.print.dates', { rule: t(boundary ? 'form.print.ruleBoundary' : 'form.print.ruleStrict') })}</p>
       <p style={{ marginTop: 8 }}>
         <b>{t('form.print.disclaimer')}</b> <a href={IRCC_CALC_URL} target="_blank" rel="noopener noreferrer">{IRCC_CALC_URL}</a>
       </p>
@@ -235,6 +236,7 @@ export function FormsScreen() {
           )}
         </div>
         {!prOnAppDate && report.credited < report.required && <p className="tiny">{t('form.cit.notPr')}</p>}
+        <p className="tiny">{t('common.citExclusions')}</p>
 
         <table className="data">
           <tbody>
@@ -294,7 +296,7 @@ export function FormsScreen() {
           ) : card.canApplyNow ? (
             <Status kind="good">{t('form.card.applyNow', { date: fd(card.cardExpiry) })}</Status>
           ) : (
-            <Status kind="info">{t('form.card.applyFrom', { date: fd(addMonths(card.cardExpiry, -CARD_RENEWAL_MONTHS)) })}</Status>
+            <Status kind="info">{t('form.card.applyFrom', { date: fd(cardRenewalOpens(card.cardExpiry)) })}</Status>
           )}
         </div>
         <div className="row wrap">

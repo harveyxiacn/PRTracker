@@ -6,9 +6,11 @@
 //    with the days outside Canada that fall inside the period (current boundary-day rule).
 //  • presenceReport: the breakdown IRCC's physical presence calculator shows (pre-PR periods at ½,
 //    PR period, absences); its totals equal PresenceModel.citizenshipAt(date) exactly.
-//  • cardRenewalCheck: residency obligation (IRPA s.28) at the signing date + the 9-month window.
-import { addMonths, fromDay, isISODate, toDay, todayISO, type ISODate } from './dates';
-import { CITIZENSHIP_REQUIRED, PresenceModel, RESIDENCY_REQUIRED } from './presence';
+//  • cardRenewalCheck: residency obligation (IRPA s.28) at the signing date + the renewal window
+//    (expiry − 270 days, PR_CARD_RENEWAL_DAYS).
+import { addDays, addMonths, fromDay, isISODate, toDay, todayISO, type ISODate } from './dates';
+import { CITIZENSHIP_REQUIRED, PR_CARD_RENEWAL_DAYS, PresenceModel, RESIDENCY_REQUIRED } from './presence';
+import { csvCell } from './csvCell';
 import type { AppData, Trip } from './types';
 
 export interface AbsenceRow {
@@ -28,8 +30,10 @@ export const PURPOSE_LABEL_EN: Record<NonNullable<Trip['purpose']>, string> = {
   other: 'Other',
 };
 
-/** IRCC: apply to renew the PR card when it expires in less than 9 months (or has expired). */
-export const CARD_RENEWAL_MONTHS = 9;
+/** First day IRCC accepts a PR card renewal: expiry − 270 days (Guide 5445 / IMM 5444). */
+export function cardRenewalOpens(expiry: ISODate): ISODate {
+  return addDays(expiry, -PR_CARD_RENEWAL_DAYS);
+}
 
 const okEnd = (d: unknown) => d === null || d === undefined || d === '' || isISODate(d);
 
@@ -162,7 +166,7 @@ export interface CardRenewalCheck {
   /** Days still needed in Canada before `signDate` for compliance (0 if compliant). */
   shortfall: number;
   cardExpiry?: ISODate;
-  canApplyNow: boolean; // card expires within 9 months (or expired)
+  canApplyNow: boolean; // card valid for 270 days or less (or expired)
 }
 
 /**
@@ -173,7 +177,7 @@ export function cardRenewalCheck(data: AppData, signDate: ISODate, today: ISODat
   const model = modelFor(data, today);
   const r = model.residencyAt(signDate);
   const expiry = isISODate(data.profile.prCardExpiry) ? data.profile.prCardExpiry : undefined;
-  const canApplyNow = !!expiry && signDate >= addMonths(expiry, -CARD_RENEWAL_MONTHS);
+  const canApplyNow = !!expiry && signDate >= cardRenewalOpens(expiry);
   if (!r) {
     return {
       signDate,
@@ -196,10 +200,6 @@ export function cardRenewalCheck(data: AppData, signDate: ISODate, today: ISODat
     cardExpiry: expiry,
     canApplyNow,
   };
-}
-
-function csvCell(v: string): string {
-  return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
 export const ABSENCE_CSV_HEADERS = ['From', 'To', 'Number of days', 'Destination', 'Reason'];

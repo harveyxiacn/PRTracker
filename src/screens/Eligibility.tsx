@@ -82,7 +82,8 @@ export function EligibilityScreen() {
 
   const total = crs.totals.total;
   // Draw categories you can be invited in: program eligibility, PNP, French, plus ticked occupations.
-  const eligibleCats = new Set<DrawCategory>(f.drawCats);
+  // A saved choice of a past category (e.g. agriculture) no longer counts and can't be un-ticked.
+  const eligibleCats = new Set<DrawCategory>(f.drawCats.filter((c) => OCCUPATION_CATEGORIES.includes(c)));
   for (const p of programs) if (p.eligible) eligibleCats.add(p.program);
   if (f.pnp) eligibleCats.add('pnp');
   const french = f.firstIsFrench ? clb1 : f.hasLang2 ? f.lang2 : undefined;

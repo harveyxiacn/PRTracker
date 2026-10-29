@@ -32,7 +32,7 @@ export const securityEn: Record<string, string> = {
 
   // App lock
   'sec.lock': 'App lock',
-  'sec.lockHint': 'Ask for a 4–8 digit PIN when the app opens or returns from the background. Only a salted hash of the PIN is stored.',
+  'sec.lockHint': 'Ask for a 4–8 digit PIN when the app opens or returns from the background. Only a salted hash of the PIN is stored. This is a screen lock: it does not encrypt the data stored on this device. While it is on, reminders on the lock screen show no details.',
   'sec.lockOn': 'PIN lock is on',
   'sec.lockOff': 'PIN lock is off',
   'sec.setPin': 'Set PIN',
@@ -78,4 +78,9 @@ export const securityEn: Record<string, string> = {
   'sec.wipe': 'Wipe all data',
   'sec.wipeConfirm1': 'Delete ALL PR Tracker data on this device? This cannot be undone.',
   'sec.wipeConfirm2': 'Are you absolutely sure? Trips, applications and settings will be erased.',
+
+  // Lock-screen notifications, screenshot block, sharing (security review v0.8)
+  'sec.notifGeneric': 'You have a reminder. Open the app to see it.',
+  'sec.privacyWithPin': 'While a PIN lock is set, screenshots and the recent-apps preview are always blocked.',
+  'sec.shareGithubConfirm': 'This opens a GitHub page in your browser with the record already filled in. GitHub receives it as soon as the page opens (linked to your account if you are signed in), but nothing is public until you submit the issue. Continue?',
 };

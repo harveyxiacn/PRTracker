@@ -26,7 +26,7 @@ Routing is hash-based (`#/timeline/<id>`) so the browser and Android back button
 | Screen | Purpose | Key components |
 |---|---|---|
 | Onboarding | 3 steps: value & privacy → status (PR date, card expiry, pre-PR periods) → trips (CSV import) | restore-from-backup shortcut |
-| Home | Today at a glance | abroad banner with *I’m back*, proactive tips, citizenship ring, residency bar, PR-card status, 53-week heat strip, application progress, upcoming reminders, quick actions |
+| Home | Today at a glance | abroad banner with *I’m back*, critical alerts, citizenship ring (hero), residency bar, PR-card status, quick-action row, other alerts (2 + *Show more*), household, application progress, 53-week heat strip, upcoming reminders |
 | Calendar | “Hot-spot” calendar | year view (12 mini months) / month view, tap-a-day details, legend, per-year table |
 | Trips | Log and fix travel | add/edit sheet with live *impact on citizenship date*, *leaving today*, overlap warnings, CSV import/export |
 | Timeline | Track applications | milestone templates per stream, prediction card (median + p25–p75), community histogram with “you are here”, search-online links, anonymous sharing |
@@ -50,7 +50,22 @@ Routing is hash-based (`#/timeline/<id>`) so the browser and Android back button
   - neutral grey: no status or not counted
   Identity is never colour-only: every cell has an accessible label and a tap-to-read detail line, and the year table repeats the numbers.
 - **Status colours** (good/warn/critical) always come with an icon and a label.
-- **Motion:** short sheet slide-up; disabled under `prefers-reduced-motion`.
+- **Hierarchy (v0.9):** each screen answers its question first. Explanations that matter but are
+  read once (“what isn’t counted”, legal exceptions, CSV columns) live behind a *How this is
+  counted*–style disclosure instead of being printed on every visit.
+- **Destructive actions:** prefer doing it at once with *Undo* in the toast over a confirm dialog
+  (trips). Keep confirms only where undo is impossible (wiping all data, replacing data from a backup).
+- **Motion** (tokens in `styles.css`: `--ease-out`, `--ease-in`, `--ease-spring`, `--dur-press` 120 ms,
+  `--dur-in` 220 ms, `--dur-sheet` 300 ms, `--dur-out` 180 ms). Motion explains a change of place or
+  state and never delays a task:
+  - sheets slide up from the bottom (dialogs scale/fade on ≥ 640 px), exit faster than they enter, and
+    can be dragged down by the handle; the close button, Escape and the backdrop are the equivalents;
+  - screens fade in (opacity only, so fixed children such as the Maple composer are never re-anchored);
+  - first-show emphasis on numbers: the citizenship ring sweeps, progress bars grow;
+  - press feedback (scale 0.97) on everything tappable; hover tints only under `(hover: hover)`;
+  - business state never waits for an animation: data changes first, presentation follows, and a
+    sheet that is unmounted by its parent (e.g. after Save) simply disappears.
+  - `prefers-reduced-motion`: no travel or scaling; feedback remains as short cross-fades.
 
 ## Program catalogue (`src/domain/programs.ts`)
 

@@ -2,7 +2,10 @@ name: Release
 
 # Push a tag like v0.1.0 to build and publish a GitHub release with the Android APK/AAB
 # and a zipped web build. Signing secrets are optional (see docs/RELEASING.md); without
-# them the release carries a debug-signed APK that can still be sideloaded for testing.
+# them the release carries a debuggable, debug-signed test APK instead of a release build.
+#
+# The signing secrets are only exposed to the steps that need them (decode + Gradle), never
+# to npm install scripts, tests or the web build.
 on:
   push:
     tags: ['v*']
@@ -16,8 +19,6 @@ jobs:
     # A manual run must target a tag (Run workflow → "Use workflow from" → Tags).
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    env:
-      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -29,36 +30,64 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
+      # Only a true/false flag leaves this step; the secret value itself is not put in env.
+      - name: Check signing secrets
+        id: signing
+        env:
+          HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: echo "enabled=$HAS_KEY" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm test
       - run: npm run build
       - run: npx cap sync android
       - name: Decode signing key
-        if: ${{ env.KEYSTORE_B64 != '' }}
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
-      - name: Build APK and AAB
+      - name: Build signed APK and AAB
+        if: steps.signing.outputs.enabled == 'true'
         working-directory: android
         env:
           PRT_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           PRT_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           PRT_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then export PRT_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"; fi
-          ./gradlew assembleRelease bundleRelease assembleDebug --no-daemon --stacktrace
+          export PRT_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          ./gradlew assembleRelease bundleRelease --no-daemon --stacktrace
+      - name: Remove signing key
+        if: always() && steps.signing.outputs.enabled == 'true'
+        run: rm -f "$RUNNER_TEMP/release.jks"
+      # Without signing secrets: a debuggable test build only (adb run-as can read its data,
+      # WebView debugging is on). It is never published next to a signed release.
+      - name: Build test APK (debug)
+        if: steps.signing.outputs.enabled != 'true'
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Collect assets
+        env:
+          SIGNED: ${{ steps.signing.outputs.enabled }}
         run: |
           mkdir -p out
           V="${GITHUB_REF_NAME}"
-          cp android/app/build/outputs/apk/debug/app-debug.apk "out/pr-tracker-${V}-debug.apk"
-          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+          if [ "$SIGNED" = "true" ]; then
             cp android/app/build/outputs/apk/release/app-release.apk "out/pr-tracker-${V}.apk"
             cp android/app/build/outputs/bundle/release/app-release.aab "out/pr-tracker-${V}.aab"
+          else
+            cp android/app/build/outputs/apk/debug/app-debug.apk "out/pr-tracker-${V}-test-build-debug.apk"
           fi
           (cd dist && zip -qr "../out/pr-tracker-${V}-web.zip" .)
           ls -la out
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+          SIGNED: ${{ steps.signing.outputs.enabled }}
         run: |
           NOTES=$(awk "/^## \[${GITHUB_REF_NAME#v}\]/{f=1;next}/^## \[/{f=0}f" CHANGELOG.md)
-          gh release create "$GITHUB_REF_NAME" out/* --title "PR Tracker $GITHUB_REF_NAME" --notes "${NOTES:-See CHANGELOG.md}" || gh release upload "$GITHUB_REF_NAME" out/* --clobber
+          NOTES="${NOTES:-See CHANGELOG.md}"
+          if [ "$SIGNED" != "true" ]; then
+            NOTES="$NOTES
+
+          > **Note:** \`pr-tracker-${GITHUB_REF_NAME}-test-build-debug.apk\` is a debuggable test build signed with a throw-away debug key. It is not for general use: install the store version instead."
+          fi
+          gh release create "$GITHUB_REF_NAME" out/* --title "PR Tracker $GITHUB_REF_NAME" --notes "$NOTES" || gh release upload "$GITHUB_REF_NAME" out/* --clobber

@@ -3,13 +3,15 @@ import { computeInsights } from './insights';
 import { emptyData } from './types';
 
 describe('insights', () => {
-  it('computes PR card renewal window 9 months before expiry and reminders', () => {
+  it('computes PR card renewal window 270 days before expiry and reminders', () => {
     const d = emptyData();
     d.profile.prDate = '2022-03-15';
     d.profile.prCardExpiry = '2027-03-15';
     d.trips = [{ id: 't', departure: '2026-12-20', return: '2027-01-05', destination: 'Paris' }];
     const i = computeInsights(d, '2026-01-01');
-    expect(i.prCard).toMatchObject({ renewalOpens: '2026-06-15', state: 'ok' });
+    // IMM 5444: renewals are returned while the card is valid for more than 270 days.
+    expect(i.prCard).toMatchObject({ renewalOpens: '2026-06-18', state: 'ok' });
+    expect(i.reminders.find((r) => r.id === 'card-renew')!.date).toBe('2026-06-18');
     expect(i.citizenship!.eligibleDate).toBe('2026-01-01');
     expect(i.citizenship!.daysUntilEligible).toBe(0);
     expect(i.citizenship!.eligible).toBe(true);
@@ -18,6 +20,10 @@ describe('insights', () => {
     expect(ids).toContain('trip-t');
     expect(ids).not.toContain('cit-eligible');
     expect(computeInsights(d, '2026-07-01').prCard!.state).toBe('renew_now');
+    // Nine calendar months before expiry (2026-06-15) is 273 days out: too early.
+    expect(computeInsights(d, '2026-06-15').prCard!.state).toBe('ok');
+    expect(computeInsights(d, '2026-06-17').prCard!.state).toBe('ok');
+    expect(computeInsights(d, '2026-06-18').prCard!.state).toBe('renew_now');
     expect(computeInsights(d, '2027-04-01').prCard!.state).toBe('expired');
   });
 

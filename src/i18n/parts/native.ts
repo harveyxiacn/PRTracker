@@ -17,5 +17,5 @@ export const nativeEn: Record<string, string> = {
   'nat.prCard': 'PR card',
   'nat.expires': 'Expires {date}',
   'nat.abroadSince': 'Abroad since',
-  'nat.eligible': 'Eligible',
+  'nat.eligible': 'Presence met',
 };

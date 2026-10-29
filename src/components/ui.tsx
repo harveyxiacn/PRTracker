@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../store/AppContext';
 import { Icon } from './Icon';
 
@@ -13,13 +14,44 @@ function focusables(root: HTMLElement): HTMLElement[] {
 /** Open sheets, innermost last: only the top one handles Escape / Tab and owns the scroll lock. */
 const openSheets: HTMLElement[] = [];
 
-export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+export const prefersReducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Length of the sheet exit (keep in sync with --dur-out in styles.css). */
+const SHEET_OUT_MS = 180;
+/** Drag-to-dismiss: release past this share of the sheet height, or flick faster than this (px/ms). */
+const DISMISS_SHARE = 0.25;
+const DISMISS_VELOCITY = 0.6;
+
+export function Sheet({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
   const { t } = useApp();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
   // Keep the latest onClose without re-running the mount effect (which moves focus).
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  // Dismissals from inside the sheet (close button, backdrop, Escape, drag) play the exit first.
+  // A parent can still unmount the sheet directly (e.g. after Save): it then simply disappears.
+  const [closing, setClosing] = useState<false | 'slide' | 'flung'>(false);
+  const closingRef = useRef(false);
+  const exitTimer = useRef<number | undefined>(undefined);
+  const requestClose = useCallback((how: 'slide' | 'flung' = 'slide') => {
+    if (closingRef.current) return; // a second tap during the exit is ignored
+    closingRef.current = true;
+    if (prefersReducedMotion()) {
+      closeRef.current();
+      closingRef.current = false;
+      return;
+    }
+    setClosing(how);
+    exitTimer.current = window.setTimeout(() => {
+      closeRef.current();
+      // Still mounted (the parent kept it open): show it again rather than leave an invisible dialog.
+      closingRef.current = false;
+      setClosing(false);
+      if (ref.current) ref.current.style.transform = '';
+    }, SHEET_OUT_MS);
+  }, []);
+  useEffect(() => () => window.clearTimeout(exitTimer.current), []);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -30,7 +62,7 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
       if (openSheets[openSheets.length - 1] !== el) return;
       if (e.key === 'Escape') {
         e.preventDefault();
-        closeRef.current();
+        requestClose();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -69,19 +101,56 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
       if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, []);
-  return (
-    <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
-        <div className="grabber" aria-hidden="true" />
-        <div className="row spread">
-          <h2 id={titleId}>{title}</h2>
-          <button type="button" className="icon-btn" onClick={onClose} aria-label={t('a11y.close')}>
-            <Icon name="close" />
-          </button>
+  // Drag the handle (grabber + title row) down to dismiss; the close button stays the
+  // equivalent for keyboard, mouse and switch users. Only the handle drags, so scrolling the
+  // form and selecting text never moves the sheet.
+  const drag = useRef<{ id: number; y0: number; t0: number; dy: number } | null>(null);
+  const onDragStart = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (closingRef.current || e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
+    drag.current = { id: e.pointerId, y0: e.clientY, t0: e.timeStamp, dy: 0 };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (ref.current) ref.current.style.transition = 'none';
+  };
+  const onDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId || !ref.current) return;
+    d.dy = Math.max(0, e.clientY - d.y0);
+    ref.current.style.transform = d.dy ? `translateY(${d.dy}px)` : '';
+  };
+  const onDragEnd = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = ref.current;
+    drag.current = null;
+    if (!d || d.id !== e.pointerId || !el) return;
+    const velocity = d.dy / Math.max(1, e.timeStamp - d.t0);
+    el.style.transition = '';
+    if (e.type === 'pointerup' && d.dy > 8 && (d.dy > el.offsetHeight * DISMISS_SHARE || velocity > DISMISS_VELOCITY)) {
+      el.style.transform = 'translateY(100%)';
+      requestClose('flung');
+    } else {
+      el.style.transform = ''; // springs back through the CSS transition
+    }
+  };
+
+  // Portalled to <body>: an ancestor with backdrop-filter/transform (the top bar) would otherwise
+  // become the containing block of the fixed backdrop and clip the sheet.
+  return createPortal(
+    <div className={`sheet-backdrop${closing ? ' closing' : ''}`} onClick={(e) => e.target === e.currentTarget && requestClose()}>
+      <div className={`sheet${footer ? ' has-footer' : ''}${closing === 'flung' ? ' flung' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} ref={ref}>
+        <div className="sheet-handle" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={onDragEnd} onPointerCancel={onDragEnd}>
+          <div className="grabber" aria-hidden="true" />
+          <div className="row spread">
+            <h2 id={titleId}>{title}</h2>
+            <button type="button" className="icon-btn" onClick={() => requestClose()} aria-label={t('a11y.close')}>
+              <Icon name="close" />
+            </button>
+          </div>
         </div>
         {children}
+        {footer && <div className="sheet-footer">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -99,11 +168,18 @@ export function Ring({ value, max, color = 'var(--d-pr)', children, label }: { v
   const r = 52;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, value / max));
+  // Sweeps in from zero once after mounting (a CSS transition on the arc); later value changes
+  // glide from the previous value. The label always carries the real number.
+  const [shown, setShown] = useState(prefersReducedMotion);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   return (
     <div className="ring" role="img" aria-label={label}>
       <svg viewBox="0 0 120 120" aria-hidden="true">
         <circle cx="60" cy="60" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="12" />
-        <circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} />
+        <circle className="ring-arc" cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="12" strokeLinecap="round" strokeDasharray={`${c * (shown ? pct : 0)} ${c}`} />
       </svg>
       <div className="center">{children}</div>
     </div>

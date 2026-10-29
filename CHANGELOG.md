@@ -2,6 +2,44 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com), versions: SemVer.
 
+## [Unreleased]
+
+Fixes from the pre-launch RCIC reviews of the immigration rules and content (2026-10-16), and a
+UI/UX pass on hierarchy, interaction and motion (2026-10-29).
+
+### Added
+- **Undo instead of "Are you sure?"** Deleting a trip happens at once and the toast offers *Undo* (6 s), which puts the saved trip back.
+- **Drag a sheet down to close it.** Only the handle (grabber and title row) drags, so forms still scroll; release past a quarter of the height or flick to dismiss, otherwise it springs back. The close button, Escape and the backdrop do the same.
+- **Motion system:** shared easing and duration tokens. Sheets slide in and out (dialogs on wide screens scale and fade), the backdrop fades, screens fade in on arrival, the citizenship ring sweeps and progress bars grow on first show, Maple's new messages rise in, toasts slide in and fade out, and everything tappable has press feedback. Hover tints only apply to devices that can hover.
+- **Reduced motion** now keeps the feedback and drops only the travel: things cross-fade instead of sliding, sheets close at once and the tab pill and bars just appear. Before, every animation and transition was removed.
+- Tapping the active tab again scrolls back to the top. Lazily loaded screens show card-shaped placeholders instead of "…".
+- `scripts/visual-local.ps1` runs the Playwright suite on Windows against its own preview server; `PW_PORT` / `PW_BASE_URL` let the suite use another port or an already running server.
+
+### Changed
+- **Home leads with the answer.** The citizenship card comes first (with a soft hero tint), then residency and the PR card; long explanations ("what isn't counted", the IRPA s.28 exceptions) are behind *How this is counted*. Critical alerts stay at the very top; other alerts show the two most important with *Show N more*. The six buttons at the bottom became a swipeable row of quick actions under the numbers (including the Application helper, which no longer has its own card). Household, applications, the year strip and reminders follow.
+- **Sheets keep their main action reachable:** Save (full width) and Delete sit in a sticky footer above the home indicator.
+- **Trips:** planned trips use an outlined icon, rows show a chevron, and CSV import/export and the CBSA import are one card (the CSV column help is folded).
+- **Chrome:** the demo banner is a slim strip, the top bar gets a hairline and shadow once content scrolls under it, the tab bar is translucent and marks the active tab with a pill behind the icon.
+- Toasts stay 4 s (was 2.6 s) so a sentence can be read.
+- Onboarding loads on demand (it is shown once), which keeps the first-load JS within the 140 kB budget (139.8 kB) after the new interaction code.
+
+### Fixed
+- A second toast was hidden early by the first toast's timer.
+
+### Fixed
+- **PR card renewal window is now expiry − 270 days**, not 9 calendar months (273–276 days), which could tell you to apply up to 6 days before IRCC accepts a renewal (Guide 5445 / IMM 5444). One constant (`PR_CARD_RENEWAL_DAYS`) drives Home, reminders, the Application helper, Documents and Maple.
+- End-to-end tests read the app's own IndexedDB store (`pr-tracker`/`kv`, used since the storage change) and expect the reviewed wording; the two restore tests that were marked as known bugs now pass and assert the fixed behaviour.
+- **Strict mode "must return by" was one day too late.** With departure and return days counted as outside, the return day itself is an absence, so the last safe return day is one day earlier. Default mode was already correct. Brute-force tests now cover strict mode too.
+
+### Changed
+- **Citizenship wording no longer reads like a guarantee.** "Eligible to apply now" is now "Meets physical presence (estimate)", and reminders say "you may meet / may be able to apply". Home's citizenship card, Maple's citizenship answer and the Application helper (screen and print report) show what isn't counted (prison, parole, probation, time as a refugee claimant) and what else is required (taxes, language, test).
+- **Time before PR:** the "other" status is now *Other authorized temporary resident status (e.g. TRP, maintained status)*. Settings explains that protected-person time counts from the positive decision and that time waiting on a refugee claim doesn't count.
+- **Residency obligation:** Home, Maple, the "at risk" tip and the reminder now say that some days abroad can count (accompanying a Canadian-citizen spouse, partner or parent; full-time work for a Canadian business or public service), with a link to IRPA s.28. The wording is softer: "by this count", "get advice".
+- **Maple** ends answers that give eligibility dates, counts or rules with the planning-only disclaimer.
+- **Program status:** parents and grandparents sponsorship is *paused*. The Home Care Worker pilots and the Start-up Visa are *closed*. PEQ (temporary reopening 2026–2028), PSTQ, non-Express Entry PNP (online PR Portal), the Atlantic Immigration Program (*changing*, provincial endorsement limits) and the spousal open work permit have updated descriptions.
+- **Express Entry categories:** physicians, senior managers and researchers are labelled "with Canadian work experience", and "Military" is now "Skilled military recruits". Agriculture is a past category and is no longer offered.
+- **Knowledge base and glossary:** updated answers for BOWP, biometrics ("most PR applicants"), medical validity, police certificates, status checks, PR card renewal, the half-day credit and the residency exceptions (including the Crown-servant exception for citizenship). Dead or weak source links are fixed (biometrics, medical, PR card, BOWP). Forum-only terms (PPR, GU, FD, PVO, SVO) are marked as such.
+
 ## [0.8.0] - 2026-10-16
 
 One release covering roadmap milestones v0.5 to v0.8.

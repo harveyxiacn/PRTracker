@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { drawCategory, standings } from './draws';
+import { OCCUPATION_CATEGORIES, drawCategory, standings } from './draws';
 
 describe('draw categories', () => {
   it('classifies IRCC draw names', () => {
@@ -9,6 +9,9 @@ describe('draw categories', () => {
     expect(drawCategory('Provincial Nominee Program')).toBe('pnp');
     expect(drawCategory('No Program Specified')).toBe('general');
     expect(drawCategory('Trade occupations (2025-1)')).toBe('trades');
+    // Past category: still recognised in old draws, but not offered as a current choice.
+    expect(drawCategory('Agriculture and agri-food occupations (2024-1)')).toBe('agriculture');
+    expect(OCCUPATION_CATEGORIES).not.toContain('agriculture');
   });
   it('compares your score with the latest eligible draws', () => {
     const draws = [

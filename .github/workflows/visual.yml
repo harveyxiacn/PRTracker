@@ -4,6 +4,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Read-only token: these jobs only check out code and upload artifacts.
+permissions:
+  contents: read
+
 concurrency:
   group: visual-${{ github.ref }}
   cancel-in-progress: true

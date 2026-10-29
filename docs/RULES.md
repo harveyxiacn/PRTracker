@@ -22,8 +22,13 @@ Citizenship Act s.5(1)(c):
 
 - At least **1,095 days** physically present in the **5 years immediately before** the application date.
 - Each day in Canada **as a PR** = 1 day.
-- Each day in Canada **before PR** as a temporary resident (worker, student, visitor) or a
-  protected person = **½ day**, capped at **365 credited days** (730 real days).
+- Each day in Canada **before PR** as an authorised temporary resident (worker, student, visitor,
+  temporary resident permit holder, maintained status) or as a protected person = **½ day**,
+  capped at **365 credited days** (730 real days) (s.5(1.001)).
+- Protected-person time counts only **from the date of the positive decision** (claim or PRRA
+  approved). Time waiting for a decision on a refugee claim does not count. The app can't tell
+  these apart, so Settings labels the "other" kind *Other authorized temporary resident status*
+  and shows hints for the protected and other kinds; users enter only qualifying periods.
 - Days with no legal status, or before your first status period, earn nothing.
 - Window used: `[applicationDate − 5 years, applicationDate − 1 day]` (conservative: the
   application day itself is not counted).
@@ -35,6 +40,13 @@ Citizenship Act s.5(1)(c):
 Other requirements are shown as reminders, not computed: tax filing for 3 of the 5 years,
 language proof (CLB 4+) and the knowledge test for ages 18–54, and no prohibitions.
 
+Because only days are checked, the app never says "eligible to apply". Results read
+"meets the physical presence requirement (estimate)", and Home's citizenship card, Maple's
+citizenship and explain answers and the Application helper (screen and print report) show
+`common.citExclusions`: time in prison, on parole or probation (Citizenship Act s.21) and time as
+a refugee claimant before becoming a protected person do not count; taxes, language and the
+knowledge test are also required. Citizenship reminders say "you may meet / may be able to apply".
+
 ## PR residency obligation (`residencyAt`)
 
 IRPA s.28: **730 days** in Canada in every 5-year period.
@@ -42,20 +54,36 @@ IRPA s.28: **730 days** in Canada in every 5-year period.
 - **PR for 5 years or more:** count PR days present in `[date − 5 years, date − 1]`; compliant if ≥ 730.
 - **PR for under 5 years:** compliant if `days present so far + days remaining until the 5th
   anniversary ≥ 730` (you can still reach 730 by the anniversary).
-- **“If I leave tomorrow”:** simulate being away from tomorrow (departure day counts as present)
-  and find the first day the obligation would fail. *Must return by* = the day before that;
-  *max absence* = full days outside. When you are already abroad, the same calculation runs
-  from today.
-- **Regain date** (if non-compliant): the first future date compliance holds again if you stay.
-- Verified by brute force in `presence.test.ts`: returning on *must-return-by* stays compliant
-  every day for a year afterwards, and returning one day later fails.
+- **“If I leave tomorrow”:** simulate being away from tomorrow (departure day counts as present
+  by default) and find the first day `F` the obligation would fail. Compliance on a day depends on
+  presence up to the day before, so:
+  - default mode (return day counts as present): *must return by* = `F − 1`;
+  - strict mode (return day counts as outside): *must return by* = `F − 2`.
 
-Only days in Canada (time as a PR accompanying a Canadian-citizen spouse abroad, etc., is **not** modelled; see *Limitations*).
+  *Max absence* = days outside if you return on that date (default `(leave, return)` exclusive,
+  strict `[leave, return]` inclusive). When you are already abroad, the same calculation runs
+  from today and *max absence* is the number of days until *must return by*.
+- **Regain date** (if non-compliant): the first future date compliance holds again if you stay.
+- Verified by brute force in `presence.test.ts`, in **both** modes (leaving tomorrow, new PR,
+  already abroad): returning on *must-return-by* stays compliant every day for 400 days
+  afterwards, and returning one day later fails.
+
+Only days in Canada are counted. Days abroad that IRPA s.28(2)(a)(ii)–(iv) treats as days in
+Canada (accompanying a Canadian-citizen spouse, common-law partner or parent; employed full time
+by a Canadian business or the federal/provincial public service; accompanying a PR spouse or
+parent who is so employed) are **not** modelled, so the result errs on the cautious side. The
+Home residency card, Maple's residency answer, the "at risk" tip and the reminder say so and link
+to [IRPA s.28](https://laws-lois.justice.gc.ca/eng/acts/i-2.5/section-28.html); H&C
+considerations (s.28(2)(c)) can also overcome a breach.
 
 ## PR card (`insights.ts`)
 
-- IRCC accepts renewals when the card **expires in less than 9 months**.
-  `renewalOpens = expiry − 9 months`.
+- IRCC returns a renewal application if the card is still valid for **more than nine months
+  (270 days)** ([Guide 5445](https://www.canada.ca/en/immigration-refugees-citizenship/services/application/application-forms-guides/guide-5445-applying-permanent-resident-card-card-first-application-replacement-renewal-change-gender-identifier.html),
+  [IMM 5444](https://www.canada.ca/en/immigration-refugees-citizenship/services/application/application-forms-guides/imm5444.html)).
+  `renewalOpens = expiry − 270 days` (`PR_CARD_RENEWAL_DAYS` in `presence.ts`, the single constant
+  used by `insights.ts`, `forms.ts` (`cardRenewalOpens`, `cardRenewalCheck`), `documents.ts`
+  (PR card warning) and Maple). Nine calendar months would be 273–276 days, too early.
 - Reminders: renewal window opens, 90 days and 30 days before expiry.
 - An expired card does not end PR status, but you need a valid card or a PR Travel Document
   to board a flight to Canada (the assistant warns when a planned trip spans the expiry date).
@@ -65,7 +93,7 @@ Only days in Canada (time as a PR accompanying a Canadian-citizen spouse abroad,
 | Reminder | When |
 |---|---|
 | Citizenship eligible | on the earliest date, and 30 days before |
-| PR card renewal window | expiry − 9 months |
+| PR card renewal window | expiry − 270 days |
 | PR card expiry | 90 and 30 days before |
 | Must return (while abroad) | 60, 30 and 7 days before *must return by* |
 | Residency at risk | immediately when non-compliant |
@@ -115,9 +143,24 @@ Each program has an offline estimate (IRCC service standards where they exist: E
 
 | Program | Status | Source |
 |---|---|---|
-| Home Care Worker Immigration Pilots (`caregiver`) | Intake paused until further notice (IRCC notice of 2025-12-19) | canada.ca notice “Pausing Home Care Worker Immigration Pilots application intake” |
-| Start-up Visa (`startup`) | Paused; only holders of a 2025 commitment certificate could apply, by 2026-06-30 | canada.ca Start-up Visa page |
-| Quebec Experience Program (`qc_peq`) | Rules changing (ended 2025-11-19, temporary reinstatement reported for 2026); check Quebec’s site | Quebec government / secondary sources |
+| Parents and grandparents (`pgp`) | **Paused**: no new interest-to-sponsor forms or invitations until further notice; existing applications processed | [PGP page](https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/family-sponsorship/sponsor-parents-grandparents.html), [MI89](https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/policies-operational-instructions-agreements/ministerial-instructions/other-goals/mi89.html) |
+| Home Care Worker Immigration Pilots (`caregiver`) | **Closed**: no new applications until 2030-03-30 (MI86/87/88/91, in force 2026-03-31) | [Caregivers page](https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/caregivers.html), [MI86-88](https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/policies-operational-instructions-agreements/ministerial-instructions/other-goals/mi86-87-88.html) |
+| Start-up Visa (`startup`) | **Closed** to new applications since 2026-06-30 (2025 commitment-certificate holders only until then); a replacement pilot is planned | [Start-up Visa page](https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/start-visa.html) |
+| Quebec Experience Program (`qc_peq`) | **Changing**: temporarily reopened 2026-07-02 to 2028-07-02 for people eligible on 2025-11-19; intake periods only | [Quebec MIFI](https://www.quebec.ca/immigration/permanente/travailleurs-qualifies/programme-experience-quebecoise/conditions-selection) |
+| Quebec skilled workers (`qc_skilled`) | Open: PRTQ replaced by the PSTQ | [quebec.ca](https://www.quebec.ca/en/immigration/permanent/skilled-workers) |
+| Atlantic Immigration Program (`aip`) | **Changing**: provinces limit endorsements (NB paused new employer designations through 2026) | [GNB notices](https://www.gnb.ca/en/topic/family-home-community/immigration/important-notices.html) |
+| Non-Express Entry PNP (`pnp_base`) | Open; IRCC application is online through the PR Portal (paper only as an accommodation) | [IRCC](https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/provincial-nominees/non-express-entry/apply.html) |
+
+The badge can only be *paused*, *closed* or *changing*; the description (`prog.desc.*`) carries the detail.
+
+## Express Entry draw categories (`draws.ts`)
+
+`OCCUPATION_CATEGORIES` lists the 2026 categories from IRCC's
+[category-based selection page](https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/rounds-invitations/category-based-selection.html)
+(2026-06-22): healthcare & social services, STEM, trades, education, transport, physicians,
+senior managers and researchers (the last three need Canadian work experience) and skilled
+military recruits; French is detected from the draw name. *Agriculture & agri-food* is a past
+category: old draws are still classified, but it is no longer offered as a choice.
 
 ## Documents (`domain/documents.ts`)
 
@@ -126,10 +169,11 @@ Each program has an offline estimate (IRCC service standards where they exist: E
 | Language test (IELTS/CELPIP/PTE/TEF/TCF) | test date + 2 years (must be < 2 years old for the Express Entry profile and the PR application) | 3 months before |
 | ECA | issue date + 5 years | 3 months before |
 | Immigration medical exam | exam date + 12 months | 3 months before |
-| Biometrics | + 10 years, **temporary residence only** (PR applicants give them every time) | 3 months before |
+| Biometrics | + 10 years, **temporary residence only** (most PR applicants give them every time) | 3 months before |
 | Passport | printed expiry | 6 months before |
 | Work/study permit, visitor record | printed expiry (apply to extend before it expires to keep maintained status) | 4 months before |
 | Visitor visa (TRV), COPR | printed expiry | 2 months before |
+| PR card | printed expiry | when the renewal window opens (expiry − 270 days) |
 | Police certificate | no fixed IRCC validity; IRCC may ask for a newer one | — |
 
 Reminders: at the warning date and 30 days before expiry (only dates on or after today).
@@ -142,8 +186,14 @@ Reminders: at the warning date and 30 days before expiry (only dates on or after
 
 ## Limitations
 
-- Time abroad that IRCC may count toward the residency obligation (accompanying a Canadian
-  citizen spouse, or working full-time for a Canadian business) is not modelled.
-- Days in prison, on probation or on parole, which do not count for citizenship, are not modelled.
+- Time abroad that IRCC may count toward the residency obligation (IRPA s.28(2)(a)(ii)–(iv):
+  accompanying a Canadian-citizen spouse, partner or parent, or working full time for a Canadian
+  business or public service) is not modelled; the app says so next to the result.
+- Days in prison, on probation or on parole (Citizenship Act s.21), and time as a refugee claimant,
+  which do not count for citizenship, are not modelled; the app shows an exclusions note instead.
+- Tax filing is not checked against the 5-year window (only a reminder); language level is not
+  converted from TEF/TCF/PTE Core (enter the CLB/NCLC level).
+- The boundary-day rule is confirmed for citizenship (IRCC operational bulletin); for the
+  residency obligation the app applies the same rule (not separately confirmed by a primary source).
 - IRCC data mapping relies on the field names in IRCC’s JSON. Check the mirror log in the
   *Refresh open data* workflow when IRCC changes its format.

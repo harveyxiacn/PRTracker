@@ -9,6 +9,7 @@
 // Implementation owner: documents agent. Keep every exported name and signature below.
 import { addDays, addMonths, diffDays, type ISODate } from './dates';
 import type { Reminder } from './insights';
+import { PR_CARD_RENEWAL_DAYS } from './presence';
 import { program } from './programs';
 
 export type DocKind =
@@ -68,10 +69,18 @@ export const LEAD_MONTHS: Record<DocKind, number> = {
   police_certificate: 3,
   biometrics: 3,
   copr: 2,
-  // IRCC lets you apply for a new PR card when the current one expires in less than 9 months.
+  // PR card: the warning starts when the renewal window opens (expiry − 270 days, see warnFrom).
   pr_card_copy: 9,
   other: 3,
 };
+
+/**
+ * First warning day ('soon' status, first reminder). The PR card uses IRCC's renewal window,
+ * expiry − 270 days (IMM 5444), not 9 calendar months; other kinds use LEAD_MONTHS.
+ */
+export function warnFrom(kind: DocKind, exp: ISODate): ISODate {
+  return kind === 'pr_card_copy' ? addDays(exp, -PR_CARD_RENEWAL_DAYS) : addMonths(exp, -(LEAD_MONTHS[kind] ?? 3));
+}
 
 /** Days before expiry for the second, critical reminder. */
 export const CRITICAL_DAYS = 30;
@@ -93,7 +102,7 @@ export function documentStatus(item: DocItem, today: ISODate): DocStatus {
   if (!exp) return 'unknown';
   // A document is valid through its expiry date.
   if (exp < today) return 'expired';
-  if (today >= addMonths(exp, -(LEAD_MONTHS[item.kind] ?? 3))) return 'soon';
+  if (today >= warnFrom(item.kind, exp)) return 'soon';
   return 'ok';
 }
 
@@ -105,7 +114,7 @@ export function documentReminders(data: DocumentsData, today: ISODate): Reminder
     if (!exp || exp < today) continue;
     const lead = LEAD_MONTHS[item.kind] ?? 3;
     const title = `doc.rem.title.${item.kind}`;
-    const warnDate = addMonths(exp, -lead);
+    const warnDate = warnFrom(item.kind, exp);
     if (warnDate >= today) {
       out.push({
         id: `doc-${item.id}-${lead}m`, date: warnDate, category: 'documents', severity: 'warn',

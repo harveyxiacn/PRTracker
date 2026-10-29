@@ -34,6 +34,14 @@
   --radius: 16px;
   --radius-sm: 10px;
   --tabbar-h: 64px;
+  /* motion: enter decelerates, exit accelerates; the pill alone gets a slight overshoot */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-press: 120ms;
+  --dur-in: 220ms;
+  --dur-sheet: 300ms;
+  --dur-out: 180ms; /* keep in sync with SHEET_OUT_MS in components/ui.tsx */
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
@@ -125,14 +133,17 @@ a { color: var(--accent-text); }
   padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(12px);
+  transition: box-shadow var(--dur-in) var(--ease-out);
 }
+.topbar[data-scrolled] { box-shadow: 0 1px 0 var(--border), 0 8px 18px -14px rgba(20, 20, 18, 0.35); }
 .topbar h1 { font-size: 20px; margin: 0; flex: 1; letter-spacing: -0.01em; }
 .main { flex: 1; width: 100%; max-width: 760px; margin: 0 auto; padding: 4px 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 24px); }
 
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
   display: flex; justify-content: center;
-  background: var(--surface); border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent); border-top: 1px solid var(--border);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom);
 }
 .tabbar-inner { display: flex; width: 100%; max-width: 760px; }
@@ -143,6 +154,11 @@ a { color: var(--accent-text); }
 }
 .tab[aria-current='page'] { color: var(--accent-text); font-weight: 600; }
 .tab svg { width: 24px; height: 24px; }
+/* Active destination: a soft pill behind the icon (shape + colour + weight, never colour alone). */
+.tab-pill { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 999px; transition: background-color var(--dur-in) var(--ease-out), transform var(--dur-press) var(--ease-out); }
+.tab[aria-current='page'] .tab-pill { background: var(--accent-soft); animation: pill-in var(--dur-sheet) var(--ease-spring); }
+.tab:active .tab-pill { transform: scale(0.92); }
+@keyframes pill-in { from { transform: scaleX(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -198,7 +214,9 @@ textarea.input { min-height: 80px; resize: vertical; }
 .check input { width: 20px; height: 20px; accent-color: var(--accent); }
 
 .progress { height: 10px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
-.progress > div { height: 100%; background: var(--d-pr); border-radius: 999px; transition: width 0.4s ease; }
+.progress > div { height: 100%; background: var(--d-pr); border-radius: 999px; transition: width 0.4s var(--ease-out); transform-origin: left; animation: bar-grow 700ms var(--ease-out); }
+[dir='rtl'] .progress > div { transform-origin: right; }
+@keyframes bar-grow { from { transform: scaleX(0); } }
 .progress.accent > div { background: var(--accent); }
 
 .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--text-2); }
@@ -221,17 +239,42 @@ textarea.input { min-height: 80px; resize: vertical; }
 .list button.item { all: unset; display: flex; align-items: center; gap: 12px; width: 100%; cursor: pointer; min-height: 44px; }
 .list button.item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 8px; }
 
-.sheet-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
-.sheet {
-  background: var(--surface); width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto;
-  border-radius: 20px 20px 0 0; padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
-  animation: up 0.2s ease;
+.sheet-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+  animation: fade-in var(--dur-in) var(--ease-out);
 }
-@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 20px; } }
+.sheet {
+  background: var(--surface); width: 100%; max-width: 560px; max-height: 92dvh; overflow: auto; overscroll-behavior: contain;
+  border-radius: 20px 20px 0 0; padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  animation: sheet-in var(--dur-sheet) var(--ease-out);
+  transition: transform 240ms var(--ease-out); /* spring-back after a short drag */
+}
+.sheet.has-footer { padding-bottom: 0; }
+/* Exit: the backdrop fades while the sheet slides away; a flung sheet keeps its drag position. */
+.sheet-backdrop.closing { animation: fade-out var(--dur-out) var(--ease-in) forwards; pointer-events: none; }
+.sheet-backdrop.closing .sheet { animation: sheet-out var(--dur-out) var(--ease-in) forwards; }
+.sheet-backdrop.closing .sheet.flung { animation: none; transition: transform var(--dur-out) var(--ease-in); }
+@media (min-width: 640px) {
+  .sheet-backdrop { align-items: center; }
+  .sheet { border-radius: 20px; animation-name: dialog-in; }
+  .sheet-backdrop.closing .sheet { animation-name: dialog-out; }
+}
+.sheet-handle { touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.sheet-handle:active { cursor: grabbing; }
 .sheet .grabber { width: 40px; height: 4px; border-radius: 4px; background: var(--border); margin: 4px auto 12px; }
 .sheet h2 { margin: 0 0 8px; font-size: 18px; }
-@keyframes up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+/* Primary actions stay reachable at the bottom of long forms, above the home indicator. */
+.sheet-footer {
+  position: sticky; bottom: 0; z-index: 1; display: flex; gap: 8px; align-items: center;
+  margin: 16px -16px 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--surface); border-top: 1px solid var(--border);
+}
+@keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sheet-out { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes dialog-in { from { transform: translateY(16px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes dialog-out { to { transform: translateY(12px) scale(0.98); opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
 
 .segmented { display: flex; background: var(--surface-2); border-radius: 12px; padding: 3px; gap: 3px; }
 .segmented button { flex: 1; border: 0; background: none; border-radius: 9px; min-height: 36px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2); }
@@ -282,6 +325,9 @@ textarea.input { min-height: 80px; resize: vertical; }
 .msg { unicode-bidi: plaintext; max-width: 86%; padding: 10px 14px; border-radius: 18px; white-space: pre-wrap; word-wrap: break-word; }
 .msg.user { align-self: flex-end; background: var(--accent); color: var(--on-accent); border-end-end-radius: 6px; }
 .msg.assistant { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); border-end-start-radius: 6px; }
+.msg.enter { animation: msg-in var(--dur-in) var(--ease-out) both; }
+.msg.assistant.enter { animation-delay: 60ms; } /* the reply lands just after the question */
+@keyframes msg-in { from { opacity: 0; transform: translateY(8px); } }
 .composer {
   position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); z-index: 15;
   background: var(--bg); border-top: 1px solid var(--border); padding: 8px 16px;
@@ -350,4 +396,138 @@ svg { flex: none; }
   .btn, .chip, .segmented button, .badge, .icon-btn { border: 1px solid ButtonText; }
   .chip[aria-pressed='true'], .segmented button[aria-pressed='true'], .tab[aria-current='page'] { outline: 2px solid Highlight; }
   .cell.today, .cell.sel { outline-color: Highlight; }
+}
+
+/* ---------- v0.9 interaction layer ---------- */
+
+/* Screens fade in on arrival. Opacity only: a transform here would re-anchor fixed children. */
+.screen { animation: fade-in var(--dur-in) var(--ease-out); }
+
+/* Press feedback on everything tappable; hover tints only where a real pointer can hover. */
+.btn, .chip, .icon-btn, .quick-btn, .app-row { transition: transform var(--dur-press) var(--ease-out), background-color var(--dur-press) ease, border-color var(--dur-press) ease; }
+.list button.item { transition: transform var(--dur-press) var(--ease-out); }
+.btn:not(:disabled):active, .chip:active, .icon-btn:active, .quick-btn:active, .app-row:active { transform: scale(0.97); }
+.list button.item:active { transform: scale(0.985); }
+.icon-btn:hover { background: none; }
+@media (hover: hover) {
+  .icon-btn:hover { background: var(--surface-2); }
+  .btn:not(.primary):not(.ghost):not(:disabled):hover, .chip:hover, .quick-btn:hover, .app-row:hover { border-color: color-mix(in srgb, var(--text) 22%, var(--border)); }
+  .btn.primary:not(:disabled):hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+  .btn.ghost:hover { background: var(--accent-soft); }
+}
+
+/* Demo mode: a slim strip instead of a full warning card on every screen. */
+.demo-strip {
+  display: flex; align-items: center; gap: 8px; margin: 0 16px; padding: 6px 6px 6px 12px;
+  border-radius: 12px; font-size: 13px; line-height: 1.3; color: var(--warn-text);
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+}
+.demo-strip .btn.sm { min-height: 32px; flex: none; }
+
+/* Home hero: the one date people come for. */
+.hero-card { background: linear-gradient(180deg, color-mix(in srgb, var(--d-pr) 8%, var(--surface)), var(--surface) 70%); }
+.hero-date { font-size: 26px; font-weight: 700; letter-spacing: -0.015em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.hero-date.sm { font-size: 20px; }
+/* CJK dates have no break opportunities a reader expects ("2026年11月12日"): a size that fits the column. */
+:root[lang^='zh'] .hero-date, :root[lang='ko'] .hero-date { font-size: 22px; }
+.ring-arc { transition: stroke-dasharray 900ms var(--ease-out); }
+
+/* Disclosure for secondary explanations ("How this is counted"). */
+.disclose { margin-top: 10px; }
+.disclose > summary {
+  list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; min-height: 32px;
+  font-size: 13px; font-weight: 600; color: var(--text-2); border-radius: 8px;
+}
+.disclose > summary::-webkit-details-marker { display: none; }
+.disclose > summary::after {
+  content: ''; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); transition: transform var(--dur-in) var(--ease-out);
+}
+.disclose[open] > summary::after { transform: translateY(1px) rotate(225deg); }
+.disclose > :not(summary) { animation: fade-in var(--dur-in) var(--ease-out); }
+.disclose p { margin: 4px 0 0; }
+
+/* Quick actions: one thumb-swipe row under the key numbers. */
+.quick {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 88px; gap: 8px;
+  overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  margin: 12px -16px; padding: 2px 16px 4px; scroll-padding-inline: 16px;
+}
+.quick::-webkit-scrollbar { display: none; }
+/* Edge fade hints that the row scrolls sideways. */
+.quick { mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); }
+[dir='rtl'] .quick { mask-image: linear-gradient(to left, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%); }
+.quick-btn {
+  scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-height: 84px; padding: 10px 4px; border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--surface); box-shadow: var(--shadow); cursor: pointer;
+  font-size: 12px; font-weight: 600; line-height: 1.2; text-align: center; color: var(--text); overflow-wrap: anywhere;
+}
+.quick-ic { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-2); flex: none; }
+.quick-btn.primary .quick-ic { background: var(--accent); color: var(--on-accent); }
+
+/* Alerts stack with "Show N more". */
+.alerts { margin: 4px 0 8px; }
+.more-toggle { margin: 0 auto; display: flex; }
+.more-toggle svg { rotate: 90deg; transition: rotate var(--dur-in) var(--ease-out); }
+.more-toggle[aria-expanded='true'] svg { rotate: -90deg; }
+.alerts .tip { animation: fade-in var(--dur-in) var(--ease-out); }
+
+/* Application progress rows on Home. */
+.app-row {
+  display: flex; flex-direction: column; align-items: stretch; width: 100%; margin-top: 10px; padding: 12px;
+  border-radius: 12px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; text-align: start; font-weight: 400;
+}
+
+/* Trips list */
+.trip-ic { background: var(--d-out); }
+.trip-ic.planned { background: transparent; color: var(--d-tr); box-shadow: inset 0 0 0 2px var(--d-tr); }
+.trip-days { font-weight: 700; }
+.list button.item > svg:last-child { color: var(--text-3); }
+.divider { height: 1px; background: var(--border); margin: 16px 0 4px; }
+
+/* Toast: above the tab bar (and above the Maple composer when it is showing). */
+.toast-region {
+  position: fixed; left: 16px; right: 16px; z-index: 60; display: flex; justify-content: center; pointer-events: none;
+  bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom));
+}
+body:has(.composer) .toast-region { bottom: calc(var(--tabbar-h) + 80px + env(safe-area-inset-bottom)); }
+.toast {
+  pointer-events: auto; display: flex; align-items: center; gap: 12px; max-width: 480px; min-height: 44px;
+  padding: 6px 6px 6px 16px; border-radius: 14px; font-size: 14px;
+  background: var(--text); color: var(--bg); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  animation: toast-in var(--dur-in) var(--ease-out);
+}
+.toast:not(:has(.toast-action)) { padding-inline-end: 16px; }
+.toast.leaving { animation: toast-out 160ms var(--ease-in) forwards; }
+.toast-action {
+  border: 0; background: none; color: var(--accent-soft); font-weight: 700; cursor: pointer;
+  min-height: 36px; padding: 0 12px; border-radius: 10px; flex: none;
+}
+.toast-action:hover { background: color-mix(in srgb, var(--bg) 14%, transparent); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(6px); } }
+
+/* Loading placeholder for lazily loaded screens. */
+.skeleton-stack { padding-top: 12px; display: flex; flex-direction: column; gap: 12px; }
+.skeleton {
+  border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+@media (pointer: coarse) {
+  .disclose > summary, .toast-action { min-height: 44px; }
+  .demo-strip .btn.sm { min-height: 44px; }
+}
+
+/* Reduced motion: keep every state change and its feedback, drop the travel. Things that slide
+   or grow simply appear (or cross-fade); sheets close at once (see Sheet in components/ui.tsx). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .sheet, .sheet-backdrop, .msg.enter, .toast, .screen, .alerts .tip, .disclose > :not(summary) { animation: fade-in 120ms linear both !important; }
+  .toast.leaving { animation: fade-out 120ms linear both !important; }
+  .tab[aria-current='page'] .tab-pill, .progress > div { animation: none !important; }
+  .skeleton { animation: none !important; }
+  .btn:active, .chip:active, .icon-btn:active, .quick-btn:active, .app-row:active, .list button.item:active, .tab:active .tab-pill { transform: none !important; }
 }

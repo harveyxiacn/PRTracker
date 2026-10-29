@@ -6,8 +6,11 @@ import { fmtDate, LANGUAGES } from '../i18n';
 import { useApp } from '../store/AppContext';
 
 export function LanguageSelect({ value, onChange }: { value: string; onChange: (code: string) => void }) {
+  const { t, lang } = useApp();
+  // Keeps the English word too, so someone who picked a language they can't read can find the way back.
+  const label = lang === 'en' ? t('set.language') : `${t('set.language')} (Language)`;
   return (
-    <select className="input" value={value} onChange={(e) => onChange(e.target.value)} aria-label="Language">
+    <select className="input" value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}>
       {LANGUAGES.map((l) => (
         <option key={l.code} value={l.code} lang={l.code} dir={l.dir}>
           {l.name}{l.code !== 'en' ? ` — ${l.english}` : ''}
@@ -31,6 +34,7 @@ export function ProfileFields() {
       </Field>
       <h3>{t('set.prePr')}</h3>
       <p className="tiny">{t('set.prePrHint')}</p>
+      <p className="tiny">{t('set.prePrNoClaim')}</p>
       {p.statusPeriods.map((s) => (
         <div key={s.id} className="row wrap" style={{ alignItems: 'flex-end', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
           <Field label={t('set.statusKind')}>
@@ -45,6 +49,9 @@ export function ProfileFields() {
             <input className="input" type="date" value={s.end ?? ''} placeholder={p.prDate ? fmtDate(p.prDate, lang) : ''} onChange={(e) => setP({ statusPeriods: p.statusPeriods.map((x) => (x.id === s.id ? { ...x, end: e.target.value || null } : x)) })} />
           </Field>
           <button className="icon-btn" aria-label={t('common.delete')} onClick={() => setP({ statusPeriods: p.statusPeriods.filter((x) => x.id !== s.id) })}><Icon name="trash" /></button>
+          {/* Only authorised temporary-resident time counts; protected-person time from the positive decision. */}
+          {s.kind === 'protected' && <p className="tiny" style={{ flexBasis: '100%', margin: 0 }}>{t('set.statusHint.protected')}</p>}
+          {s.kind === 'other' && <p className="tiny" style={{ flexBasis: '100%', margin: 0 }}>{t('set.statusHint.other')}</p>}
         </div>
       ))}
       <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setP({ statusPeriods: [...p.statusPeriods, { id: uid(), kind: 'worker', start: p.firstEntry ?? '' }] })}>

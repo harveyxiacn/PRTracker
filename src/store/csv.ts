@@ -2,9 +2,9 @@
 // (header required). Dates must be YYYY-MM-DD; a blank return means still abroad.
 import { isISODate } from '../domain/dates';
 import { uid, type Trip } from '../domain/types';
+import { csvCell as esc, restoreFormula } from '../domain/csvCell';
 
 export function tripsToCsv(trips: Trip[]): string {
-  const esc = (s = '') => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
   const rows = [...trips]
     .sort((a, b) => a.departure.localeCompare(b.departure))
     .map((t) => [t.departure, t.return ?? '', esc(t.destination), esc(t.purpose), esc(t.note)].join(','));
@@ -67,9 +67,9 @@ export function csvToTrips(text: string): { trips: Trip[]; errors: number[] } {
       id: uid(),
       departure: dep,
       return: ret || null,
-      destination: iDest >= 0 ? c[iDest] || undefined : undefined,
+      destination: iDest >= 0 ? restoreFormula(c[iDest] ?? '') || undefined : undefined,
       purpose: purpose && ['vacation', 'family', 'work', 'study', 'other'].includes(purpose) ? purpose : undefined,
-      note: iNote >= 0 ? c[iNote] || undefined : undefined,
+      note: iNote >= 0 ? restoreFormula(c[iNote] ?? '') || undefined : undefined,
     });
   });
   return { trips, errors };

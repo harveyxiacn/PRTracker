@@ -138,9 +138,10 @@ describe('ics', () => {
   });
 
   it('escapes text', () => {
-    expect(escapeText('a\\b;c,d\ne\r\nf')).toBe('a\\\\b\;c\\,d\\ne\\nf');
+    // Each of \ ; , is preceded by one literal backslash; newlines become the two characters \n.
+    expect(escapeText('a\\b;c,d\ne\r\nf')).toBe(String.raw`a\\b\;c\,d\ne\nf`);
     const s = buildIcsAt([{ ...ev, title: 'Tax, PR; card', description: 'line1\nline2' }], NOW);
-    expect(s).toContain('SUMMARY:Tax\\, PR\; card\r\n');
+    expect(s).toContain(String.raw`SUMMARY:Tax\, PR\; card` + '\r\n');
     expect(s).toContain('DESCRIPTION:line1\\nline2\r\n');
   });
 

@@ -68,15 +68,32 @@ export function TripEditor({ state }: { state: TripEditorState }) {
     setDraft(null);
     state.close();
   };
+  // No confirm dialog: deleting is instant and the toast offers Undo, which puts the saved
+  // trip (not the unsaved draft) back in its place.
   const remove = () => {
-    if (!confirm(t('trips.confirmDelete'))) return;
+    const saved = data.trips.find((tr) => tr.id === d.id);
     update((x) => ({ ...x, trips: x.trips.filter((tr) => tr.id !== d.id) }));
     setDraft(null);
     state.close();
+    if (saved) {
+      toast(t('ux.tripDeleted'), {
+        label: t('ux.undo'),
+        run: () => update((x) => (x.trips.some((tr) => tr.id === saved.id) ? x : { ...x, trips: [...x.trips, saved] })),
+      });
+    }
   };
 
   return (
-    <Sheet title={state.isNew ? t('trips.add') : t('trips.edit')} onClose={() => { setDraft(null); state.close(); }}>
+    <Sheet
+      title={state.isNew ? t('trips.add') : t('trips.edit')}
+      onClose={() => { setDraft(null); state.close(); }}
+      footer={
+        <>
+          {!state.isNew && <button className="btn danger" onClick={remove}><Icon name="trash" /> {t('common.delete')}</button>}
+          <button className="btn primary grow" disabled={!valid} onClick={save}>{t('common.save')}</button>
+        </>
+      }
+    >
       <div className="grid2">
         <Field label={t('trips.departure')}>
           <input className="input" type="date" value={d.departure} onChange={(e) => set({ departure: e.target.value })} required />
@@ -108,11 +125,6 @@ export function TripEditor({ state }: { state: TripEditorState }) {
         </p>
       )}
       {impact && <div className="tip info"><Icon name="info" /><div>{impact}</div></div>}
-      <div className="row" style={{ marginTop: 12 }}>
-        {!state.isNew && <button className="btn danger" onClick={remove}><Icon name="trash" /> {t('common.delete')}</button>}
-        <div className="grow" />
-        <button className="btn primary" disabled={!valid} onClick={save}>{t('common.save')}</button>
-      </div>
     </Sheet>
   );
 }
@@ -174,7 +186,7 @@ export function TripsScreen() {
               return (
                 <li key={tr.id}>
                   <button className="item" onClick={() => editor.edit(tr)}>
-                    <span className="avatar" style={{ background: tr.departure > insights.today ? 'var(--d-tr)' : 'var(--d-out)' }}><Icon name="plane" /></span>
+                    <span className={`avatar trip-ic${tr.departure > insights.today ? ' planned' : ''}`}><Icon name="plane" /></span>
                     <span className="grow">
                       <b>{tr.destination || t('trips.abroad')}</b>
                       <div className="small muted">
@@ -182,7 +194,8 @@ export function TripsScreen() {
                       </div>
                       {issue && <Status kind="warn">{t(`trips.issue.${issue}`)}</Status>}
                     </span>
-                    <span className="num" style={{ fontWeight: 700 }}>{days}<span className="tiny"> {t('common.d')}</span></span>
+                    <span className="num trip-days">{days}<span className="tiny"> {t('common.d')}</span></span>
+                    <Icon name="chevron" size={16} />
                   </button>
                 </li>
               );
@@ -191,20 +204,21 @@ export function TripsScreen() {
         </section>
       ))}
 
-      <section className="card">
-        <h2>{t('trips.importExport')}</h2>
-        <p className="small muted">{t('trips.csvHelp')}</p>
+      <section className="card" aria-labelledby="trips-io-h">
+        <h2 id="trips-io-h">{t('trips.importExport')}</h2>
         <div className="row wrap">
           <button className="btn sm" onClick={importCsv}><Icon name="upload" size={16} /> {t('trips.importCsv')}</button>
           <button className="btn sm" onClick={() => saveTextFile('pr-tracker-trips.csv', tripsToCsv(data.trips), 'text/csv')}><Icon name="download" size={16} /> {t('trips.exportCsv')}</button>
         </div>
-        <p className="tiny">{t('trips.cbsaHint')}</p>
-      </section>
-
-      <section className="card">
-        <h2><Icon name="search" /> {t('cbsa.cardTitle')}</h2>
+        <details className="disclose">
+          <summary>{t('ux.csvFormat')}</summary>
+          <p className="tiny">{t('trips.csvHelp')}</p>
+        </details>
+        <div className="divider" />
+        <h3><Icon name="search" size={16} /> {t('cbsa.cardTitle')}</h3>
         <p className="small muted">{t('cbsa.cardBody')}</p>
         <button className="btn sm" onClick={() => setCbsa(true)}><Icon name="search" size={16} /> {t('cbsa.open')}</button>
+        <p className="tiny">{t('trips.cbsaHint')}</p>
       </section>
       {cbsa && (
         <Suspense fallback={null}>

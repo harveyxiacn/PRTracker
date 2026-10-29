@@ -1,9 +1,10 @@
 // Derived dashboard facts and reminder schedule, shared by the Home screen,
 // local notifications and the smart assistant.
 
-import { addDays, addMonths, diffDays, todayISO, type ISODate } from './dates';
+import { addDays, diffDays, todayISO, type ISODate } from './dates';
 import {
   CITIZENSHIP_REQUIRED,
+  PR_CARD_RENEWAL_DAYS,
   PresenceModel,
   validateTrips,
   type CitizenshipResult,
@@ -12,9 +13,6 @@ import {
 } from './presence';
 import type { AppData, Trip } from './types';
 import { documentReminders, emptyDocuments } from './documents';
-
-/** IRCC: apply to renew when the card expires in less than 9 months. */
-export const PR_CARD_RENEWAL_MONTHS = 9;
 
 export interface Insights {
   today: ISODate;
@@ -105,7 +103,8 @@ export function computeInsights(data: AppData, today: ISODate = todayISO()): Ins
 
   if (profile.prCardExpiry) {
     const expiry = profile.prCardExpiry;
-    const renewalOpens = addMonths(expiry, -PR_CARD_RENEWAL_MONTHS);
+    // IRCC returns renewals for cards valid more than 270 days (Guide 5445 / IMM 5444).
+    const renewalOpens = addDays(expiry, -PR_CARD_RENEWAL_DAYS);
     const daysUntilExpiry = diffDays(expiry, today);
     const daysUntilRenewal = diffDays(renewalOpens, today);
     out.prCard = {

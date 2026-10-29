@@ -30,11 +30,20 @@ export async function requestPermission(): Promise<boolean> {
   return (await Notification.requestPermission()) === 'granted';
 }
 
-/** Replace all scheduled reminders with the current set. */
-export async function syncNotifications(reminders: Reminder[], settings: Settings, t: Translate): Promise<number> {
+/**
+ * Title and body shown for a reminder. With `generic` (an app lock is set) the text carries no
+ * numbers, names or status, because notifications are visible on the device lock screen.
+ */
+export function notificationText(r: Reminder, t: Translate, generic = false): { title: string; body: string } {
+  if (generic) return { title: t('app.name'), body: t('sec.notifGeneric') };
+  return { title: t(r.title, r.vars), body: t(r.body, r.vars) };
+}
+
+/** Replace all scheduled reminders with the current set. `generic` hides the reminder details. */
+export async function syncNotifications(reminders: Reminder[], settings: Settings, t: Translate, generic = false): Promise<number> {
   const list = enabledReminders(reminders, settings).slice(0, 60);
   if (!Capacitor.isNativePlatform()) {
-    showDueWebNotifications(list, t);
+    showDueWebNotifications(list, t, generic);
     return list.length;
   }
   const perm = await LocalNotifications.checkPermissions();
@@ -53,8 +62,7 @@ export async function syncNotifications(reminders: Reminder[], settings: Setting
     notifications: upcoming.map((r) => {
       return {
         id: notificationId(r.id),
-        title: t(r.title, r.vars),
-        body: t(r.body, r.vars),
+        ...notificationText(r, t, generic),
         schedule: { at: at(r), allowWhileIdle: true },
         extra: { reminderId: r.id },
       };
@@ -65,7 +73,7 @@ export async function syncNotifications(reminders: Reminder[], settings: Setting
 
 const SHOWN_KEY = 'prtracker.shownReminders';
 
-function showDueWebNotifications(list: Reminder[], t: Translate) {
+function showDueWebNotifications(list: Reminder[], t: Translate, generic: boolean) {
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   const today = new Date();
   const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -79,7 +87,8 @@ function showDueWebNotifications(list: Reminder[], t: Translate) {
     const key = `${r.id}@${r.date}`;
     if (r.date === iso && !shown.includes(key)) {
       try {
-        new Notification(t(r.title, r.vars), { body: t(r.body, r.vars), icon: 'icon-192.png' });
+        const { title, body } = notificationText(r, t, generic);
+        new Notification(title, { body, icon: 'icon-192.png' });
       } catch {
         /* some mobile browsers only allow service-worker notifications */
       }

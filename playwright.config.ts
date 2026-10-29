@@ -3,6 +3,11 @@
 // `npm run test:visual` (the preview server is started automatically).
 import { defineConfig, devices } from '@playwright/test';
 
+// PW_PORT lets a second checkout run while another preview server holds the default port.
+// PW_BASE_URL points at a preview server that is already running (started by the caller).
+const port = Number(process.env.PW_PORT) || 4173;
+const external = process.env.PW_BASE_URL;
+
 export default defineConfig({
   testDir: './tests/visual',
   outputDir: 'test-results',
@@ -13,7 +18,7 @@ export default defineConfig({
   reporter: process.env.CI ? [['list'], ['github']] : 'list',
   timeout: 60_000,
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: external ?? `http://localhost:${port}`,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -29,9 +34,9 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173',
+  webServer: external ? undefined : {
+    command: `npm run preview -- --port ${port} --strictPort`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: false,
     timeout: 120_000,
   },

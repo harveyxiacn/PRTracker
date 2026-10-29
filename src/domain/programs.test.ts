@@ -8,6 +8,14 @@ describe('program catalogue', () => {
     for (const [id, list] of Object.entries(TEMPLATES)) expect(list, id).toContain(TEMPLATE_FINAL[id as keyof typeof TEMPLATES]);
     expect(new Set(PROGRAMS.map((p) => p.id)).size).toBe(PROGRAMS.length);
   });
+  it('intake status matches official sites (RCIC content review v1, 2026-10-16)', () => {
+    const status = (id: string) => PROGRAMS.find((p) => p.id === id)!.status;
+    expect(status('pgp')).toBe('paused');
+    expect(status('caregiver')).toBe('closed');
+    expect(status('startup')).toBe('closed');
+    expect(status('qc_peq')).toBe('changing');
+    expect(status('aip')).toBe('changing');
+  });
   it('the community intake validator knows every program id', () => {
     const src = readFileSync(join(__dirname, '../../scripts/build-community.mjs'), 'utf8');
     const kinds = /export const KINDS = \[([\s\S]*?)\];/.exec(src)![1].match(/'([a-z_]+)'/g)!.map((s) => s.slice(1, -1));

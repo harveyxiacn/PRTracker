@@ -30,14 +30,19 @@ owner's accounts. Status: **prepared, waiting for accounts.**
 **Category:** Productivity (alt.: Travel & Local) · **Content rating:** Everyone · **Contact:** GitHub issues URL · **Privacy policy URL:** https://harveyxiacn.github.io/PRTracker/privacy.html
 
 ## 3. Google Play — Data safety answers
-- Does the app collect or share any of the required user data types? **No.** (All data is stored on device only; the app downloads public data but sends none.)
+- Does the app collect or share any of the required user data types? **No.** (All data is stored on device only; the app downloads public data but sends none. The optional "Review & share" timeline action opens github.com in the user's browser, after a confirmation, with an anonymised record — program, month, day counts — in the URL; the app itself transmits nothing, and the user posts it on GitHub under their own account.)
 - Is data encrypted in transit? **Yes** (HTTPS for public-data downloads).
-- Can users request data deletion? **Yes** — Settings → Delete all data (data never leaves the device).
+- Can users request data deletion? **Yes** — Settings → Delete all data (data never leaves the device). It removes the app's data, scheduled reminders and any export files left in the app cache.
+- Security notes for reviewers: data is stored in app-private storage, not encrypted at rest; the optional PIN is a screen lock (not encryption). With a PIN set, lock-screen notifications are generic and the recent-apps preview is blocked.
 - Ads: **No.** Target audience: 18+ (adults managing immigration).
 
 ## 4. App Store — App Privacy
-- **Data Not Collected.** No tracking. Required-reason APIs: UserDefaults (via Capacitor Preferences) — reason `CA92.1` (access info from the same app); add `PrivacyInfo.xcprivacy` to the App target in Xcode (template in `store/PrivacyInfo.xcprivacy`).
-- `NSFaceIDUsageDescription` is set in Info.plist (biometric unlock).
+- **Data Not Collected.** No tracking. Required-reason APIs (`store/PrivacyInfo.xcprivacy`, copied to `ios/App/App/PrivacyInfo.xcprivacy` and added to the App target's Copy Bundle Resources):
+  - UserDefaults `CA92.1` (Capacitor Preferences stores the app's data; AppDelegate reads it for the app-switcher cover);
+  - FileTimestamp `C617.1` (Capacitor Filesystem lists/deletes the app's own export files in its cache).
+  Capacitor core ships its own empty manifest; the other plugins use none of these APIs. Check Xcode's generated privacy report (Product → Archive → Generate Privacy Report) before submitting.
+- `NSFaceIDUsageDescription` ("Unlock PR Tracker with Face ID instead of typing your PIN.") is in `ios/App/App/Info.plist`. The iOS project lives outside the repo; `ios.yml` still adds the key with PlistBuddy for a fresh `cap add ios` checkout.
+- **Web version (owner action before promoting the PWA):** it runs on `harveyxiacn.github.io`, an origin shared with every other GitHub Pages site of that account, so browser storage is not isolated from them. Move the PWA to a dedicated custom domain (e.g. a subdomain with its own Pages site) and send `frame-ancestors`/CSP as headers there.
 
 ## 5. Screenshots
 Use the Visual QA workflow artifact (`screenshots/`, 390×844 @2x = 780×1688; Play requires 16:9–9:16 ≥ 1080 px on the short side for promo — upscale or capture on a device). Recommended set: Home, Calendar, Trips what-if (Maple), Timeline with curve, Documents, Household — in English plus each launch language.

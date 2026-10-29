@@ -25,7 +25,7 @@ export const peopleEn: Record<string, string> = {
   'ppl.confirmRemove': 'Remove {name}? Their PR dates, status and trips will be deleted from this device. Shared applications and documents stay.',
   'ppl.removed': '{name} removed',
   'ppl.notPr': 'Not a permanent resident yet',
-  'ppl.citEligible': 'Can apply for citizenship',
+  'ppl.citEligible': 'Meets citizenship presence (estimate)',
   'ppl.citFrom': 'Citizenship from {date}',
   'ppl.resOk': 'Residency OK',
   'ppl.resRisk': 'Residency at risk',
@@ -33,7 +33,7 @@ export const peopleEn: Record<string, string> = {
   'ppl.cardExpired': 'PR card expired {date}',
   'ppl.abroad': 'Abroad now',
   'ppl.applyTogether': 'Apply together from {date}',
-  'ppl.applyTogetherNow': 'You can all apply for citizenship together now',
+  'ppl.applyTogetherNow': 'You all meet the citizenship presence requirement now (estimate)',
   'ppl.applyTogetherHint': 'Family members often apply together. This is the later of the eligibility dates, assuming no new trips.',
   'ppl.tapToSwitch': 'Tap a person to view their calendar, trips and dates.',
   /** Notification title for another household member: lead wraps the reminder's own title. */

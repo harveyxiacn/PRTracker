@@ -127,3 +127,19 @@ I had 1 year of foreign work experience and submitted an LOE with pay stubs.`;
     expect(get(r)).toEqual({ aor: '2025-11-20', biometrics_request: '2025-12-05', ppr: '2026-03-02' });
   });
 });
+
+describe('adversarial input (ReDoS)', () => {
+  // 64 KB on one line: the old unbounded `.*` in pnp_ee took seconds on this.
+  const cases = ['pnp '.repeat(16_384), 'ee pnp '.repeat(9_400), 'spouse '.repeat(9_400), 'a'.repeat(65_536), `oinp ${'x '.repeat(32_000)}`];
+  for (const [i, text] of cases.entries()) {
+    it(`parses adversarial paste #${i + 1} in under 200 ms`, () => {
+      const t0 = performance.now();
+      parseTimelineText(text, TODAY);
+      guessKind(text);
+      expect(performance.now() - t0).toBeLessThan(200);
+    });
+  }
+  it('still finds a PNP-EE timeline with words in between', () => {
+    expect(guessKind('BC PNP tech pilot, then I applied through Express Entry').kind).toBe('pnp_ee');
+  });
+});

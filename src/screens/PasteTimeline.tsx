@@ -56,6 +56,8 @@ export function PasteTimelineSheet({
     const office = parsedOffice && knownOffice(parsedOffice);
     if (office) rec.office = office;
     const url = `${REPO}/issues/new?labels=timeline&template=timeline.yml&title=${encodeURIComponent(`Timeline: ${kind} ${rec.submittedMonth}`)}&record=${encodeURIComponent(JSON.stringify(rec, null, 2))}`;
+    // The record travels in the URL, so GitHub receives it when the page opens, not only on submit.
+    if (!confirm(t('sec.shareGithubConfirm'))) return;
     void openExternal(url);
   };
 

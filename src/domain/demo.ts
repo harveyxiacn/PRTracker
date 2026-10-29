@@ -20,7 +20,7 @@ export function demoData(today: ISODate, language?: string): AppData {
   // ---- Key dates --------------------------------------------------------------------------
   const prDate = addMonths(today, -28); // landed ≈ 2.3 years ago
   const workerStart = addMonths(prDate, -24); // 2 years on a work permit before PR
-  const prCardExpiry = addMonths(today, 7); // renewal window (9 months before expiry) is open
+  const prCardExpiry = addMonths(today, 7); // renewal window (expiry − 270 days) is open
   const y = yearOf(today);
 
   const profile: Profile = {

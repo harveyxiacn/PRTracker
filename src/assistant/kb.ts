@@ -23,8 +23,8 @@ export const KB: KbEntry[] = [
   { id: 'prtd', keywords: ['prtd', 'travel document', 'expired while abroad', 'expired abroad', 'card expired abroad', 'stuck abroad', 'return without card', 'outside canada without', '旅行证件', '旅行證件', '回不来', '回不來', '在国外过期', '在國外過期'], source: IRCC + 'permanent-residents/travel-document.html' },
   { id: 'tax', keywords: ['tax', 'taxes', 'file taxes', 'income tax', '报税', '税'], source: IRCC + 'canadian-citizenship/become-canadian-citizen/eligibility.html' },
   { id: 'language', requires: /citizen|入籍|公民|test|考试|考試|clb/, keywords: ['language test', 'language proof', 'citizenship test', 'clb 4', 'knowledge test', '语言', '語言', '入籍考试', '入籍考試'], source: IRCC + 'canadian-citizenship/become-canadian-citizen/eligibility.html' },
-  { id: 'biometrics_valid', keywords: ['biometrics valid', 'biometrics again', 'reuse biometrics', 'fingerprints valid', '指纹有效', '指纹多久'], source: IRCC + 'campaigns/biometrics.html' },
-  { id: 'medical_valid', keywords: ['medical valid', 'medical expire', 'medical exam valid', 'ime valid', '体检有效', '体检过期'], source: IRCC + 'application/medical-police/medical-exams.html' },
+  { id: 'biometrics_valid', keywords: ['biometrics valid', 'biometrics again', 'reuse biometrics', 'fingerprints valid', '指纹有效', '指纹多久'], source: IRCC + 'biometrics/when-to-give.html' },
+  { id: 'medical_valid', keywords: ['medical valid', 'medical expire', 'medical exam valid', 'ime valid', '体检有效', '体检过期'], source: IRCC + 'application/medical-police/medical-exams/requirements-permanent-residents.html' },
   { id: 'police', keywords: ['police certificate', 'police clearance', 'pcc', '无犯罪', '无犯罪证明'], source: IRCC + 'immigrate-canada/express-entry/documents/police-certificates.html' },
   { id: 'pof', keywords: ['proof of funds', 'settlement funds', 'pof', 'money required', '资金证明'], source: IRCC + 'immigrate-canada/express-entry/documents/proof-funds.html' },
   { id: 'job_offer_points', keywords: ['job offer points', 'lmia points', 'arranged employment', 'job offer crs', '工作offer', '雇主担保加分'], source: IRCC + 'immigrate-canada/express-entry/check-score/crs-criteria.html' },
@@ -32,8 +32,8 @@ export const KB: KbEntry[] = [
   { id: 'boundary', keywords: ['departure day', 'day i leave', 'return day', 'travel day count', '出境当天', '入境当天'], source: 'https://eservices.cic.gc.ca/rescalc/resCalcStartNew.do' },
   { id: 'half_day', keywords: ['half day', 'before pr count', 'work permit days count', 'student days count', 'pre-pr', '半天', 'pr之前'], source: IRCC + 'canadian-citizenship/become-canadian-citizen/eligibility.html' },
   { id: 'ro_new', keywords: ['less than 5 years', 'new pr', 'just landed', 'first five years', '不满5年', '刚登陆'], source: 'https://laws-lois.justice.gc.ca/eng/acts/i-2.5/section-28.html' },
-  { id: 'card_renew', keywords: ['renew card', 'renewal', 'when to renew', 'card renewal', '续卡', '换卡'], source: IRCC + 'new-immigrants/pr-card/apply-renew-replace.html' },
-  { id: 'bowp', keywords: ['bowp', 'bridging', 'work permit expiring', 'keep working while waiting', '过渡工签'], source: IRCC + 'work-canada/extend/eligibility.html' },
+  { id: 'card_renew', keywords: ['renew card', 'renewal', 'when to renew', 'card renewal', '续卡', '换卡'], source: IRCC + 'permanent-residents/card/apply.html' },
+  { id: 'bowp', keywords: ['bowp', 'bridging', 'work permit expiring', 'keep working while waiting', '过渡工签'], source: IRCC + 'work-canada/pr-work-permits/bridging.html' },
 ];
 
 /** Glossary terms (matched as whole words, case-insensitive). */

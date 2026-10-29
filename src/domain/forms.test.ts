@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { absencesToCsv, cardRenewalCheck, citizenshipAbsences, presenceReport, type AbsenceRow } from './forms';
+import { absencesToCsv, cardRenewalCheck, cardRenewalOpens, citizenshipAbsences, presenceReport, type AbsenceRow } from './forms';
 import { PresenceModel } from './presence';
 import { emptyData, type AppData, type Profile, type StatusPeriod, type Trip } from './types';
 
@@ -214,10 +214,13 @@ describe('cardRenewalCheck', () => {
     expect(late.shortfall).toBe(730 - 36 - 214);
   });
 
-  it('opens the renewal window 9 months before expiry', () => {
+  it('opens the renewal window 270 days before expiry', () => {
     const data = make({ prDate: '2018-01-01', prCardExpiry: '2026-09-01' }, []);
-    expect(cardRenewalCheck(data, '2025-12-01', TODAY).canApplyNow).toBe(true);
-    expect(cardRenewalCheck(data, '2025-11-30', TODAY).canApplyNow).toBe(false);
+    // 2026-09-01 − 270 days = 2025-12-05 (nine calendar months, 2025-12-01, would be 274 days).
+    expect(cardRenewalOpens('2026-09-01')).toBe('2025-12-05');
+    expect(cardRenewalCheck(data, '2025-12-05', TODAY).canApplyNow).toBe(true);
+    expect(cardRenewalCheck(data, '2025-12-04', TODAY).canApplyNow).toBe(false);
+    expect(cardRenewalCheck(data, '2025-12-01', TODAY).canApplyNow).toBe(false);
     expect(cardRenewalCheck(data, '2027-01-01', TODAY).canApplyNow).toBe(true); // expired
     expect(cardRenewalCheck(data, '2025-12-01', TODAY).cardExpiry).toBe('2026-09-01');
     expect(cardRenewalCheck(make({ prDate: '2018-01-01' }, []), TODAY, TODAY).canApplyNow).toBe(false);
