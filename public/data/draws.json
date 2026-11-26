@@ -1,6 +1,13 @@
 {
- "fetchedAt": "2026-11-25T20:29:13.870Z",
+ "fetchedAt": "2026-11-26T20:12:24.579Z",
  "draws": [
+  {
+   "number": 456,
+   "date": "2026-11-26",
+   "name": "STEM occupations, 2026-Version 3",
+   "size": 600,
+   "crs": 547
+  },
   {
    "number": 455,
    "date": "2026-11-25",
@@ -413,13 +420,6 @@
    "name": "Physicians with Canadian Work Experience, 2026-Version 1",
    "size": 391,
    "crs": 169
-  },
-  {
-   "number": 396,
-   "date": "2026-02-17",
-   "name": "Canadian Experience Class",
-   "size": 6000,
-   "crs": 508
   }
  ]
 }
